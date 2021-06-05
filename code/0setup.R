@@ -16,7 +16,7 @@ source(here::here('code', '0functions.R'))
 
 # Setup directories
 dir <- list(
-    data_raw       = here::here('data', 'raw'),
+    data           = here::here('data'),
     data_formatted = here::here('data', 'formatted.Rds'),
     figs           = here::here('figs'),
     output         = here::here('output'),
