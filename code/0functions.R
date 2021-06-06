@@ -1,37 +1,3 @@
-# Fit a two-factor learning model
-# This model assumes that the 'data' input has already been nested
-# It estimates a log-log model with cumulative capacity and input prices 
-# and returns the results as a data frame with model coefficients as well as
-# the computed learning rates
-fit_2flr_model <- function(data) {
-    fit <- data %>%
-        # Estimate linear model on log-transformed variables
-        mutate(
-            model  = map(data, function(df) lm(lnCost ~ lnCap + log(price_si), data = df)),
-            tidied = map(model, tidy)) %>%
-        unnest(tidied) %>%
-        select(-data) %>%
-        # Rename estimate variable names
-        mutate(term = str_replace_all(term, fixed('(Intercept)'), 'int'),
-               term = str_replace_all(term, fixed('log(price_si)'),'lnSi')) %>%
-        rename(pval = p.value,
-                stderr = std.error) %>%
-        gather(key = 'var', value = 'val', estimate:pval) %>%
-        mutate(
-            term = ifelse(term == "lnCap", "b", term), 
-            var  = ifelse(var == "estimate", "est", var)) %>%
-        unite(temp, term, var) %>%
-        spread(temp, val) %>%
-        rename(int = int_est, b = b_est) %>% 
-        mutate(
-            A    = exp(int),
-            b_lb = b - 2*b_stderr,
-            b_ub = b + 2*b_stderr, 
-            lnSi_est_lb = lnSi_est - 2*lnSi_stderr, 
-            lnSi_est_ub = lnSi_est + 2*lnSi_stderr)
-    return(fit)
-}
-
 # Get cumulative capacity of latest year in data
 get_country_cap <- function(df) {
     result <- df %>%
