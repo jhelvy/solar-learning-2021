@@ -48,9 +48,9 @@ stores paths to commonly accessed folders and files.
 
 ## Formatting the data
 
-All of the raw data are stored in the `/data/raw` folder. The script at
+All of the raw data are stored in the `/data` folder. The script at
 `/code/2format_data.R` formats all of this data and saves it as a list
-stored at `/code/formatted.Rds`.
+stored at `/data/formatted.Rds`.
 
 To load this list of formatted data, run this line after sourcing the
 `/code/0setup.R` file:
@@ -61,6 +61,10 @@ data <- readRDS(dir$data_formatted)
 # Names of the formatted data frames:
 names(data)
 ```
+
+    ##  [1] "nrelCapacity" "nrelCost"     "seiaCapacity" "lbnlCost"     "usNrel"      
+    ##  [6] "usSeia"       "usSeiaLbnl"   "us2030"       "china"        "germany"     
+    ## [11] "world"        "world2030"    "pvProduction"
 
 ## Learning curve models
 

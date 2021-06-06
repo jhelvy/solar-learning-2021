@@ -50,14 +50,14 @@ source(here::here('code', '0setup.R'))
 ```
 
 This loads all the libraries we use as well as custom functions in the `/code/0functions.R` file. It also creates a list called `dir` which stores paths to commonly accessed folders and files.
- 
+
 ## Formatting the data
 
-All of the raw data are stored in the `/data/raw` folder. The script at `/code/2format_data.R` formats all of this data and saves it as a list stored at `/code/formatted.Rds`.
+All of the raw data are stored in the `/data` folder. The script at `/code/2format_data.R` formats all of this data and saves it as a list stored at `/data/formatted.Rds`.
 
 To load this list of formatted data, run this line after sourcing the `/code/0setup.R` file:
 
-```{r, eval=FALSE}
+```{r}
 data <- readRDS(dir$data_formatted)
 
 # Names of the formatted data frames:

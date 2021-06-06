@@ -21,9 +21,9 @@ components <- tribble(
   "BOS",          "Soft",
   "Labor",        "Soft",
   "Other",        "Soft")
-# Notes:
-#     - In some cases, the components aren't broken down to this
-#       degree and might only distinguish between "hard" and "soft"
+
+# In some cases, the components aren't broken down to this
+# degree and might only distinguish between "hard" and "soft"
 #
 # CAPACITY:
 # installType   = "Residential", "Commercial", "Utility"
@@ -43,26 +43,32 @@ usNrel2020FilePath <- file.path(
   dir$data, "nrel", "Data File (U.S. Solar Photovoltaic  BESS System Cost Benchmark Q1 2020 Report).xlsx")
 usLbnlFilePath <- file.path(
   dir$data, "lbnl", "tts_2019_summary_data_tables_0.xlsx")
+usSeiaFilePath <- file.path(dir$data, "seia", "seiaCapacity.json")
+irenaCapFilePath <- file.path(dir$data, "irena", "irenaCumCapacityMw.csv")
 germanyFilePath <- file.path(
   dir$data, "digitize", "germany", "fraunhofer_fig2.csv")
-irenaCapFilePath <- file.path(dir$data, "irena", "irenaCumCapacityMw.csv")
 chinaFilePath <- file.path(dir$data, "china", "wang_ndrc_data.csv")
 siliconFilePath <- file.path(
   dir$data, "digitize", "silicon", "nemet_silicon.csv")
-usSeiaFilePath <- file.path(dir$data, "seia", "seiaCapacity.json")
 exchangeRatesPath <- file.path(dir$data, "exchange-rates.xlsx")
 productionFilePath <- file.path(
   dir$data, "digitize", "production", "production.csv")
 
 # Load exchange rates --------------------------------------------------------
 
-exchangeRatesRMB <- read_excel(exchangeRatesPath, sheet = "usd-rmb", skip = 2) %>%
+exchangeRatesRMB <- read_excel(
+  exchangeRatesPath, sheet = "usd-rmb", skip = 2) %>%
   clean_names() %>%
   rename(year = row_labels)
     
-exchangeRatesEUR <- read_excel(exchangeRatesPath, sheet = "usd-euro", skip = 2) %>%
+exchangeRatesEUR <- read_excel(
+  exchangeRatesPath, sheet = "usd-euro", skip = 2) %>%
   clean_names() %>%
   rename(year = row_labels)
+
+# -----------------------------------------------------------------------
+# U.S.
+# -----------------------------------------------------------------------
 
 # Format SEIA capacity data (US) ---------------------------------------------
 
@@ -139,10 +145,12 @@ lbnlCost <- read_excel(usLbnlFilePath, sheet = "Fig 17", skip = 3) %>%
     soft_cost_commercial = small_non_residential,
     soft_cost_utility = large_non_residential
   ) %>%
-  gather(key = "component", value = "costPerW", module_price_index:soft_cost_utility) %>%
+  gather(
+    key = "component", 
+    value = "costPerW", 
+    module_price_index:soft_cost_utility) %>%
   mutate(
-    component = str_to_title(
-      str_replace(component, "_price_index", "")),
+    component = str_to_title(str_replace(component, "_price_index", "")),
     costPerW = str_replace(costPerW, "-", ""),
     costPerW = as.numeric(costPerW),
     costPerKw = costPerW * 1000) %>%
@@ -196,8 +204,8 @@ nrelCost <- nrelCost %>%
     costPerKw = as.numeric(cost) * 10^3,
     component = fct_recode(component,
       "BOS" = "Hardware BOS - Structural and Electrical Components",
-      "Labor"   = "Soft Costs - Install Labor",
-      "Other"   = "Soft Costs - Others (PII, Land Acquisition, Transmission Line, Sales Tax, Overhead, and Profit)"
+      "Labor" =  "Soft Costs - Install Labor",
+      "Other" = "Soft Costs - Others (PII, Land Acquisition, Transmission Line, Sales Tax, Overhead, and Profit)"
     ),
     installType = fct_recode(installType,
       "utility_fixed" = "Utility ground mount (Fixed axis)",
@@ -251,44 +259,55 @@ nrelCapacity <- read_excel(usNrel2018FilePath, sheet="Figure 1") %>%
   select(year, installType, cumCapacityKw, lnCap)
 
 # Create US 2030 projections ----------------------------------------
-#   Cost projections from 2019 to 2030, copied from 2018 LBNL data 
-#   (assuming no cost reduction)
-newcols <- as.character(seq(2019,2030,1))
+
+# Cost projections from 2019 to 2030, copied from 2018 LBNL data 
+# (assuming no cost reduction)
+newcols <- as.character(seq(2019, 2030, 1))
 us2030_cost <- lbnlCost %>%
-  filter(year %in% c(2018)) %>%
+  filter(year == 2018) %>%
   select(-lnCost, -year) %>%
   rename(`2018` = costPerKw) %>%
-  add_column(!!!set_names(as.list(rep(NA, length(newcols))),nm=newcols)) %>%
+  # Create copies of 2018 costPerKw for each year out to 2030
+  add_column(!!!set_names(as.list(rep(NA, length(newcols))), nm = newcols)) %>%
   mutate_at(newcols, ~ `2018`) %>%
-  gather(key = 'year','costPerKw',all_of(c(newcols,'2018'))) %>%
-  mutate(lnCost = log(costPerKw),
-         year = as.numeric(year)) %>%
+  # Reshape
+  gather(key = 'year','costPerKw', all_of(c(newcols,'2018'))) %>%
+  mutate(
+    lnCost = log(costPerKw),
+    year = as.numeric(year)) %>%
   select(all_of(names(lbnlCost))) 
   
-#   Capacity projections to 2030, based on achieving fixed capacity by 2030
-target_capacity = 300*1e6 # 300 GW, taken from NAM, Committee on Accelerating Decarbonization in the United States (2021)
-type_capacity = c("Commercial"=0.180629266,   # breakdown taken from 2020 SEIA Capacity shares
-               "Residential"=0.207163921,
-               "Utility"=0.612206813) * target_capacity
+# Capacity projections to 2030, based on achieving fixed capacity by 2030
+# 300 GW, taken from NAM, Committee on Accelerating Decarbonization in the
+# United States (2021)
+target_capacity = 300*1e6 
+# Breakdown taken from 2020 SEIA Capacity shares:
+type_capacity = target_capacity * c(
+  "Commercial" = 0.180629266,   
+  "Residential" = 0.207163921,
+  "Utility" = 0.612206813)
 us2030_cap_add <- seiaCapacity %>%
   filter(year == 2020) %>% # latest year in dataset
-  merge(data.frame(installType = names(type_capacity), endCapacityKw = type_capacity)) %>%
-  mutate(annualCap = (endCapacityKw - cumCapacityKw)/10) %>%
+  merge(data.frame(
+    installType = names(type_capacity), 
+    endCapacityKw = type_capacity)) %>%
+  mutate(annualCap = (endCapacityKw - cumCapacityKw) / 10) %>%
   select(installType, begCap = cumCapacityKw, annualCap)
 
 us2030_capacity <- seiaCapacity %>%
   filter(year >= 2018)
 
-for (i in seq(2021,2030,1)) {
+for (i in seq(2021, 2030, 1)) {
   df <- us2030_cap_add %>%
-    mutate(cumCapacityKw = begCap + (i-2020)*annualCap,
-           lnCap = log(cumCapacityKw),
-           year = i) %>%
-    select(year,installType,cumCapacityKw,lnCap)
+    mutate(
+      cumCapacityKw = begCap + (i - 2020) * annualCap,
+      lnCap = log(cumCapacityKw),
+      year = i) %>%
+    select(year, installType, cumCapacityKw, lnCap)
   us2030_capacity <- rbind(us2030_capacity,df)
 }
 
-# Format US data -----------------------------------------------------
+# Format all U.S. data -----------------------------------------------------
 
 # Merge NREL cost and capacity data
 usNrel <- nrelCost %>%
@@ -299,8 +318,9 @@ usSeia <- seiaCapacity %>%
   select(-lnCap) %>%
   spread(key = installType, value = cumCapacityKw) %>%
   mutate(All = Commercial + Residential + Utility) %>%
-  gather(key = "installType", value = "cumCapacityKw",
-         Commercial:All) %>%
+  gather(
+    key = "installType", value = "cumCapacityKw",
+    Commercial:All) %>%
   left_join(lbnlCost) %>%
   filter(!is.na(costPerKw)) %>%
   mutate(lnCap = log(cumCapacityKw)) %>%
@@ -339,10 +359,12 @@ germany <- read_csv(germanyFilePath) %>%
   rename(
     component = type,
     costPerKw = y) %>%
-# Conversion then inflation
+  # Currency conversion first, then adjust for inflation
   merge(exchangeRatesEUR) %>%
-  mutate(costPerKw = costPerKw / average_of_rate,
-         costPerKw = adjust_for_inflation(costPerKw, year, "US", to_date = 2018)) %>%
+  mutate(
+    costPerKw = costPerKw / average_of_rate,
+    costPerKw = priceR::adjust_for_inflation(
+      costPerKw, year, "US", to_date = 2018)) %>%
   left_join(germany_cap) %>%
   mutate(
     component = str_to_title(component),
@@ -370,17 +392,11 @@ china <- read_csv(chinaFilePath) %>%
     cumCapacityKw = total_capacity_gw * 10^6,
     # convert to cost / kW
     costPerKw = rmbPerW * 10^3) %>%
-  # Conversion then inflation
+  # Currency conversion first, then adjust for inflation
   merge(exchangeRatesRMB) %>%
-  mutate(costPerKw = costPerKw / average_of_rate,
-         costPerKw = adjust_for_inflation(costPerKw, year, "US", to_date = 2018)) %>%
-  # (not used) Inflation then conversion
-  # # Inflation adjustment
-  # mutate(costPerKw_nom = costPerKw,
-    # costPerKw = adjust_for_inflation(costPerKw_nom, year, "China", to_date = 2018)) %>%
-  # # Convert cost from Euro to USD
-  # mutate(costPerKw = costPerKw * usdPerEuro) %>%
   mutate(
+    costPerKw = costPerKw / average_of_rate,
+    costPerKw = adjust_for_inflation(costPerKw, year, "US", to_date = 2018),
     component = str_to_title(
       str_replace_all(component, "_price_rmb_w", "")),
     component = ifelse(component == "System", "BOS", component)
@@ -412,24 +428,26 @@ world <- left_join(world, silicon) %>%
 
 # World 2030 projections -----
 # Silicon price: Assume constant from 2018
-newcols <- as.character(seq(2019,2030,1))
-price_si_new <- rep(world %>% filter(year == 2018) %>% select(price_si) %>% unlist,
-                    length(newcols))
-world2030_add <- data.frame(year = as.numeric(newcols), 
-                   price_si = price_si_new,
-                   cumCapacityKw = rep(NA,length(newcols)),
-                   lnCap = rep(NA,length(newcols)))
+newcols <- as.character(seq(2019, 2030, 1))
+price_si_new <- rep(
+  silicon[which(silicon$year == 2018),]$price_si,
+  length(newcols))
+world2030_add <- data.frame(
+  year = as.numeric(newcols), 
+  price_si = price_si_new,
+  cumCapacityKw = NA,
+  lnCap = NA)
 
 # Capacity projections to 2030, based on achieving fixed capacity by 2030
-target_capacity = 3100*1e6 # 3100 GW, taken from WEO 2020, Sustainable Development Scenario
-beg_capacity = world %>%
-  filter(year == 2018) %>%
-  select(cumCapacityKw) %>% unlist
-annualCap = (target_capacity - beg_capacity) / (2030-2018)
 
+# 3100 GW, taken from WEO 2020, Sustainable Development Scenario:
+target_capacity <- 3100*1e6  
+beg_capacity <- world[which(world$year == 2018),]$cumCapacityKw
+annualCap <- (target_capacity - beg_capacity) / (2030 - 2018)
 world2030_add <- world2030_add %>%
-  mutate(cumCapacityKw = beg_capacity + (year - 2018)*annualCap,
-         lnCap = log(cumCapacityKw))
+  mutate(
+    cumCapacityKw = beg_capacity + (year - 2018)*annualCap,
+    lnCap = log(cumCapacityKw))
 
 world2030 <- world %>%
   filter(year >= 2018) %>%

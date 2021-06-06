@@ -16,8 +16,8 @@ library(digitize)
 
 # digitize
 #   manually select top of bars
-df <- digitize(file.path(
-    dir$data, 'germany',
+df <- digitize(
+    file.path(dir$data, 'digitize', 'germany',
     'Fraunhofer-recent-facts-about-photovoltaics-in-germany-Fig2.png'))
 df.bak = df
 
@@ -38,8 +38,10 @@ df <- plyr::rename(df, c('y.1'='y'))
 ggplot(df) +
     geom_line(aes(year, y, col = type))
 
-write.csv(df, file.path(dir$data, 'germany', 'fraunhofer_fig2.csv'),
-    row.names = F)
+write.csv(
+    df, file.path(dir$data, 'digitize', 'germany', 'fraunhofer_fig2.csv'),
+    row.names = F
+)
 
 ## Nemet silicon prices ----
 # Nemet, G. F. (2019). How solar energy became cheap: A model for low-carbon innovation. Routledge.
@@ -49,9 +51,10 @@ write.csv(df, file.path(dir$data, 'germany', 'fraunhofer_fig2.csv'),
 #   manual steps:
 #       1) select bottom-left and top-right corner of graph
 #       2) enter axis bounds of two axes
-fn <- digitize(file.path(
-    dir$data, 'silicon',
-    'Nemet-silicon-prices.png'), twopoints = T, auto = T)
+fn <- digitize(
+    file.path(dir$data, 'digitize', 'silicon', 'Nemet-silicon-prices.png'),
+    twopoints = T, auto = T
+)
 
 # plot
 x <- seq(1970, 2017, 0.01)
@@ -67,6 +70,8 @@ for (x in seq(2016.01, 2017, 0.01)) {
 }
 df[nrow(df)+1,] <- c(2017,y)
 
-write.csv(df, file.path(dir$data, 'silicon', 'nemet_silicon.csv'),
-          row.names = FALSE)
-
+write.csv(
+    df,
+    file.path(dir$data, 'digitize', 'silicon', 'nemet_silicon.csv'),
+    row.names = FALSE
+)
