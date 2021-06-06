@@ -1,5 +1,4 @@
-
-# Two-factor learning model
+# Fit a two-factor learning model
 # This model assumes that the 'data' input has already been nested
 # It estimates a log-log model with cumulative capacity and input prices 
 # and returns the results as a data frame with model coefficients as well as

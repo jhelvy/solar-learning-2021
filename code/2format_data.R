@@ -352,7 +352,9 @@ us2030 <- us2030_capacity %>%
 #   Fraunhofer -- costs
 #   IRENA -- capacity
 
-germany_cap <- read_csv(irenaCapFilePath) %>%
+irenaCumCapacityMw <- read_csv(irenaCapFilePath)
+
+germany_cap <- irenaCumCapacityMw %>%
   select(year, capacityCumulativeMw = germany)
 
 germany <- read_csv(germanyFilePath) %>%
@@ -414,7 +416,7 @@ china <- read_csv(chinaFilePath) %>%
 # Source capacity: IRENA
 
 # Note: for silicon prices, extend last observation to missing years
-world <- read_csv(irenaCapFilePath) %>%
+world <- irenaCumCapacityMw %>%
   select(year, capacityCumulativeMw = world) %>% 
   mutate(
     cumCapacityKw = capacityCumulativeMw * 10^3,
@@ -478,18 +480,19 @@ pvProduction <- read_csv(productionFilePath) %>%
 # Save all formatted data as a list object ---
 
 saveRDS(list(
-    nrelCapacity = nrelCapacity,
-    nrelCost     = nrelCost,
-    seiaCapacity = seiaCapacity,
-    lbnlCost     = lbnlCost,
-    usNrel       = usNrel,
-    usSeia       = usSeia,
-    usSeiaLbnl   = usSeiaLbnl,
-    us2030       = us2030,
-    china        = china,
-    germany      = germany,
-    world        = world,
-    world2030    = world2030, 
-    pvProduction = pvProduction),
+    irenaCumCapacityMw = irenaCumCapacityMw,
+    nrelCapacity       = nrelCapacity,
+    nrelCost           = nrelCost,
+    seiaCapacity       = seiaCapacity,
+    lbnlCost           = lbnlCost,
+    usNrel             = usNrel,
+    usSeia             = usSeia,
+    usSeiaLbnl         = usSeiaLbnl,
+    us2030             = us2030,
+    china              = china,
+    germany            = germany,
+    world              = world,
+    world2030          = world2030,
+    pvProduction       = pvProduction),
     dir$data_formatted
 )
