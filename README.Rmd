@@ -30,7 +30,7 @@ file or folder | description
 `0setup.R` | Loads libraries, creates `dir` object (a list of paths to folders and objects), and loads `0functions.R`
 `1digitize_plots.R` | Code to extract data from some image files in the `data/raw` folder
 `2format_data.R` | Formats and harmonizes all raw data and saves the result as the list object at `data/formatted.Rds`
-`3compare_us_data.R` | Some quick checks to compare the NREL and SEIA/LBNL data for the US. We decided to use the SEIA/LBNL data for our analyses
+`3compare_us_data.R` | Some quick checks to compare the capacity data (NREL, SEIA, and IRENA) and cost data (NREL and LBNL) for the US. We decided to use the SEIA data for capacity and LBNL data for cost for our analyses.
 `4learning_curves.R` | Estimates all learning curve models and saves all results as the list object at `output/lr_models.Rds`
 `5cost_scenarios.R` | Uses the estimates learning curves models to compute differences in historical costs under different scenarios. Results are saved as the list object at `output/cost_scenarios.Rds`
 `6charts.R` | All charts
