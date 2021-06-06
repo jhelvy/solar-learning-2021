@@ -33,7 +33,7 @@ Global installed capacity data are in the `irena/irenaCumCapacityMw.csv` file an
 
 ### Silicon data
 
-Data on the global average price of silicon over time were extracted using the {digitize} package from the `digitize/silicon/Nemet-silicon-prices.png` figure in Greg Nemet's book: Nemet, G. F. (2019). How solar energy became cheap: A model for low-carbon innovation. Routledge. The extracted price data are in the file `digitize/silicon/nemet_silicon.csv`.
+Data on the global average price of silicon over time were sourced from Greg Nemet's book: Nemet, G. F. (2019). How solar energy became cheap: A model for low-carbon innovation. Routledge. The price data are in the file `nemet_silicon.csv`. Greg sent us the data directly.
 
 ### Exchange rates
 
