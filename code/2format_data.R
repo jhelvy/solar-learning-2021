@@ -28,11 +28,6 @@ components <- tribble(
 # CAPACITY:
 # installType   = "Residential", "Commercial", "Utility"
 # cumCapacityKw = The cumulative installed capacity, in Kw
-#
-# ADDITIONAL VARS:
-# year   = The year
-# lnCap  = log(cumCapacityKw)
-# lnCost = log(costPerKw)
 
 # Set paths to data files----------------------------------------------------
 
@@ -48,8 +43,7 @@ irenaCapFilePath <- file.path(dir$data, "irena", "irenaCumCapacityMw.csv")
 germanyFilePath <- file.path(
   dir$data, "digitize", "germany", "fraunhofer_fig2.csv")
 chinaFilePath <- file.path(dir$data, "china", "wang_ndrc_data.csv")
-siliconFilePath <- file.path(
-  dir$data, "digitize", "silicon", "nemet_silicon.csv")
+siliconFilePath <- file.path(dir$data, "nemet_silicon.csv")
 exchangeRatesPath <- file.path(dir$data, "exchange-rates.xlsx")
 productionFilePath <- file.path(
   dir$data, "digitize", "production", "production.csv")
@@ -104,8 +98,8 @@ seiaEarlyYears <- tribble(
 seiaRaw <- map(fromJSON(file = usSeiaFilePath), data.frame)
 seiaCapacity <- do.call(rbind, seiaRaw)
 seiaCapacity$installType <- rep(c(
-  "Residential", "Commercial", "Utility", "CSP"
-), length(seiaRaw))
+  "Residential", "Commercial", "Utility", "CSP"),
+  length(seiaRaw))
 seiaCapacity <- as_tibble(seiaCapacity) %>%
   rename(year = label, cumCapacityMw = value) %>%
   mutate(
@@ -130,10 +124,8 @@ seiaCapacity <- seiaCapacity %>%
       select(year, cumCapacityMw, installType)) %>%
   mutate(cumCapacityKw = cumCapacityMw * 1000) %>%
   # Can't have 0 when taking log
-  mutate(
-    cumCapacityKw = ifelse(cumCapacityKw == 0, 1, cumCapacityKw),
-    lnCap = log(cumCapacityKw)) %>%
-  select(year, installType, cumCapacityKw, lnCap) %>%
+  mutate(cumCapacityKw = ifelse(cumCapacityKw == 0, 1, cumCapacityKw)) %>%
+  select(year, installType, cumCapacityKw) %>%
   arrange(year)
 
 # Format LBNL cost data (US) -----------------------------------------------
@@ -175,8 +167,7 @@ lbnlCost_hard <- lbnlCost %>%
     merge(expand.grid(installType = unique(lbnlCost_soft$installType))) %>%
   select(year, component, componentType, installType, costPerKw)
 lbnlCost <- rbind(lbnlCost_hard, lbnlCost_soft) %>%
-  filter(!is.na(costPerKw)) %>%
-  mutate(lnCost = log(costPerKw))
+  filter(!is.na(costPerKw))
 
 # Format NREL cost data (US) -------------------------------------------------
 
@@ -235,7 +226,6 @@ nrelCost <- nrelCost %>%
     installType = str_replace(installType, " Rooftop", "")) %>%
   group_by(year, component, componentType, installType) %>%
   summarise(costPerKw = sum(costPerKw)) %>%
-  mutate(lnCost = log(costPerKw)) %>%
   arrange(year, component)
 
 # Format NREL capacity data (US) --------------------------------------------
@@ -254,9 +244,8 @@ nrelCapacity <- read_excel(usNrel2018FilePath, sheet="Figure 1") %>%
   rename(cumCapacityMw = Cumulative) %>%
   mutate(
     installType = str_replace(installType, "-scale", ""),
-    cumCapacityKw = cumCapacityMw * 10^3,
-    lnCap = log(cumCapacityKw)) %>%
-  select(year, installType, cumCapacityKw, lnCap)
+    cumCapacityKw = cumCapacityMw * 10^3) %>% 
+  select(year, installType, cumCapacityKw)
 
 # Create US 2030 projections ----------------------------------------
 
@@ -265,24 +254,22 @@ nrelCapacity <- read_excel(usNrel2018FilePath, sheet="Figure 1") %>%
 newcols <- as.character(seq(2019, 2030, 1))
 us2030_cost <- lbnlCost %>%
   filter(year == 2018) %>%
-  select(-lnCost, -year) %>%
+  select(-year) %>%
   rename(`2018` = costPerKw) %>%
   # Create copies of 2018 costPerKw for each year out to 2030
   add_column(!!!set_names(as.list(rep(NA, length(newcols))), nm = newcols)) %>%
   mutate_at(newcols, ~ `2018`) %>%
   # Reshape
   gather(key = 'year','costPerKw', all_of(c(newcols,'2018'))) %>%
-  mutate(
-    lnCost = log(costPerKw),
-    year = as.numeric(year)) %>%
+  mutate(year = as.numeric(year)) %>%
   select(all_of(names(lbnlCost))) 
   
 # Capacity projections to 2030, based on achieving fixed capacity by 2030
 # 300 GW, taken from NAM, Committee on Accelerating Decarbonization in the
 # United States (2021)
-target_capacity = 300*1e6 
+target_capacity <- 300*1e6 
 # Breakdown taken from 2020 SEIA Capacity shares:
-type_capacity = target_capacity * c(
+type_capacity <- target_capacity * c(
   "Commercial" = 0.180629266,   
   "Residential" = 0.207163921,
   "Utility" = 0.612206813)
@@ -301,10 +288,9 @@ for (i in seq(2021, 2030, 1)) {
   df <- us2030_cap_add %>%
     mutate(
       cumCapacityKw = begCap + (i - 2020) * annualCap,
-      lnCap = log(cumCapacityKw),
       year = i) %>%
-    select(year, installType, cumCapacityKw, lnCap)
-  us2030_capacity <- rbind(us2030_capacity,df)
+    select(year, installType, cumCapacityKw)
+  us2030_capacity <- rbind(us2030_capacity, df)
 }
 
 # Format all U.S. data -----------------------------------------------------
@@ -315,7 +301,6 @@ usNrel <- nrelCost %>%
 
 # Merge SEIA capacity with LBNL cost data
 usSeia <- seiaCapacity %>%
-  select(-lnCap) %>%
   spread(key = installType, value = cumCapacityKw) %>%
   mutate(All = Commercial + Residential + Utility) %>%
   gather(
@@ -323,30 +308,24 @@ usSeia <- seiaCapacity %>%
     Commercial:All) %>%
   left_join(lbnlCost) %>%
   filter(!is.na(costPerKw)) %>%
-  mutate(lnCap = log(cumCapacityKw)) %>%
   select(
-    year, component, componentType, installType, costPerKw, lnCost,
-    cumCapacityKw, lnCap)
+    year, component, componentType, installType, costPerKw, cumCapacityKw)
 
 # Merge SEIA capacity with LBNL cost data ----
 
 usSeiaLbnl <- seiaCapacity %>%
   left_join(lbnlCost) %>%
   filter(!is.na(costPerKw)) %>%
-  filter(is.finite(lnCap) & !is.na(lnCap)) %>%
   select(
-    year, component, componentType, installType, costPerKw, lnCost,
-    cumCapacityKw, lnCap)
+    year, component, componentType, installType, costPerKw, cumCapacityKw)
 
 # Merge 2030 projections -- future capacity and cost data ----
 
 us2030 <- us2030_capacity %>%
   left_join(us2030_cost) %>%
   filter(!is.na(costPerKw)) %>%
-  filter(is.finite(lnCap) & !is.na(lnCap)) %>%
   select(
-    year, component, componentType, installType, costPerKw, lnCost,
-    cumCapacityKw, lnCap)
+    year, component, componentType, installType, costPerKw, cumCapacityKw)
 
 # Format Germany data ------------------------------------------------------
 #   Fraunhofer -- costs
@@ -373,13 +352,10 @@ germany <- read_csv(germanyFilePath) %>%
     component = ifelse(
       component == "Bos_inverter", "BOS_Inverter", component),
     cumCapacityKw = capacityCumulativeMw * 10^3,
-    lnCost   = log(costPerKw),
-    lnCap = log(cumCapacityKw),
     installType = "All") %>%
   left_join(components) %>%
   select(
-    year, component, componentType, installType, costPerKw, lnCost,
-    cumCapacityKw, lnCap)
+    year, component, componentType, installType, costPerKw, cumCapacityKw)
 
 # Format Wang NDRC data -------------------------------------------------------
 
@@ -406,11 +382,9 @@ china <- read_csv(chinaFilePath) %>%
   left_join(components) %>%
   mutate(
     year = as.numeric(year),
-    lnCap = log(cumCapacityKw),
-    lnCost   = log(costPerKw),
     installType = "All") %>%
-  select(year, component, componentType, installType, costPerKw,
-         lnCost, cumCapacityKw, lnCap)
+  select(
+    year, component, componentType, installType, costPerKw, cumCapacityKw)
 
 # Format World data ----------------------------------------------------
 # Source capacity: IRENA
@@ -420,12 +394,11 @@ world <- irenaCumCapacityMw %>%
   select(year, capacityCumulativeMw = world) %>% 
   mutate(
     cumCapacityKw = capacityCumulativeMw * 10^3,
-    lnCap = log(cumCapacityKw),
     installType = "All")
 silicon <- read_csv(siliconFilePath) %>%
   select(year = yr, price_si = price)
 world <- left_join(world, silicon) %>%
-  select(year, price_si, cumCapacityKw, lnCap) %>%
+  select(year, price_si, cumCapacityKw) %>%
   fill(price_si, .direction = "down")
 
 # World 2030 projections -----
@@ -437,8 +410,7 @@ price_si_new <- rep(
 world2030_add <- data.frame(
   year = as.numeric(newcols), 
   price_si = price_si_new,
-  cumCapacityKw = NA,
-  lnCap = NA)
+  cumCapacityKw = NA)
 
 # Capacity projections to 2030, based on achieving fixed capacity by 2030
 
@@ -447,9 +419,7 @@ target_capacity <- 3100*1e6
 beg_capacity <- world[which(world$year == 2018),]$cumCapacityKw
 annualCap <- (target_capacity - beg_capacity) / (2030 - 2018)
 world2030_add <- world2030_add %>%
-  mutate(
-    cumCapacityKw = beg_capacity + (year - 2018)*annualCap,
-    lnCap = log(cumCapacityKw))
+  mutate(cumCapacityKw = beg_capacity + (year - 2018)*annualCap)
 
 world2030 <- world %>%
   filter(year >= 2018) %>%

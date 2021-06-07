@@ -1,34 +1,160 @@
-# Get cumulative capacity of latest year in data
-get_country_cap <- function(df) {
-    result <- df %>%
-        filter(year == max(year)) %>%
-        select(componentType, installType, capacity = cumCapacityKw) %>%
-        distinct() 
+# NOTES
+#
+# Basic learning curve model: Y_x = A*x^b
+# where
+#   Y = the cost of unit x (dependent variable)
+#   A = the theoretical cost of unit 1 (a.k.a. T1)
+#   x = the unit number (independent variable)
+#   b = a constant representing the slope (slope = 2^b)
+#
+# Log transformation: ln(Y) = ln(A) + b*ln(x)
+#           Re-write: Y'    = int   + b*x'
+#
+# To convert log-space estimated coefficients back to original model:
+# A = exp(int)
+# b = b
+# Learning curve slope = 2^b
+# Learning Rate        = 1 - slope
+#
+# Approximation of the cumulative total cost of producing N units:
+# C = (A*N^(b + 1)) / (b + 1)
+#
+# Two factor learning curve model: Y = A * x^b * p^c
+# where
+#   Y = the cost of unit x at silicon price p (dependent variable)
+#   A = the theoretical cost of unit 1 (a.k.a. T1)
+#   x = the unit number (independent variable)
+#   p = silicon price
+#   b = lnCap_estimate = learning coefficient on capacity
+#   c = lnSi_estimate = coefficient on silicon price
+#
+# Approximation of the cumulative total cost of producing N units:
+# C = (A*N^(b + 1)) / (b + 1)
+
+ci <- function(data, alpha = 0.025) {
+  B <- mean(data, na.rm = T)
+  L <- stats::quantile(data, alpha, na.rm = T)
+  U <- stats::quantile(data, 1 - alpha, na.rm = T)
+  ests <- c(B, L, U)
+  names(ests) <- c("mean", "low", "high")
+  return(ests)
+}
+
+predict_cost_manual <- function(model, data, year_min = NULL, ci = 0.95) {
+    if (is.null(year_min)) {
+        year_min = min(data$year)
+    }
+    data <- filter(data, year >= year_min)
+    # Create multivariate normal draws of the model parameters to 
+    # incorporate the full covariance matrix of the model
+    draws <- data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
+    colnames(draws) <- c('int', 'b', 'lnSi_est')
+    # Compute starting values
+    cost_beg <- exp(data[1,]$lnCost)
+    cap_beg <- exp(data[1,]$lnCap)
+    si_beg <- data[1,]$price_si
+    result <- list()
+    # Compute cost_per_kw with uncertainty using parameter draws
+    for (i in seq(nrow(data))) {
+        row <- data[i,]
+        result[[i]] <- ci(
+            cost_beg * 
+            cap_beg^(-draws$b) * 
+            si_beg^(-draws$lnSi_est) * 
+            exp(row$lnCap)^draws$b * 
+            row$price_si^draws$lnSi_est)
+    }
+    # Combine results
+    result <- do.call(rbind, result) %>% 
+        as.data.frame() %>% 
+        mutate(year = data$year) %>% 
+        select(
+            year,
+            cost_per_kw = mean,
+            cost_per_kw_lb = low,
+            cost_per_kw_ub = high)
     return(result)
 }
 
-# Get cumulative capacity at each year in range
-get_country_cap_range <- function(df.country, df.world, min_year = NULL) {
-    if (is.null(min_year)) {
-        min_year = min(df$year)
+predict_cost <- function(model, data, year_min = NULL, ci = 0.95) {
+    if (is.null(year_min)) {
+        year_min = min(data$year)
     }
-    df <- df.world %>% 
-        merge(
-            df.country %>% 
-                select(year, component, installType, costPerKw)
-        )
+    data <- filter(data, year >= year_min)
+    result <- predict(
+        model,
+        data,
+        se.fit = TRUE,
+        interval = "confidence",
+        level = ci)$fit %>%
+        as.data.frame() %>%
+        mutate(
+            year = data$year,
+            cost_per_kw = exp(fit),
+            cost_per_kw_lb = exp(lwr),
+            cost_per_kw_ub = exp(upr)) %>%
+        select(year, cost_per_kw, cost_per_kw_lb, cost_per_kw_ub)
+    return(result)
+}
+
+makeNationalLearningData <- function(df_country, df_model, year_min = NULL) {
+    if (is.null(year_min)) {
+        year_min = min(data$year)
+    }
+    # Aggregate country installed capacity if data is broken down by 
+    # install type 
+    df_country <- df_country %>% 
+        group_by(year) %>%
+        summarise(cap_country = sum(cumCapacityKw)) %>% 
+        filter(year >= year_min)
+    # Add first year capacity 
+    df_country$cap_beg_country <- 
+        df_country[df_country$year == year_min,]$cap_country
+    # Get world capacity dat
+    df_model <- df_model %>% 
+        filter(year >= year_min) %>% 
+        mutate(cap_world = exp(lnCap))
+    # Add first year capacity 
+    df_model$cap_beg_world <- df_model[df_model$year == year_min,]$cap_world
+    # Join and compute national capacity
+    result <- df_model %>% 
+        left_join(df_country, by = "year") %>%
+        mutate(
+            cap = cap_beg_world + cap_country - cap_beg_country, 
+            lnCap = log(cap)) %>% 
+        select(year, lnCost, price_si, lnCap)
+    return(result)
+}
+
+combineScenarios <- function(global, national, country) {
+    national$country <- country
+    national$scenario <- "national"
+    global$country <- country
+    global$scenario <- "global"
+    return(rbind(national, global))
+}
+
+
+
+
+
+# Get cumulative capacity at each year in range
+get_country_cap_range <- function(df, year_min = NULL) {
+    if (is.null(year_min)) {
+        year_min = min(df$year)
+    }
     result <- df %>%
         select(component, installType, year, cap = cumCapacityKw) %>%
         distinct() %>%
         merge(
             df %>% 
-                filter(year == min_year) %>%
+                filter(year == year_min) %>%
                 select(
                     component, installType, cap_beg = cumCapacityKw,
                     cost_beg = costPerKw, si_beg = price_si) %>% 
                 distinct() 
         ) %>%
-        filter(year >= min_year)
+        filter(year >= year_min)
     return(result)
 }
 
@@ -47,26 +173,27 @@ get_country_cap_additions <- function(df) {
 }
 
 # Get cumulative counterfactual capacity at each year in range:
-# cap_beg = world_cap_beg to cap_end = world_cap_beg + country_cap_end - country_cap_beg
+# cap_beg = world_cap_beg to
+# cap_end = world_cap_beg + country_cap_end - country_cap_beg
 # Note: world capacity does not currently breakdown by type (Commercial, Residential, Utility)
-get_country_world_cap_range <- function(df.country, df.world, min_year = NULL) {
-    if (is.null(min_year)) {
-        min_year = min(df$year)
+get_country_world_cap_range <- function(df_country, df_world, year_min = NULL) {
+    if (is.null(year_min)) {
+        year_min = min(df$year)
     }
-    df <- df.country %>% 
-            merge(df.world %>% 
+    df <- df_country %>%
+            merge(df_world %>%
                 select(year, world_cap = cumCapacityKw, price_si))
     result <- df %>%
         select(component, installType, year, cap = cumCapacityKw) %>%
         distinct() %>%
         merge(df %>% 
-              filter(year == min_year) %>%
+              filter(year == year_min) %>%
               select(
                   component, installType, cap_beg = world_cap, 
                   cap_country_beg = cumCapacityKw, cost_beg = costPerKw, 
                   si_beg = price_si) %>% 
               distinct() ) %>%
-        filter(year >= min_year) %>%
+        filter(year >= year_min) %>%
         mutate(cap = cap_beg + cap - cap_country_beg) %>%
         select(year, component, installType, cap_beg, cap, cost_beg, si_beg)
     return(result)

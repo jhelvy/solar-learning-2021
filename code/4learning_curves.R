@@ -4,12 +4,11 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
-year_min <- 2008
 year_max <- 2018
 
 # Notes -----------------------------------------------------------------------
 
-## Basic learning curve model: Y_x = A*x^b
+# Basic learning curve model: Y_x = A*x^b
 # where
 #   Y = the cost of unit x (dependent variable)
 #   A = the theoretical cost of unit 1 (a.k.a. T1)
@@ -42,28 +41,29 @@ year_max <- 2018
 # US cost data: LBNL
 
 # Prep data
-usLrData <- data$usSeiaLbnl %>%
+data_us <- data$usSeiaLbnl %>%
     filter(
+        year <= year_max,
         component == 'Module',
-        year >= year_min, year <= year_max,
         installType == "Utility") %>%
     select(year, lnCost) %>%
     left_join(
         data$world %>%
             select(year, price_si, lnCap),
-        by = "year")
+        by = "year") %>% 
+    filter(!is.na(price_si), !is.na(lnCap))
 
 # Run model
-usLrModel <- lm(lnCost ~ lnCap + log(price_si), data = usLrData)
-summary(usLrModel)
+model_us <- lm(lnCost ~ lnCap + log(price_si), data = data_us)
+summary(model_us)
 
  # China -----------------------------------------------------------------------
 
 # Prep data
-chinaLrData <- data$china %>%
+data_china <- data$china %>%
     filter(
-        component == 'Module',
-        year >= year_min, year <= year_max) %>%
+        year <= year_max,
+        component == 'Module') %>%
     select(year, lnCost) %>%
     left_join(
         data$world %>%
@@ -71,16 +71,16 @@ chinaLrData <- data$china %>%
         by = "year")
 
 # Run model
-chinaLrModel <- lm(lnCost ~ lnCap + log(price_si), data = chinaLrData)
-summary(chinaLrModel)
+model_china <- lm(lnCost ~ lnCap + log(price_si), data = data_china)
+summary(model_china)
 
 # Germany ---------------------------------------------------------------------
 
 # Prep data
-germanyLrData <- data$germany %>%
+data_germany <- data$germany %>%
     filter(
-        component == 'Module',
-        year >= year_min, year <= year_max) %>%
+        year <= year_max,
+        component == 'Module') %>%
     select(year, lnCost) %>%
     left_join(
         data$world %>%
@@ -88,14 +88,17 @@ germanyLrData <- data$germany %>%
         by = "year")
 
 # Run model
-germanyLrModel <- lm(lnCost ~ lnCap + log(price_si), data = germanyLrData)
-summary(germanyLrModel)
+model_germany <- lm(lnCost ~ lnCap + log(price_si), data = data_germany)
+summary(model_germany)
 
 # Output ----------------------------------------------------------------------
 
 saveRDS(list(
-    us      = usLrModel,
-    china   = chinaLrModel,
-    germany = germanyLrModel),
+    model_us      = model_us,
+    data_us       = data_us,
+    model_china   = model_china,
+    data_china    = data_china,
+    model_germany = model_germany,
+    data_germany  = data_germany),
     dir$lr_models
 )
