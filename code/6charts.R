@@ -10,38 +10,23 @@ lr <- readRDS(dir$lr_models)
 # Load cost scenario data
 cost <- readRDS(dir$cost_scenarios)
 
-# Create all data frames for plotting -----------------------------
-
-# **Modeled costs: all using the 2 factor models**
-
-
-
-
 # Cost per kw for global vs. national learning ------
 
 # True historical cost per kW
 cost_historical <- rbind(
     data$usSeiaLbnl %>%
-        filter(
-            year >= 2008, year <= 2018,
-            component == "Module", installType == "Utility") %>%         
+        filter(installType == "Utility") %>% 
         mutate(country = "U.S."),
     data$china %>%
-        filter(
-            year >= 2008, year <= 2018,
-            component == "Module") %>%
         mutate(country = "China"),
     data$germany %>%
-        filter(
-            year >= 2008, year <= 2018,
-            component == "Module") %>%
         mutate(country = "Germany")
-    )
+    ) %>% 
+    filter(
+      year >= 2008, year <= 2018,
+      component == "Module")
 
-cost_historical_plot <- rbind(
-  cost$cost_scenarios_us, 
-  cost$cost_scenarios_china, 
-  cost$cost_scenarios_germany) %>% 
+cost_historical_plot <- cost$cost_scenarios_historical %>% 
     mutate(
         scenario = fct_relevel(scenario, c("national", "global")),
         scenario = fct_recode(scenario,
@@ -97,21 +82,22 @@ cost_historical_plot <- rbind(
     geom_segment(
         data = data.frame(
             x = lubridate::ymd(rep("2011-01-01", 3)), 
-            xend = lubridate::ymd(rep("2012-01-01", 3)), 
+            xend = lubridate::ymd(rep("2011-12-01", 3)), 
             y = c(500, 500, 500), 
-            yend = c(700, 850, 800), 
+            yend = c(700, 650, 800), 
             country = c("China", "Germany", "U.S.")),
         aes(x = x, y = y, xend = xend, yend = yend), 
         color = "grey60", size = 0.5
     )
 
+# # Check for color blindness
 # colorblindr::cvd_grid(cost_historical_plot)
 
 ggsave(
-    file.path(dir$figs, 'final', 'cost_historical.pdf'),
+    file.path(dir$figs, 'cost_historical.pdf'),
     cost_historical_plot, height = 4, width = 12, device = cairo_pdf)
 ggsave(
-    file.path(dir$figs, 'final', 'cost_historical.png'),
+    file.path(dir$figs, 'cost_historical.png'),
     cost_historical_plot, height = 4, width = 12)
 
 
