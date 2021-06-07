@@ -46,32 +46,32 @@ data_us <- data$usSeiaLbnl %>%
         year <= year_max,
         component == 'Module',
         installType == "Utility") %>%
-    select(year, lnCost) %>%
+    select(year, costPerKw) %>%
     left_join(
         data$world %>%
-            select(year, price_si, lnCap),
+            select(year, price_si, cumCapacityKw),
         by = "year") %>% 
-    filter(!is.na(price_si), !is.na(lnCap))
+    filter(!is.na(price_si), !is.na(cumCapacityKw))
 
 # Run model
-model_us <- lm(lnCost ~ lnCap + log(price_si), data = data_us)
+model_us <- run_model(data_us)
 summary(model_us)
 
- # China -----------------------------------------------------------------------
+ # China ----------------------------------------------------------------------
 
 # Prep data
 data_china <- data$china %>%
     filter(
         year <= year_max,
         component == 'Module') %>%
-    select(year, lnCost) %>%
+    select(year, costPerKw) %>%
     left_join(
         data$world %>%
-            select(year, price_si, lnCap),
+            select(year, price_si, cumCapacityKw),
         by = "year")
 
 # Run model
-model_china <- lm(lnCost ~ lnCap + log(price_si), data = data_china)
+model_china <- run_model(data_china)
 summary(model_china)
 
 # Germany ---------------------------------------------------------------------
@@ -81,14 +81,14 @@ data_germany <- data$germany %>%
     filter(
         year <= year_max,
         component == 'Module') %>%
-    select(year, lnCost) %>%
+    select(year, costPerKw) %>%
     left_join(
         data$world %>%
-            select(year, price_si, lnCap),
+            select(year, price_si, cumCapacityKw),
         by = "year")
 
 # Run model
-model_germany <- lm(lnCost ~ lnCap + log(price_si), data = data_germany)
+model_germany <- run_model(data_germany)
 summary(model_germany)
 
 # Output ----------------------------------------------------------------------

@@ -27,9 +27,13 @@
 #   p = silicon price
 #   b = lnCap_estimate = learning coefficient on capacity
 #   c = lnSi_estimate = coefficient on silicon price
-#
-# Approximation of the cumulative total cost of producing N units:
-# C = (A*N^(b + 1)) / (b + 1)
+
+run_model <- function(data) {
+    model <- lm(
+        formula = log(costPerKw) ~ log(cumCapacityKw) + log(price_si),
+        data = data)
+    return(model)
+}
 
 ci <- function(data, alpha = 0.025) {
   B <- mean(data, na.rm = T)
@@ -40,7 +44,7 @@ ci <- function(data, alpha = 0.025) {
   return(ests)
 }
 
-predict_cost_manual <- function(model, data, year_min = NULL, ci = 0.95) {
+predict_cost <- function(model, data, year_min = NULL, ci = 0.95) {
     if (is.null(year_min)) {
         year_min = min(data$year)
     }
@@ -50,8 +54,8 @@ predict_cost_manual <- function(model, data, year_min = NULL, ci = 0.95) {
     draws <- data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
     colnames(draws) <- c('int', 'b', 'lnSi_est')
     # Compute starting values
-    cost_beg <- exp(data[1,]$lnCost)
-    cap_beg <- exp(data[1,]$lnCap)
+    cost_beg <- data[1,]$costPerKw
+    cap_beg <- data[1,]$cumCapacityKw
     si_beg <- data[1,]$price_si
     result <- list()
     # Compute cost_per_kw with uncertainty using parameter draws
@@ -59,10 +63,8 @@ predict_cost_manual <- function(model, data, year_min = NULL, ci = 0.95) {
         row <- data[i,]
         result[[i]] <- ci(
             cost_beg * 
-            cap_beg^(-draws$b) * 
-            si_beg^(-draws$lnSi_est) * 
-            exp(row$lnCap)^draws$b * 
-            row$price_si^draws$lnSi_est)
+            (row$cumCapacityKw / cap_beg)^draws$b * 
+            (row$price_si / si_beg)^draws$lnSi_est)
     }
     # Combine results
     result <- do.call(rbind, result) %>% 
@@ -73,27 +75,6 @@ predict_cost_manual <- function(model, data, year_min = NULL, ci = 0.95) {
             cost_per_kw = mean,
             cost_per_kw_lb = low,
             cost_per_kw_ub = high)
-    return(result)
-}
-
-predict_cost <- function(model, data, year_min = NULL, ci = 0.95) {
-    if (is.null(year_min)) {
-        year_min = min(data$year)
-    }
-    data <- filter(data, year >= year_min)
-    result <- predict(
-        model,
-        data,
-        se.fit = TRUE,
-        interval = "confidence",
-        level = ci)$fit %>%
-        as.data.frame() %>%
-        mutate(
-            year = data$year,
-            cost_per_kw = exp(fit),
-            cost_per_kw_lb = exp(lwr),
-            cost_per_kw_ub = exp(upr)) %>%
-        select(year, cost_per_kw, cost_per_kw_lb, cost_per_kw_ub)
     return(result)
 }
 
@@ -113,26 +94,25 @@ makeNationalLearningData <- function(df_country, df_model, year_min = NULL) {
     # Get world capacity dat
     df_model <- df_model %>% 
         filter(year >= year_min) %>% 
-        mutate(cap_world = exp(lnCap))
+        mutate(cap_world = cumCapacityKw)
     # Add first year capacity 
     df_model$cap_beg_world <- df_model[df_model$year == year_min,]$cap_world
     # Join and compute national capacity
     result <- df_model %>% 
         left_join(df_country, by = "year") %>%
         mutate(
-            cap = cap_beg_world + cap_country - cap_beg_country, 
-            lnCap = log(cap)) %>% 
-        select(year, lnCost, price_si, lnCap)
+            cap_country_diff = cap_country - cap_beg_country,
+            cumCapacityKw = cap_beg_world + cap_country_diff) %>% 
+        select(year, costPerKw, price_si, cumCapacityKw)
     return(result)
 }
 
-combineScenarios <- function(global, national, country) {
-    national$country <- country
-    national$scenario <- "national"
-    global$country <- country
-    global$scenario <- "global"
-    return(rbind(national, global))
-}
+
+
+
+
+
+
 
 
 
