@@ -111,6 +111,7 @@ cum_savings_historical_plot <- cost$savings_historical %>%
     scale_y_continuous(
         labels = dollar,
         breaks = seq(0, 150, 50),
+        limits = c(0, 150),
         expand = expansion(mult = c(0, 0.05))) +
     theme_minimal_hgrid(font_family = "Fira Sans Condensed") +
     theme(
@@ -120,14 +121,14 @@ cum_savings_historical_plot <- cost$savings_historical %>%
     # Add country labels
     geom_text(
         data = data.frame(
-            x = c(2016, 2016, 2015.5), 
-            y = c(25, 67, 130), 
+            x = c(2017, 2017, 2016), 
+            y = c(30, 85, 130), 
             label = c("China", "U.S.", "Germany")), 
         aes(x = x, y = y, label = label, color = label), 
         size = 6, family = "Fira Sans Condensed"
     ) +
     annotate(
-        "segment", x = 2016.4, xend = 2017, y = 128, yend = 121,
+        "segment", x = 2016.8, xend = 2017.5, y = 128, yend = 117,
         colour = "black") +
     scale_color_manual(values = c("white", "black", "white")) + 
     labs(
@@ -147,24 +148,24 @@ ggsave(
     cum_savings_historical_plot, height = 4, width = 6.5)
 
 # Annual savings ----
-cum_savings_labels <- cost_2f_range_ann %>% 
-    group_by(country) %>% 
-    summarise(
-        mean = scales::dollar(round(sum(annSavings))), 
-        lb = scales::dollar(round(sum(annSavings_lb))),
-        ub = scales::dollar(round(sum(annSavings_ub)))) %>% 
+
+cum_savings_labels <- cost$savings_historical %>% 
+    filter(year == 2018) %>% 
     mutate(
+        mean = scales::dollar(round(cum_savings_bil)), 
+        lb = scales::dollar(round(cum_savings_bil_lb)),
+        ub = scales::dollar(round(cum_savings_bil_ub)),
         x = 2009, 
         y = 22,
         label = paste0(
             "Cumulative savings:\n", mean, " (", lb, " - ", ub, ") billion"))
-ann_savings_historical_plot <- cost_2f_range_ann %>%
+ann_savings_historical_plot <- cost$savings_historical %>% 
     filter(year >= 2009) %>% 
-    mutate(country = fct_relevel(country, c("Germany", "USA", "China"))) %>%
+    mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
     ggplot() + 
-    geom_col(aes(x = year, y = annSavings, fill = country)) + 
+    geom_col(aes(x = year, y = ann_savings_bil, fill = country)) + 
     geom_errorbar(
-        aes(x = year, ymin = annSavings_lb, ymax = annSavings_ub), 
+        aes(x = year, ymin = ann_savings_bil_lb, ymax = ann_savings_bil_ub), 
         color = "grey42", width = 0.5) + 
     facet_wrap(vars(country), nrow = 1) +
     scale_x_continuous(breaks = seq(2009, 2017, 2)) +
@@ -192,14 +193,14 @@ ann_savings_historical_plot <- cost_2f_range_ann %>%
     geom_text(
         data = cum_savings_labels,
         aes(x = x, y = y, label = label), 
-        size = 4.5, family = "Fira Sans Condensed", hjust = 0
+        size = 4.5, family = "Roboto Condensed", hjust = 0
     ) 
 
 ggsave(
-    file.path(dir$figs, 'final', 'ann_savings_historical_plot.pdf'),
+    file.path(dir$figs, 'pdf', 'ann_savings_historical_plot.pdf'),
     ann_savings_historical_plot, height = 4, width = 12, device = cairo_pdf)
 ggsave(
-    file.path(dir$figs, 'final', 'ann_savings_historical_plot.png'),
+    file.path(dir$figs, 'png', 'ann_savings_historical_plot.png'),
     ann_savings_historical_plot, height = 4, width = 12)
 
 
