@@ -10,6 +10,48 @@ lr <- readRDS(dir$lr_models)
 # Load cost scenario data
 cost <- readRDS(dir$cost_scenarios)
 
+
+# Global PV production ------------
+
+# Read in and format data
+pvProduction <- data$pvProduction %>% 
+  mutate(
+    country = str_to_title(country), 
+    country = ifelse(country == "Row", "ROW", country), 
+    country = ifelse(country == "Us", "USA", country), 
+    country = fct_relevel(country, rev(c(
+      "China", "Taiwan", "Malaysia", "Japan", "Europe", "USA", "ROW"))),
+    year = as.factor(year)) %>% 
+  ggplot(aes(x = year, y = production_gw)) +
+  geom_col(aes(fill = country), width = 0.7, alpha = 0.9) +
+  scale_y_continuous(
+    limits = c(0, 140), breaks=seq(0, 140, 20), 
+    expand = expansion(mult = c(0, 0.05))) +
+  scale_fill_manual(values = c(
+    "#767676", "#0088cc", "#ff6611", "#ffee55", "#aa6688", "#aacc22",
+    "#ff1417")) +
+  theme_minimal_hgrid(font_family = "Fira Sans Condensed", font_size = 16) +
+  theme(
+    legend.position = c(0.01, 0.7),
+    legend.background = element_rect(
+      fill = "white", color = "black", size = 0.2),
+    legend.margin = margin(6, 8, 8, 6), 
+    plot.caption = element_text(
+      hjust = 0, size = 12, family = "Fira Sans Condensed", 
+      face = "italic"),
+    plot.caption.position = "plot",
+    plot.title.position = "plot") +
+  labs(x = NULL,
+       y = 'Annual Cell Production (GW)',
+       title = 'Annual Solar Voltaic Cell Production (GW)',
+       fill  = 'Origin', 
+       caption = "Data from Jäger-Waldau, A. (2020) https://doi.org/10.3390/en13040930")
+
+ggsave(here::here(dir$figs, 'final', "pvProduction.pdf"),
+       pvProduction, width = 8, height = 6, device = cairo_pdf)
+ggsave(here::here(dir$figs, 'final', "pvProduction.png"),
+       pvProduction, width = 8, height = 6, dpi = 300)
+
 # Cost per kw for global vs. national learning ------
 
 # True historical cost per kW
@@ -100,7 +142,7 @@ ggsave(
     file.path(dir$figs, 'png', 'cost_historical.png'),
     cost_historical_plot, height = 4, width = 12)
 
-# Cumulative savings ----
+# Cumulative savings historical ----
 
 cum_savings_historical_plot <- cost$savings_historical %>%
     mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
@@ -147,7 +189,7 @@ ggsave(
     file.path(dir$figs, 'png', 'cum_savings_historical.png'),
     cum_savings_historical_plot, height = 4, width = 6.5)
 
-# Annual savings ----
+# Annual savings historical ----
 
 cum_savings_labels <- cost$savings_historical %>% 
     filter(year == 2018) %>% 
@@ -203,13 +245,8 @@ ggsave(
     file.path(dir$figs, 'png', 'ann_savings_historical_plot.png'),
     ann_savings_historical_plot, height = 4, width = 12)
 
+# 2030 Projections -----
 
-
-
-
-
-# # 2030 Projections -----
-# 
 # bau_s1_us2030 <- cost_us2030 %>%
 #      ggplot(aes(x = year, y = cost_per_kw, color = component)) +
 #      geom_line(aes(linetype = scenario), size = 1) +
@@ -238,44 +275,4 @@ ggsave(
 #     bau_s1_us2030, height = 4, width = 10)
 
 
-# Global PV production ------------
-
-# Read in and format data
-pvProduction <- data$pvProduction %>% 
-    mutate(
-        country = str_to_title(country), 
-        country = ifelse(country == "Row", "ROW", country), 
-        country = ifelse(country == "Us", "USA", country), 
-        country = fct_relevel(country, rev(c(
-            "China", "Taiwan", "Malaysia", "Japan", "Europe", "USA", "ROW"))),
-        year = as.factor(year)) %>% 
-    ggplot(aes(x = year, y = production_gw)) +
-    geom_col(aes(fill = country), width = 0.7, alpha = 0.9) +
-    scale_y_continuous(
-        limits = c(0, 140), breaks=seq(0, 140, 20), 
-        expand = expansion(mult = c(0, 0.05))) +
-    scale_fill_manual(values = c(
-        "#767676", "#0088cc", "#ff6611", "#ffee55", "#aa6688", "#aacc22",
-        "#ff1417")) +
-    theme_minimal_hgrid(font_family = "Fira Sans Condensed", font_size = 16) +
-    theme(
-        legend.position = c(0.01, 0.7),
-        legend.background = element_rect(
-            fill = "white", color = "black", size = 0.2),
-        legend.margin = margin(6, 8, 8, 6), 
-        plot.caption = element_text(
-            hjust = 0, size = 12, family = "Fira Sans Condensed", 
-            face = "italic"),
-        plot.caption.position = "plot",
-        plot.title.position = "plot") +
-    labs(x = NULL,
-         y = 'Annual Cell Production (GW)',
-         title = 'Annual Solar Voltaic Cell Production (GW)',
-         fill  = 'Origin', 
-         caption = "Data from Jäger-Waldau, A. (2020) https://doi.org/10.3390/en13040930")
-
-ggsave(here::here(dir$figs, 'final', "pvProduction.pdf"),
-  pvProduction, width = 8, height = 6, device = cairo_pdf)
-ggsave(here::here(dir$figs, 'final', "pvProduction.png"),
-  pvProduction, width = 8, height = 6, dpi = 300)
 

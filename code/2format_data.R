@@ -398,57 +398,106 @@ target_capacity_china <- 570*1e6
 target_capacity_germany <- 100*1e6 
 target_capacity_world <- 3100*1e6
 
-# US 2030 projections ----------------------------------------
+# US projections ----------------------------------------
 
-# 300 GW capacity in 2030
 # Compute annual capacity increase, 
 # install type breakdown taken from 2020 SEIA Capacity shares:
-cap_add_proj_us <- seiaCapacity %>% 
-  filter(year == max(year)) %>% 
-  mutate(
-    shares = cumCapacityKw / sum(cumCapacityKw),
-    installType = installType,
-    endCapacityKw = shares * target_capacity_us, 
-    annualCap = (endCapacityKw - cumCapacityKw) / num_years_proj) %>%
-  select(installType, begCap = cumCapacityKw, annualCap)
-
-# Add annualCap out to 2030, starting from most recent year in data
-start_year <- max(seiaCapacity$year)
+start_year_us <- max(seiaCapacity$year)
+num_years_us <- year_max_proj - start_year_us
 capacity_proj_us <- seiaCapacity %>%
   filter(year >= year_min_proj) %>%
   rbind(
-    # New cumulative capacity out to 2030
-    repDf(cap_add_proj_us, num_years_proj) %>%
-    mutate(year = rep(start_year + seq(num_years_proj), each = 3)) %>%
-    group_by(installType) %>% 
-    mutate(cumCapacityKw = cumsum(annualCap) + begCap) %>% 
-    select(year, installType, cumCapacityKw)
+    seiaCapacity %>%
+      filter(year == start_year_us) %>%
+      mutate(
+        shares = cumCapacityKw / sum(cumCapacityKw),
+        installType = installType,
+        endCapacityKw = shares * target_capacity_us,
+        annualCap = (endCapacityKw - cumCapacityKw) / num_years_us) %>%
+      select(installType, begCap = cumCapacityKw, annualCap) %>%
+      repDf(num_years_us) %>%
+      mutate(year = rep(start_year + seq(num_years_us), each = 3)) %>%
+      group_by(installType) %>%
+      mutate(cumCapacityKw = cumsum(annualCap) + begCap) %>%
+      select(year, installType, cumCapacityKw)
   )
 
 # Preview
-ggplot(capacity_us_2030) + 
-  geom_point(aes(x = year, y = cumCapacityKw)) + 
+ggplot(capacity_proj_us) +
+  geom_point(aes(x = year, y = cumCapacityKw)) +
   facet_wrap(vars(installType))
 
-# World 2030 projections -----
+# China projections ----------------------------------------
+
+start_year_china <- max(china$year)
+num_years_china <- year_max_proj - start_year_china
+capacity_proj_china <- china %>%
+  filter(year >= year_min_proj, component == "Module") %>%
+  select(year, installType, cumCapacityKw) %>%
+  rbind(
+    china %>%
+      filter(year == start_year_china, component == "Module") %>%
+      mutate(
+        endCapacityKw = target_capacity_china,
+        annualCap = (endCapacityKw - cumCapacityKw) / num_years_china) %>%
+      select(installType, begCap = cumCapacityKw, annualCap) %>%
+      repDf(num_years_china) %>%
+      mutate(
+        year = start_year + seq(num_years_china),
+        cumCapacityKw = cumsum(annualCap) + begCap) %>%
+      select(year, installType, cumCapacityKw)
+  )
+
+# Preview
+ggplot(capacity_proj_china) +
+  geom_point(aes(x = year, y = cumCapacityKw))
+
+# Germany projections ----------------------------------------
+
+start_year_germany <- max(germany$year)
+num_years_germany <- year_max_proj - start_year_germany
+capacity_proj_germany <- germany %>%
+  filter(year >= year_min_proj, component == "Module") %>%
+  select(year, installType, cumCapacityKw) %>%
+  rbind(
+    germany %>%
+      filter(year == start_year_germany, component == "Module") %>%
+      mutate(
+        endCapacityKw = target_capacity_germany,
+        annualCap = (endCapacityKw - cumCapacityKw) / num_years_germany) %>%
+      select(installType, begCap = cumCapacityKw, annualCap) %>%
+      repDf(num_years_germany) %>%
+      mutate(
+        year = start_year + seq(num_years_germany),
+        cumCapacityKw = cumsum(annualCap) + begCap) %>%
+      select(year, installType, cumCapacityKw)
+  )
+
+# Preview
+ggplot(capacity_proj_germany) +
+  geom_point(aes(x = year, y = cumCapacityKw))
+
+# World projections -----
 
 # Silicon price: Assume constant from 2018
-cap_add_proj_world <- data.frame(
-  year = seq(year_min_proj + 1, year_max_proj, 1),
+start_year_world <- max(world$year)
+num_years_world <- year_max_proj - start_year_world
+capacity_proj_world <- data.frame(
+  year = seq(start_year_world + 1, year_max_proj),
   price_si = silicon[which(silicon$year == year_min_proj),]$price_si,
   cumCapacityKw = NA)
-
-# Capacity projections to 2030, based on achieving fixed capacity by 2030
-# 3100 GW, taken from WEO 2020, Sustainable Development Scenario:
-beg_capacity <- world[which(world$year == year_min_proj),]$cumCapacityKw
-annualCap <- (target_capacity_world - beg_capacity) / num_years_proj
-cap_add_proj_world <- cap_add_proj_world %>%
-  mutate(cumCapacityKw = beg_capacity + (year - year_min_proj)*annualCap)
-
-# Add in years with known historical values
+beg_capacity <- world[which(world$year == start_year_world),]$cumCapacityKw
+annualCap <- (target_capacity_world - beg_capacity) / num_years_world
 capacity_proj_world <- world %>%
   filter(year >= year_min_proj) %>%
-  rbind(cap_add_proj_world)
+  rbind(
+    capacity_proj_world %>%
+      mutate(cumCapacityKw = beg_capacity + (year - start_year_world)*annualCap)
+  )
+  
+# Preview
+ggplot(capacity_proj_world) +
+  geom_point(aes(x = year, y = cumCapacityKw))
 
 # Save all formatted data as a list object ---
 
