@@ -7,6 +7,10 @@ data <- readRDS(dir$data_formatted)
 # Load estimated LR models
 lr <- readRDS(dir$lr_models)
 
+# Historical range
+year_min <- 2008
+year_max <- 2018
+
 # HISTORICAL COST SCENARIOS ---------------------------------------------------
 
 # Load historical cost data ----
@@ -173,98 +177,4 @@ saveRDS(list(
     cost_scenarios_historical = cost_scenarios_historical,
     savings_historical = savings_historical),
     dir$cost_scenarios
-)
-
-
-
-
-
-
-
-
-
-
-
-
-# BAU - 2030 ----
-#   2018-2030 projection given BAU assumptions  
-#       hard costs -- use world capacity data and local installed costs
-#       soft costs -- use projected local installed costs
-
-## Estimation for hard costs -- learning rates on world cumulative capacity
-# Note: Since world data does not break down installation type
-#       (Commercial, Residential, Utility),
-#       we replicate capacities across all types
-#       (assuming in effect that learning is shared)
-
-#   Integrating from cap=world_cap_beg to cap=world_cap_end
-
-#   US
-cap_world_range <- get_country_cap_range(
-    data$us2030,
-    data$world2030 %>%
-        merge(expand.grid(
-            installType = unique(lr$us_twoLevel$installType),
-            component = unique(lr$us_twoLevel$component))),
-    year_min_projection)
-us2030_hard_bau_range <- lr$us_twoLevel %>%
-    filter(capData == "world") %>%
-    cost_constant_cap_range(cap_world_range)
-us2030_hard_bau_2f_range <- lr$us_twoFactor %>%
-    cost_constant_cap_range_2f(
-        merge(
-            cap_world_range,
-            select(data$world2030, year, price_si)))
-
-# Combine both hard and soft costs together
-us2030_bau_range <- rbind(data_projected_us2030, us2030_hard_bau_range)
-us2030_bau_2f_range <- rbind(
-    us2030_hard_bau_2f_range %>%
-        filter(component == "Module"),
-    us2030_bau_range %>%
-        filter(!(component == "Module"))
-) %>%
-    distinct(component, installType, year, .keep_all = T)
-
-# S1: Local protectionism - 2030 ----
-#   2018-2030 projection given S1 assumptions
-
-## Estimation for hard costs -- learning rates on local cumulative capacity
-#   Integrating from cap=world_cap_beg to cap=world_cap_beg + cap_end - cap_beg
-
-#   US
-cap_us_world_range <- get_country_world_cap_range(
-    data$us2030,
-    data$world2030 %>%
-        merge(expand.grid(
-            installType = unique(lr$us_twoLevel$installType),
-            component = unique(lr$us_twoLevel$component))),
-    year_min_projection)
-us2030_hard_s1_range <- lr$us_twoLevel %>%
-    filter(capData == "world") %>%
-    cost_constant_cap_range(cap_us_world_range)
-us2030_hard_s1_2f_range <- lr$us_twoFactor %>%
-    cost_constant_cap_range_2f(
-        merge(
-            cap_us_world_range,
-            select(data$world2030, year, price_si)))
-
-# Combine both hard and soft costs together
-us2030_s1_range <- rbind(data_projected_us2030, us2030_hard_s1_range)
-us2030_s1_2f_range <- rbind(
-    us2030_hard_s1_2f_range %>%
-        filter(component == "Module"),
-    us2030_s1_range %>%
-        filter(!(component == "Module"))
-) %>%
-    distinct(component,installType,year, .keep_all = T)
-
-# Combine BAU and S1
-us2030_2f_range <- rbind(
-    us2030_bau_2f_range %>%
-        mutate(scenario = 'bau', model = '2factor'),
-    us2030_bau_range %>%
-        mutate(scenario = 'bau', model = '1factor'),
-    us2030_s1_2f_range %>%
-        mutate(scenario = 's1', model = '2factor')
 )
