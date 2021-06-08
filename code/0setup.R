@@ -31,5 +31,6 @@ year_min <- 2008
 year_max <- 2018
 
 # Projection range
-year_min_projection <- 2018
-year_max_projection <- 2030
+year_min_proj <- 2018
+year_max_proj <- 2030
+num_years_proj <- year_max_proj - year_min_proj

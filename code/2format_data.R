@@ -386,35 +386,21 @@ world <- left_join(world, silicon) %>%
 #
 # Targets:
 #
-# U.S.: 300 GW, taken from NAM, Committee on Accelerating Decarbonization 
-#       in the United States (2021)
-# China: 570 GW, taken from total renewable goal of 1200 GW in 2030, using
-#        same proportions of wind + solar as in 2020
+# U.S.:    300 GW, taken from NAM, Committee on Accelerating Decarbonization
+#          in the United States (2021)
+# China:   570 GW, taken from total renewable goal of 1200 GW in 2030, using
+#          same proportions of wind + solar as in 2020
 # Germany: 100 GW, from Germany's Renewable Energy Act 2021  
+# World:   3100 GW, from WEO 2020 Sustainable Development Scenario
 
 target_capacity_us <- 300*1e6 
 target_capacity_china <- 570*1e6 
 target_capacity_germany <- 100*1e6 
+target_capacity_world <- 3100*1e6
 
 # US 2030 projections ----------------------------------------
 
-# Cost projections from 2019 to 2030, copied from 2018 LBNL data 
-# (assuming no cost reduction)
-
-# Create copies of 2018 costPerKw for each year out to 2030
-newcols <- as.character(seq(2019, 2030, 1))
-cost_proj_us <- lbnlCost %>%
-  filter(year == year_min_projection) %>%
-  select(-year) %>%
-  rename(`2018` = costPerKw) %>%
-  add_column(!!!set_names(as.list(rep(NA, length(newcols))), nm = newcols)) %>%
-  mutate_at(newcols, ~ `2018`) %>%
-  # Reshape
-  gather(key = 'year','costPerKw', all_of(c(newcols, '2018'))) %>%
-  mutate(year = as.numeric(year)) %>%
-  select(all_of(names(lbnlCost))) 
-
-# Capacity projections to 2030: 300 GW
+# 300 GW capacity in 2030
 # Compute annual capacity increase, 
 # install type breakdown taken from 2020 SEIA Capacity shares:
 cap_add_proj_us <- seiaCapacity %>% 
@@ -423,19 +409,17 @@ cap_add_proj_us <- seiaCapacity %>%
     shares = cumCapacityKw / sum(cumCapacityKw),
     installType = installType,
     endCapacityKw = shares * target_capacity_us, 
-    annualCap = (endCapacityKw - cumCapacityKw) / 
-                (year_max_projection - year_min_projection)) %>%
+    annualCap = (endCapacityKw - cumCapacityKw) / num_years_proj) %>%
   select(installType, begCap = cumCapacityKw, annualCap)
 
 # Add annualCap out to 2030, starting from most recent year in data
 start_year <- max(seiaCapacity$year)
-num_years <- year_max_projection - start_year
 capacity_proj_us <- seiaCapacity %>%
-  filter(year >= year_min_projection) %>% 
+  filter(year >= year_min_proj) %>%
   rbind(
     # New cumulative capacity out to 2030
-    repDf(cap_add_proj_us, num_years) %>% 
-    mutate(year = rep(start_year + seq(num_years), each = 3)) %>% 
+    repDf(cap_add_proj_us, num_years_proj) %>%
+    mutate(year = rep(start_year + seq(num_years_proj), each = 3)) %>%
     group_by(installType) %>% 
     mutate(cumCapacityKw = cumsum(annualCap) + begCap) %>% 
     select(year, installType, cumCapacityKw)
@@ -446,55 +430,44 @@ ggplot(capacity_us_2030) +
   geom_point(aes(x = year, y = cumCapacityKw)) + 
   facet_wrap(vars(installType))
 
-# Merge 2030 projections -- future capacity and cost data
-
-proj_us <- capacity_proj_us %>%
-  left_join(cost_proj_us) %>%
-  filter(!is.na(costPerKw)) %>%
-  select(
-    year, component, componentType, installType, costPerKw, cumCapacityKw)
-
 # World 2030 projections -----
 
 # Silicon price: Assume constant from 2018
-newcols <- as.character(seq(2019, 2030, 1))
-price_si_new <- rep(
-  silicon[which(silicon$year == 2018),]$price_si,
-  length(newcols))
-world2030_add <- data.frame(
-  year = as.numeric(newcols), 
-  price_si = price_si_new,
+cap_add_proj_world <- data.frame(
+  year = seq(year_min_proj + 1, year_max_proj, 1),
+  price_si = silicon[which(silicon$year == year_min_proj),]$price_si,
   cumCapacityKw = NA)
 
 # Capacity projections to 2030, based on achieving fixed capacity by 2030
-
 # 3100 GW, taken from WEO 2020, Sustainable Development Scenario:
-target_capacity <- 3100*1e6  
-beg_capacity <- world[which(world$year == 2018),]$cumCapacityKw
-annualCap <- (target_capacity - beg_capacity) / (2030 - 2018)
-world2030_add <- world2030_add %>%
-  mutate(cumCapacityKw = beg_capacity + (year - 2018)*annualCap)
+beg_capacity <- world[which(world$year == year_min_proj),]$cumCapacityKw
+annualCap <- (target_capacity_world - beg_capacity) / num_years_proj
+cap_add_proj_world <- cap_add_proj_world %>%
+  mutate(cumCapacityKw = beg_capacity + (year - year_min_proj)*annualCap)
 
-world2030 <- world %>%
-  filter(year >= 2018) %>%
-  rbind(world2030_add)
+# Add in years with known historical values
+capacity_proj_world <- world %>%
+  filter(year >= year_min_proj) %>%
+  rbind(cap_add_proj_world)
 
 # Save all formatted data as a list object ---
 
 saveRDS(list(
-    pvProduction       = pvProduction,
-    irenaCumCapacityMw = irenaCumCapacityMw,
-    nrelCapacity       = nrelCapacity,
-    nrelCost           = nrelCost,
-    seiaCapacity       = seiaCapacity,
-    lbnlCost           = lbnlCost,
-    usNrel             = usNrel,
-    usSeia             = usSeia,
-    usSeiaLbnl         = usSeiaLbnl,
-    china              = china,
-    germany            = germany,
-    world              = world,
-    us2030             = us2030,
-    world2030          = world2030),
+    pvProduction          = pvProduction,
+    irenaCumCapacityMw    = irenaCumCapacityMw,
+    nrelCapacity          = nrelCapacity,
+    nrelCost              = nrelCost,
+    seiaCapacity          = seiaCapacity,
+    lbnlCost              = lbnlCost,
+    usNrel                = usNrel,
+    usSeia                = usSeia,
+    usSeiaLbnl            = usSeiaLbnl,
+    china                 = china,
+    germany               = germany,
+    world                 = world,
+    capacity_proj_us      = capacity_proj_us,
+    capacity_proj_china   = capacity_proj_china,
+    capacity_proj_germany = capacity_proj_germany,
+    capacity_proj_world   = capacity_proj_world),
     dir$data_formatted
 )
