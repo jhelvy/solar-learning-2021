@@ -13,34 +13,6 @@ year_max <- 2018
 
 # HISTORICAL COST SCENARIOS ---------------------------------------------------
 
-# Load historical cost data ----
-
-data_historical_us <- data$usSeiaLbnl %>%
-    filter(year >= year_min) %>%
-    select(
-        component, installType, year, cap = cumCapacityKw, 
-        cost_per_kw = costPerKw)
-
-data_historical_china <- data$china %>%
-    filter(year >= year_min) %>%
-    select(
-        component, installType, year, cap = cumCapacityKw, 
-        cost_per_kw = costPerKw)
-
-data_historical_germany <- data$germany %>%
-    filter(year >= year_min) %>%
-    select(
-        component, installType, year, cap = cumCapacityKw, 
-        cost_per_kw = costPerKw)
-
-# Load projected cost data ----
-
-data_projected_us2030 <- data$us2030 %>%
-    filter(year >= year_min_projection) %>%
-    select(
-        component, installType, year, cap = cumCapacityKw, 
-        cost_per_kw = costPerKw)
-
 # Global Learning ----
 
 # Learning rates based on world cumulative capacity and local installed costs
@@ -75,37 +47,32 @@ cost_scenarios_global_germany <- predict_cost(
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
-# Create national capacity data sets for predictions
+# Compute national cost predictions
 
 data_national_us <- makeNationalLearningData(
     df_country = data$usSeiaLbnl,
     df_model = lr$data_us,
     year_min = year_min)
-
-data_national_china <- makeNationalLearningData(
-    df_country = data$china,
-    df_model = lr$data_china,
-    year_min = year_min)
-
-data_national_germany <- makeNationalLearningData(
-    df_country = data$germany,
-    df_model = lr$data_germany,
-    year_min = year_min)
-
-# Compute national cost predictions
-
 cost_scenarios_national_us <- predict_cost(
     model    = lr$model_us,
     data     = data_national_us,
     year_min = year_min,
     ci       = 0.95)
 
+data_national_china <- makeNationalLearningData(
+    df_country = data$china,
+    df_model = lr$data_china,
+    year_min = year_min)
 cost_scenarios_national_china <- predict_cost(
     model    = lr$model_china,
     data     = data_national_china,
     year_min = year_min,
     ci       = 0.95)
 
+data_national_germany <- makeNationalLearningData(
+    df_country = data$germany,
+    df_model = lr$data_germany,
+    year_min = year_min)
 cost_scenarios_national_germany <- predict_cost(
     model    = lr$model_germany,
     data     = data_national_germany,
@@ -114,7 +81,7 @@ cost_scenarios_national_germany <- predict_cost(
 
 # Combine Global And National Cost Scenarios ----
 
-cost_scenarios_historical <- rbind(
+cost_scenarios <- rbind(
     mutate(cost_scenarios_global_us,
            scenario = "global", country = "U.S."),
     mutate(cost_scenarios_national_us,
@@ -139,26 +106,26 @@ cap_additions <- rbind(
     select(year, country, cum_cap_addition) %>% 
     mutate(ann_cap_addition = cum_cap_addition - lag(cum_cap_addition, 1))
 
-savings_historical_mean <- cost_scenarios_historical %>% 
+savings_mean <- cost_scenarios %>%
     select(year, scenario, country, cost_per_kw) %>% 
     spread(key = scenario, value = cost_per_kw) %>%
     computeSavings(cap_additions, year_min)
 
-savings_historical_lb <- cost_scenarios_historical %>% 
+savings_lb <- cost_scenarios %>%
     select(year, scenario, country, cost_per_kw_lb) %>% 
     spread(key = scenario, value = cost_per_kw_lb) %>% 
     computeSavings(cap_additions, year_min)
 
-savings_historical_ub <- cost_scenarios_historical %>% 
+savings_ub <- cost_scenarios %>%
     select(year, scenario, country, cost_per_kw_ub) %>% 
     spread(key = scenario, value = cost_per_kw_ub) %>% 
     computeSavings(cap_additions, year_min)
 
 # Merge savings 
-savings_historical <- rbind(
-    mutate(savings_historical_mean, est = "mean"),
-    mutate(savings_historical_lb, est = "lb"),
-    mutate(savings_historical_ub, est = "ub")) %>% 
+savings <- rbind(
+    mutate(savings_mean, est = "mean"),
+    mutate(savings_lb, est = "lb"),
+    mutate(savings_ub, est = "ub")) %>%
     spread(key = est, value = ann_savings_bil) %>% 
     rename(
         ann_savings_bil = mean, 
@@ -174,7 +141,7 @@ savings_historical <- rbind(
 # Save outputs ----
 
 saveRDS(list(
-    cost_scenarios_historical = cost_scenarios_historical,
-    savings_historical = savings_historical),
+    cost_scenarios = cost_scenarios,
+    savings = savings),
     dir$historical_scenarios
 )

@@ -8,8 +8,7 @@ data <- readRDS(dir$data_formatted)
 lr <- readRDS(dir$lr_models)
 
 # Load cost scenario data
-cost <- readRDS(dir$cost_scenarios)
-
+cost <- readRDS(dir$historical_scenarios)
 
 # Global PV production ------------
 
@@ -47,9 +46,9 @@ pvProduction <- data$pvProduction %>%
        fill  = 'Origin', 
        caption = "Data from Jäger-Waldau, A. (2020) https://doi.org/10.3390/en13040930")
 
-ggsave(here::here(dir$figs, 'final', "pvProduction.pdf"),
+ggsave(here::here(dir$figs, 'pdf', "pvProduction.pdf"),
        pvProduction, width = 8, height = 6, device = cairo_pdf)
-ggsave(here::here(dir$figs, 'final', "pvProduction.png"),
+ggsave(here::here(dir$figs, 'png', "pvProduction.png"),
        pvProduction, width = 8, height = 6, dpi = 300)
 
 # Cost per kw for global vs. national learning ------
@@ -68,7 +67,7 @@ cost_historical <- rbind(
       year >= 2008, year <= 2018,
       component == "Module")
 
-cost_historical_plot <- cost$cost_scenarios_historical %>% 
+cost_historical_plot <- cost$cost_scenarios %>% 
     mutate(
         scenario = fct_relevel(scenario, c("national", "global")),
         scenario = fct_recode(scenario,
@@ -144,7 +143,7 @@ ggsave(
 
 # Cumulative savings historical ----
 
-cum_savings_historical_plot <- cost$savings_historical %>%
+cum_savings_historical_plot <- cost$savings %>%
     mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
     ggplot() +
     geom_area(aes(x = year, y = cum_savings_bil, fill = country)) +
@@ -191,7 +190,7 @@ ggsave(
 
 # Annual savings historical ----
 
-cum_savings_labels <- cost$savings_historical %>% 
+cum_savings_labels <- cost$savings %>% 
     filter(year == 2018) %>% 
     mutate(
         mean = scales::dollar(round(cum_savings_bil)), 
@@ -201,7 +200,7 @@ cum_savings_labels <- cost$savings_historical %>%
         y = 22,
         label = paste0(
             "Cumulative savings:\n", mean, " (", lb, " - ", ub, ") billion"))
-ann_savings_historical_plot <- cost$savings_historical %>% 
+ann_savings_historical_plot <- cost$savings %>% 
     filter(year >= 2009) %>% 
     mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
     ggplot() + 

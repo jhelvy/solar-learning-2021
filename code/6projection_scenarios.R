@@ -137,27 +137,16 @@ ggplot(capacity_world) +
 
 # Cost calculations ------------------------------------------------------
 
+# US projections ---
+
+cost_scenarios_global_us <- predict_cost(
+  model    = lr$model_us,
+  data     = lr$data_us,
+  year_min = year_min,
+  ci       = 0.95)
 
 
 
-
-
-
-
-
-
-# BAU - 2030 ----
-#   2018-2030 projection given BAU assumptions  
-#       hard costs -- use world capacity data and local installed costs
-#       soft costs -- use projected local installed costs
-
-## Estimation for hard costs -- learning rates on world cumulative capacity
-# Note: Since world data does not break down installation type
-#       (Commercial, Residential, Utility),
-#       we replicate capacities across all types
-#       (assuming in effect that learning is shared)
-
-#   Integrating from cap=world_cap_beg to cap=world_cap_end
 
 #   US
 cap_world_range <- get_country_cap_range(
