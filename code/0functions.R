@@ -118,3 +118,7 @@ computeSavings <- function(df, cap_additions, year_min) {
         select(year, country, ann_savings_bil)
     return(result)
 }
+
+repDf <- function(df, n) {
+  return(df[rep(seq_len(nrow(df)), n), ])
+}

@@ -60,6 +60,28 @@ exchangeRatesEUR <- read_excel(
   clean_names() %>%
   rename(year = row_labels)
 
+# Format PV production data ----------------------------------------------------
+
+# Read in & format 2010 to 2019 data (Production in GW) from Engauge Digitizer
+pvProduction <- read_csv(productionFilePath) %>% 
+  clean_names() %>% 
+  rename(year = x) %>% 
+  mutate(year = floor(year) + 1) %>% 
+  gather(key = "country", value = "n", china:total) %>% 
+  group_by(year, country) %>% 
+  summarise(production_gw = mean(n)) %>% 
+  spread(key = country, value = production_gw) %>% 
+  mutate(
+    taiwan = china_taiwan - china, 
+    europe = china_taiwan_europe - china_taiwan, 
+    japan = china_taiwan_europe_japan - china_taiwan_europe, 
+    malaysia = china_taiwan_europe_japan_malaysia - china_taiwan_europe_japan, 
+    us = china_taiwan_europe_japan_malaysia_us - china_taiwan_europe_japan_malaysia, 
+    row = total - china_taiwan_europe_japan_malaysia_us) %>% 
+  select(year, china, taiwan, europe, japan, malaysia, us, row) %>% 
+  ungroup() %>% 
+  gather(key = "country", value = "production_gw", china:row) 
+
 # -----------------------------------------------------------------------
 # U.S.
 # -----------------------------------------------------------------------
@@ -247,52 +269,6 @@ nrelCapacity <- read_excel(usNrel2018FilePath, sheet="Figure 1") %>%
     cumCapacityKw = cumCapacityMw * 10^3) %>% 
   select(year, installType, cumCapacityKw)
 
-# Create US 2030 projections ----------------------------------------
-
-# Cost projections from 2019 to 2030, copied from 2018 LBNL data 
-# (assuming no cost reduction)
-newcols <- as.character(seq(2019, 2030, 1))
-us2030_cost <- lbnlCost %>%
-  filter(year == 2018) %>%
-  select(-year) %>%
-  rename(`2018` = costPerKw) %>%
-  # Create copies of 2018 costPerKw for each year out to 2030
-  add_column(!!!set_names(as.list(rep(NA, length(newcols))), nm = newcols)) %>%
-  mutate_at(newcols, ~ `2018`) %>%
-  # Reshape
-  gather(key = 'year','costPerKw', all_of(c(newcols,'2018'))) %>%
-  mutate(year = as.numeric(year)) %>%
-  select(all_of(names(lbnlCost))) 
-  
-# Capacity projections to 2030, based on achieving fixed capacity by 2030
-# 300 GW, taken from NAM, Committee on Accelerating Decarbonization in the
-# United States (2021)
-target_capacity <- 300*1e6 
-# Breakdown taken from 2020 SEIA Capacity shares:
-type_capacity <- target_capacity * c(
-  "Commercial" = 0.180629266,   
-  "Residential" = 0.207163921,
-  "Utility" = 0.612206813)
-us2030_cap_add <- seiaCapacity %>%
-  filter(year == 2020) %>% # latest year in dataset
-  merge(data.frame(
-    installType = names(type_capacity), 
-    endCapacityKw = type_capacity)) %>%
-  mutate(annualCap = (endCapacityKw - cumCapacityKw) / 10) %>%
-  select(installType, begCap = cumCapacityKw, annualCap)
-
-us2030_capacity <- seiaCapacity %>%
-  filter(year >= 2018)
-
-for (i in seq(2021, 2030, 1)) {
-  df <- us2030_cap_add %>%
-    mutate(
-      cumCapacityKw = begCap + (i - 2020) * annualCap,
-      year = i) %>%
-    select(year, installType, cumCapacityKw)
-  us2030_capacity <- rbind(us2030_capacity, df)
-}
-
 # Format all U.S. data -----------------------------------------------------
 
 # Merge NREL cost and capacity data
@@ -319,15 +295,10 @@ usSeiaLbnl <- seiaCapacity %>%
   select(
     year, component, componentType, installType, costPerKw, cumCapacityKw)
 
-# Merge 2030 projections -- future capacity and cost data ----
+# -----------------------------------------------------------------------
+# Germany
+# -----------------------------------------------------------------------
 
-us2030 <- us2030_capacity %>%
-  left_join(us2030_cost) %>%
-  filter(!is.na(costPerKw)) %>%
-  select(
-    year, component, componentType, installType, costPerKw, cumCapacityKw)
-
-# Format Germany data ------------------------------------------------------
 #   Fraunhofer -- costs
 #   IRENA -- capacity
 
@@ -357,7 +328,11 @@ germany <- read_csv(germanyFilePath) %>%
   select(
     year, component, componentType, installType, costPerKw, cumCapacityKw)
 
-# Format Wang NDRC data -------------------------------------------------------
+# -----------------------------------------------------------------------
+# China
+# -----------------------------------------------------------------------
+
+# Format Wang NDRC data 
 
 china <- read_csv(chinaFilePath) %>%
   gather(key = "year", value = "value", `2007`:`2020`) %>%
@@ -386,7 +361,10 @@ china <- read_csv(chinaFilePath) %>%
   select(
     year, component, componentType, installType, costPerKw, cumCapacityKw)
 
-# Format World data ----------------------------------------------------
+# -----------------------------------------------------------------------
+# World
+# -----------------------------------------------------------------------
+
 # Source capacity: IRENA
 
 # Note: for silicon prices, extend last observation to missing years
@@ -401,7 +379,83 @@ world <- left_join(world, silicon) %>%
   select(year, price_si, cumCapacityKw) %>%
   fill(price_si, .direction = "down")
 
+# -----------------------------------------------------------------------
+# PROJECTIONS
+# -----------------------------------------------------------------------
+# Projections to 2030, based on achieving fixed capacity by 2030
+#
+# Targets:
+#
+# U.S.: 300 GW, taken from NAM, Committee on Accelerating Decarbonization 
+#       in the United States (2021)
+# China: 570 GW, taken from total renewable goal of 1200 GW in 2030, using
+#        same proportions of wind + solar as in 2020
+# Germany: 100 GW, from Germany's Renewable Energy Act 2021  
+
+target_capacity_us <- 300*1e6 
+target_capacity_china <- 570*1e6 
+target_capacity_germany <- 100*1e6 
+
+# US 2030 projections ----------------------------------------
+
+# Cost projections from 2019 to 2030, copied from 2018 LBNL data 
+# (assuming no cost reduction)
+
+# Create copies of 2018 costPerKw for each year out to 2030
+newcols <- as.character(seq(2019, 2030, 1))
+cost_proj_us <- lbnlCost %>%
+  filter(year == year_min_projection) %>%
+  select(-year) %>%
+  rename(`2018` = costPerKw) %>%
+  add_column(!!!set_names(as.list(rep(NA, length(newcols))), nm = newcols)) %>%
+  mutate_at(newcols, ~ `2018`) %>%
+  # Reshape
+  gather(key = 'year','costPerKw', all_of(c(newcols, '2018'))) %>%
+  mutate(year = as.numeric(year)) %>%
+  select(all_of(names(lbnlCost))) 
+
+# Capacity projections to 2030: 300 GW
+# Compute annual capacity increase, 
+# install type breakdown taken from 2020 SEIA Capacity shares:
+cap_add_proj_us <- seiaCapacity %>% 
+  filter(year == max(year)) %>% 
+  mutate(
+    shares = cumCapacityKw / sum(cumCapacityKw),
+    installType = installType,
+    endCapacityKw = shares * target_capacity_us, 
+    annualCap = (endCapacityKw - cumCapacityKw) / 
+                (year_max_projection - year_min_projection)) %>%
+  select(installType, begCap = cumCapacityKw, annualCap)
+
+# Add annualCap out to 2030, starting from most recent year in data
+start_year <- max(seiaCapacity$year)
+num_years <- year_max_projection - start_year
+capacity_proj_us <- seiaCapacity %>%
+  filter(year >= year_min_projection) %>% 
+  rbind(
+    # New cumulative capacity out to 2030
+    repDf(cap_add_proj_us, num_years) %>% 
+    mutate(year = rep(start_year + seq(num_years), each = 3)) %>% 
+    group_by(installType) %>% 
+    mutate(cumCapacityKw = cumsum(annualCap) + begCap) %>% 
+    select(year, installType, cumCapacityKw)
+  )
+
+# Preview
+ggplot(capacity_us_2030) + 
+  geom_point(aes(x = year, y = cumCapacityKw)) + 
+  facet_wrap(vars(installType))
+
+# Merge 2030 projections -- future capacity and cost data
+
+proj_us <- capacity_proj_us %>%
+  left_join(cost_proj_us) %>%
+  filter(!is.na(costPerKw)) %>%
+  select(
+    year, component, componentType, installType, costPerKw, cumCapacityKw)
+
 # World 2030 projections -----
+
 # Silicon price: Assume constant from 2018
 newcols <- as.character(seq(2019, 2030, 1))
 price_si_new <- rep(
@@ -425,31 +479,10 @@ world2030 <- world %>%
   filter(year >= 2018) %>%
   rbind(world2030_add)
 
-# Format PV production data ----------------------------------------------------
-
-# Read in & format 2010 to 2019 data (Production in GW) from Engauge Digitizer
-pvProduction <- read_csv(productionFilePath) %>% 
-    clean_names() %>% 
-    rename(year = x) %>% 
-    mutate(year = floor(year) + 1) %>% 
-    gather(key = "country", value = "n", china:total) %>% 
-    group_by(year, country) %>% 
-    summarise(production_gw = mean(n)) %>% 
-    spread(key = country, value = production_gw) %>% 
-    mutate(
-        taiwan = china_taiwan - china, 
-        europe = china_taiwan_europe - china_taiwan, 
-        japan = china_taiwan_europe_japan - china_taiwan_europe, 
-        malaysia = china_taiwan_europe_japan_malaysia - china_taiwan_europe_japan, 
-        us = china_taiwan_europe_japan_malaysia_us - china_taiwan_europe_japan_malaysia, 
-        row = total - china_taiwan_europe_japan_malaysia_us) %>% 
-    select(year, china, taiwan, europe, japan, malaysia, us, row) %>% 
-    ungroup() %>% 
-    gather(key = "country", value = "production_gw", china:row) 
-
 # Save all formatted data as a list object ---
 
 saveRDS(list(
+    pvProduction       = pvProduction,
     irenaCumCapacityMw = irenaCumCapacityMw,
     nrelCapacity       = nrelCapacity,
     nrelCost           = nrelCost,
@@ -458,11 +491,10 @@ saveRDS(list(
     usNrel             = usNrel,
     usSeia             = usSeia,
     usSeiaLbnl         = usSeiaLbnl,
-    us2030             = us2030,
     china              = china,
     germany            = germany,
     world              = world,
-    world2030          = world2030,
-    pvProduction       = pvProduction),
+    us2030             = us2030,
+    world2030          = world2030),
     dir$data_formatted
 )

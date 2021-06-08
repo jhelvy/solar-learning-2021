@@ -23,3 +23,13 @@ dir <- list(
     lr_models      = here::here('output', 'lr_models.Rds'),
     cost_scenarios = here::here('output', 'cost_scenarios.Rds')
 )
+
+# Set period dates
+
+# Historical range
+year_min <- 2008 
+year_max <- 2018
+
+# Projection range
+year_min_projection <- 2018
+year_max_projection <- 2030

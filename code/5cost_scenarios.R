@@ -7,11 +7,6 @@ data <- readRDS(dir$data_formatted)
 # Load estimated LR models
 lr <- readRDS(dir$lr_models)
 
-# Set period dates
-year_min <- 2008
-year_max <- 2018
-year_min_projection <- 2018
-
 # HISTORICAL COST SCENARIOS ---------------------------------------------------
 
 # Load historical cost data ----
