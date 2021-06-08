@@ -7,7 +7,7 @@ data <- readRDS(dir$data_formatted)
 # Load estimated LR models
 lr <- readRDS(dir$lr_models)
 
-# Load cost scenario data
+# Load historical cost scenario data
 cost <- readRDS(dir$historical_scenarios)
 
 # Global PV production ------------
