@@ -156,23 +156,40 @@ ggplot(capacity_world) +
 
 # US projections ---
 
-capacity_us_global <- capacity_us %>% 
+capacity_us_global <- capacity_world %>% 
     mutate(
         costPerKw = costPerKw_start %>% 
             filter(country == "U.S.", scenario == "global") %>% 
             pull(costPerKw))
+cap_beg_us <- capacity_us[which(capacity_us$year == year_min_proj),]$cumCapacityKw
+cap_beg_world <- capacity_world[which(capacity_world$year == year_min_proj),]$cumCapacityKw
+capacity_us_national <- capacity_us %>% 
+    mutate(
+        costPerKw = costPerKw_start %>% 
+            filter(country == "U.S.", scenario == "national") %>% 
+            pull(costPerKw),
+        cum_cap_addition = cumCapacityKw - cap_beg_us,
+        cumCapacityKw = cap_beg_world + cum_cap_addition)
+
 cost_proj_global_us <- predict_cost(
-  model    = lr$model_us,
-  data     = capacity_us_global,
-  year_min = year_min_proj,
-  ci       = 0.95)
-
-
+    model    = lr$model_us,
+    data     = capacity_us_global,
+    year_min = year_min_proj,
+    ci       = 0.95)
+cost_proj_national_us <- predict_cost(
+    model    = lr$model_us,
+    data     = capacity_us_national,
+    year_min = year_min_proj,
+    ci       = 0.95)
 
 # Save all formatted data as a list object ---
 
 saveRDS(list(
   capacity_us      = capacity_us,
+  capacity_us_global = capacity_us_global, 
+  capacity_us_national = capacity_us_national,
+  cost_proj_global_us = cost_proj_global_us,
+  cost_proj_national_us = cost_proj_national_us,
   capacity_china   = capacity_china,
   capacity_germany = capacity_germany,
   capacity_world   = capacity_world),
