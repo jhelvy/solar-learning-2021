@@ -130,56 +130,53 @@ cost_scenarios_historical <- rbind(
            scenario = "national", country = "Germany")
 )
 
-# Calculate cumulative savings between national and global learning
+# Calculate savings between national and global learning scenarios
 
-# Combine additional capacity data for each country
-
+# Combine additional capacity data for each country into one data frame
 cap_additions <- rbind(
     mutate(data_national_us, country = "U.S."),
     mutate(data_national_china, country = "China"),
     mutate(data_national_germany, country = "Germany")) %>% 
-    select(year, country, cap_addition)
+    select(year, country, cum_cap_addition) %>% 
+    mutate(ann_cap_addition = cum_cap_addition - lag(cum_cap_addition, 1))
 
-cum_savings_historical_mean <- cost_scenarios_historical %>% 
+savings_historical_mean <- cost_scenarios_historical %>% 
     select(year, scenario, country, cost_per_kw) %>% 
-    spread(key = scenario, value = cost_per_kw) %>% 
-    left_join(cap_additions, by = c("year", "country")) %>% 
-    mutate(cum_savings = cap_addition*(national - global)) %>% 
-    select(year, country, cum_savings)
-    
-cum_savings_historical_lb <- cost_scenarios_historical %>% 
+    spread(key = scenario, value = cost_per_kw) %>%
+    computeSavings(cap_additions, year_min)
+
+savings_historical_lb <- cost_scenarios_historical %>% 
     select(year, scenario, country, cost_per_kw_lb) %>% 
     spread(key = scenario, value = cost_per_kw_lb) %>% 
-    left_join(cap_additions, by = c("year", "country")) %>% 
-    mutate(cum_savings = cap_addition*(national - global)) %>% 
-    select(year, country, cum_savings)
+    computeSavings(cap_additions, year_min)
 
-cum_savings_historical_ub <- cost_scenarios_historical %>% 
+savings_historical_ub <- cost_scenarios_historical %>% 
     select(year, scenario, country, cost_per_kw_ub) %>% 
     spread(key = scenario, value = cost_per_kw_ub) %>% 
-    left_join(cap_additions, by = c("year", "country")) %>% 
-    mutate(cum_savings = cap_addition*(national - global)) %>% 
-    select(year, country, cum_savings)
-        
+    computeSavings(cap_additions, year_min)
+
 # Merge savings 
-cum_savings_historical <- rbind(
-    mutate(cum_savings_historical_mean, est = "mean"),
-    mutate(cum_savings_historical_lb, est = "lb"),
-    mutate(cum_savings_historical_ub, est = "ub")) %>% 
-    mutate(cum_savings_bil = cum_savings / 10^9) %>% 
-    select(-cum_savings) %>% 
-    spread(key = est, value = cum_savings_bil) %>% 
+savings_historical <- rbind(
+    mutate(savings_historical_mean, est = "mean"),
+    mutate(savings_historical_lb, est = "lb"),
+    mutate(savings_historical_ub, est = "ub")) %>% 
+    spread(key = est, value = ann_savings_bil) %>% 
     rename(
-        cum_savings_bil = mean, cum_savings_bil_lb = lb, 
-        cum_savings_bil_ub = ub)
-
-
+        ann_savings_bil = mean, 
+        ann_savings_bil_lb = lb, 
+        ann_savings_bil_ub = ub) %>% 
+    group_by(country) %>% 
+    mutate(
+        cum_savings_bil = cumsum(ann_savings_bil), 
+        cum_savings_bil_lb = cumsum(ann_savings_bil_lb),
+        cum_savings_bil_ub = cumsum(ann_savings_bil_ub)) %>% 
+    ungroup()
 
 # Save outputs ----
 
 saveRDS(list(
     cost_scenarios_historical = cost_scenarios_historical,
-    cum_savings_historical = cum_savings_historical),
+    savings_historical = savings_historical),
     dir$cost_scenarios
 )
 

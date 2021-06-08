@@ -94,74 +94,18 @@ cost_historical_plot <- cost$cost_scenarios_historical %>%
 # colorblindr::cvd_grid(cost_historical_plot)
 
 ggsave(
-    file.path(dir$figs, 'cost_historical.pdf'),
+    file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
     cost_historical_plot, height = 4, width = 12, device = cairo_pdf)
 ggsave(
-    file.path(dir$figs, 'cost_historical.png'),
+    file.path(dir$figs, 'png', 'cost_historical.png'),
     cost_historical_plot, height = 4, width = 12)
-
-
-
 
 # Cumulative savings ----
 
-# Annual costs
-cost_2f_range_ann <- rbind(
-    cost$us_2f_range_cum %>%
-        group_by(year) %>%
-        summarise(
-            annSavings = sum(cost_diff_bil), 
-            annSavings_lb = sum(cost_diff_bil_lb),
-            annSavings_ub = sum(cost_diff_bil_ub)) %>% 
-        mutate(country = 'USA'),
-    cost$germany_2f_range_cum %>%
-        group_by(year) %>%
-        select(
-            annSavings = cost_diff_bil, 
-            annSavings_lb = cost_diff_bil_lb,
-            annSavings_ub = cost_diff_bil_ub) %>% 
-        mutate(country = 'Germany'),
-    cost$china_2f_range_cum %>%
-        group_by(year) %>%
-        select(
-            annSavings = cost_diff_bil, 
-            annSavings_lb = cost_diff_bil_lb,
-            annSavings_ub = cost_diff_bil_ub) %>% 
-        mutate(country = 'China'))
-
-# Cumulative costs
-cost_2f_range_cum <- rbind(
-    cost$us_2f_range_cum %>%
-        group_by(year) %>%
-        summarise(
-            cumSavings = sum(cost_diff_cum), 
-            cumSavings_lb = sum(cost_diff_cum_lb),
-            cumSavings_ub = sum(cost_diff_cum_ub)) %>% 
-        mutate(country = 'USA'),
-    cost$germany_2f_range_cum %>%
-        group_by(year) %>%
-        select(
-            cumSavings = cost_diff_cum, 
-            cumSavings_lb = cost_diff_cum_lb,
-            cumSavings_ub = cost_diff_cum_ub) %>% 
-        mutate(country = 'Germany'),
-    cost$china_2f_range_cum %>%
-        group_by(year) %>%
-        select(
-            cumSavings = cost_diff_cum, 
-            cumSavings_lb = cost_diff_cum_lb,
-            cumSavings_ub = cost_diff_cum_ub) %>% 
-        mutate(country = 'China'))
-
-# Cost data frames -- Projections BAU
-cost_us2030 <- cost$us2030_2f_range %>%
-    filter(model == "2factor", installType == 'Utility') %>%
-    mutate(scenario = str_to_upper(scenario))
-
-cum_savings_historical_plot <- cost_2f_range_cum %>%
-    mutate(country = fct_relevel(country, c("Germany", "USA", "China"))) %>%
+cum_savings_historical_plot <- cost$savings_historical %>%
+    mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
     ggplot() +
-    geom_area(aes(x = year, y = cumSavings, fill = country)) +
+    geom_area(aes(x = year, y = cum_savings_bil, fill = country)) +
     scale_fill_manual(values = c("#E5C61A", "#1A9FE5", "#E5601A")) +
     scale_x_continuous(breaks = seq(2008, 2018, 2)) +
     scale_y_continuous(
@@ -178,7 +122,7 @@ cum_savings_historical_plot <- cost_2f_range_cum %>%
         data = data.frame(
             x = c(2016, 2016, 2015.5), 
             y = c(25, 67, 130), 
-            label = c("China", "USA", "Germany")), 
+            label = c("China", "U.S.", "Germany")), 
         aes(x = x, y = y, label = label, color = label), 
         size = 6, family = "Fira Sans Condensed"
     ) +
@@ -192,13 +136,14 @@ cum_savings_historical_plot <- cost_2f_range_cum %>%
         y = "Cumulative savings (Billion 2018 $USD)",
         fill = "Country")
 
+# # Check for color blindness
 # colorblindr::cvd_grid(cum_savings_historical)
 
 ggsave(
-    file.path(dir$figs, 'final', 'cum_savings_historical.pdf'),
+    file.path(dir$figs, 'pdf', 'cum_savings_historical.pdf'),
     cum_savings_historical_plot, height = 4, width = 6.5, device = cairo_pdf)
 ggsave(
-    file.path(dir$figs, 'final', 'cum_savings_historical.png'),
+    file.path(dir$figs, 'png', 'cum_savings_historical.png'),
     cum_savings_historical_plot, height = 4, width = 6.5)
 
 # Annual savings ----
@@ -257,8 +202,11 @@ ggsave(
     file.path(dir$figs, 'final', 'ann_savings_historical_plot.png'),
     ann_savings_historical_plot, height = 4, width = 12)
 
-# 
-# 
+
+
+
+
+
 # # 2030 Projections -----
 # 
 # bau_s1_us2030 <- cost_us2030 %>%

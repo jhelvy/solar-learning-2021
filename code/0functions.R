@@ -101,42 +101,20 @@ makeNationalLearningData <- function(df_country, df_model, year_min = NULL) {
     result <- df_model %>% 
         left_join(df_country, by = "year") %>%
         mutate(
-            cap_addition = cap_country - cap_beg_country,
-            cumCapacityKw = cap_beg_world + cap_addition) %>% 
+            cum_cap_addition = cap_country - cap_beg_country,
+            cumCapacityKw = cap_beg_world + cum_cap_addition) %>% 
         select(
             year, costPerKw, price_si, cumCapacityKw, cap_beg_country,
-            cap_addition)
+            cum_cap_addition)
     return(result)
 }
 
-
-
-
-
-
-
-
-
-computeCostSavings <- function(df, data) {
-    result <- df %>%
-        merge(get_country_cap_additions(data)) %>%
-        group_by(year, installType) %>%
+computeSavings <- function(df, cap_additions, year_min) {
+    result <- df %>% 
+        left_join(cap_additions, by = c("year", "country")) %>% 
+        filter(year > year_min) %>% 
         mutate(
-            diff = cost_per_kw - lag(cost_per_kw, 1),
-            diff_ub = cost_per_kw_lb - lag(cost_per_kw_lb, 1),
-            diff_lb = cost_per_kw_ub - lag(cost_per_kw_ub, 1)) %>%
-        drop_na() %>%
-        select(-scenario) %>% 
-        select(year, installType, addCap, everything()) %>% 
-        mutate(
-            cost_diff_bil = addCap*diff / 10^9,
-            cost_diff_bil_lb = addCap*diff_lb / 10^9,
-            cost_diff_bil_ub = addCap*diff_ub / 10^9) %>% 
-        arrange(installType, year) %>% 
-        group_by(installType) %>% 
-        mutate(
-            cost_diff_cum = cumsum(cost_diff_bil), 
-            cost_diff_cum_lb = cumsum(cost_diff_bil_lb), 
-            cost_diff_cum_ub = cumsum(cost_diff_bil_ub))
+            ann_savings_bil = ann_cap_addition*(national - global) / 10^9) %>% 
+        select(year, country, ann_savings_bil)
     return(result)
 }
