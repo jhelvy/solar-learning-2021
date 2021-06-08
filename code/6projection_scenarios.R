@@ -4,6 +4,9 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
+# Load estimated LR models
+lr <- readRDS(dir$lr_models)
+
 # -----------------------------------------------------------------------
 # NOTES
 #
@@ -28,9 +31,12 @@ target_capacity_china <- 570*1e6
 target_capacity_germany <- 100*1e6 
 target_capacity_world <- 3100*1e6
 
-# US projections ----------------------------------------
+# Capacity calculations --------------------------------------------------
 
-# Compute annual capacity increase, 
+# Compute annual, linear capacity increase to meet target
+
+# US projections ---
+
 # install type breakdown taken from 2020 SEIA Capacity shares:
 start_year_us <- max(data$seiaCapacity$year)
 num_years_us <- year_max_proj - start_year_us
@@ -57,7 +63,7 @@ ggplot(capacity_us) +
   geom_point(aes(x = year, y = cumCapacityKw)) +
   facet_wrap(vars(installType))
 
-# China projections ----------------------------------------
+# China projections ---
 
 start_year_china <- max(data$china$year)
 num_years_china <- year_max_proj - start_year_china
@@ -82,7 +88,7 @@ capacity_china <- data$china %>%
 ggplot(capacity_china) +
   geom_point(aes(x = year, y = cumCapacityKw))
 
-# Germany projections ----------------------------------------
+# Germany projections ---
 
 start_year_germany <- max(data$germany$year)
 num_years_germany <- year_max_proj - start_year_germany
@@ -107,7 +113,7 @@ capacity_germany <- data$germany %>%
 ggplot(capacity_germany) +
   geom_point(aes(x = year, y = cumCapacityKw))
 
-# World projections -----
+# World projections ---
 
 # Silicon price: Assume constant from 2018
 start_year_world <- max(world$year)
@@ -129,18 +135,7 @@ capacity_world <- world %>%
 ggplot(capacity_world) +
   geom_point(aes(x = year, y = cumCapacityKw))
 
-# Save all formatted data as a list object ---
-
-saveRDS(list(
-    capacity_us      = capacity_us,
-    capacity_china   = capacity_china,
-    capacity_germany = capacity_germany,
-    capacity_world   = capacity_world),
-    dir$projections
-)
-
-
-
+# Cost calculations ------------------------------------------------------
 
 
 
@@ -232,4 +227,20 @@ us2030_2f_range <- rbind(
     mutate(scenario = 'bau', model = '1factor'),
   us2030_s1_2f_range %>%
     mutate(scenario = 's1', model = '2factor')
+)
+
+
+
+
+
+
+
+# Save all formatted data as a list object ---
+
+saveRDS(list(
+  capacity_us      = capacity_us,
+  capacity_china   = capacity_china,
+  capacity_germany = capacity_germany,
+  capacity_world   = capacity_world),
+  dir$projection_scenarios
 )

@@ -176,5 +176,5 @@ savings_historical <- rbind(
 saveRDS(list(
     cost_scenarios_historical = cost_scenarios_historical,
     savings_historical = savings_historical),
-    dir$cost_scenarios
+    dir$historical_scenarios
 )
