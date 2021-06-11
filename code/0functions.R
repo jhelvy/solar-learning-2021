@@ -125,3 +125,11 @@ computeSavings <- function(df, cap_additions, year_min) {
 repDf <- function(df, n) {
   return(df[rep(seq_len(nrow(df)), n), ])
 }
+
+getStartingCapcity <- function(df, year_min_proj) {
+  return(df[which(df$year == year_min_proj),]$cumCapacityKw)
+}
+
+getStartingCost <- function(df, year_min_proj) {
+  return(df[which(df$year == year_min_proj),]$costPerKw)
+}

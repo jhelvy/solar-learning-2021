@@ -34,13 +34,8 @@ target_capacity_china <- 570*1e6
 target_capacity_germany <- 100*1e6 
 target_capacity_world <- 3100*1e6
 
-# Silicon prices held constant at 2018 level 
+# Assuming silicon prices held constant at 2018 level
 price_si <- data$world[which(data$world$year == year_min_proj),]$price_si
-
-# Costs for global versus national learning
-costPerKw_start <- cost$cost_scenarios %>% 
-    filter(year == year_min_proj) %>% 
-    select(country, scenario, costPerKw = cost_per_kw)
 
 # Capacity calculations --------------------------------------------------
 
@@ -74,9 +69,9 @@ capacity_us <- data$seiaCapacity %>%
   ungroup() %>% 
   mutate(price_si = price_si)
 
-# Preview
-ggplot(capacity_us) +
-  geom_point(aes(x = year, y = cumCapacityKw))
+# # Preview
+# ggplot(capacity_us) +
+#   geom_point(aes(x = year, y = cumCapacityKw))
 
 # China projections ---
 
@@ -100,9 +95,9 @@ capacity_china <- data$china %>%
   ) %>% 
   mutate(price_si = price_si)
 
-# Preview
-ggplot(capacity_china) +
-  geom_point(aes(x = year, y = cumCapacityKw))
+# # Preview
+# ggplot(capacity_china) +
+#   geom_point(aes(x = year, y = cumCapacityKw))
 
 # Germany projections ---
 
@@ -126,13 +121,12 @@ capacity_germany <- data$germany %>%
   ) %>% 
   mutate(price_si = price_si)
 
-# Preview
-ggplot(capacity_germany) +
-  geom_point(aes(x = year, y = cumCapacityKw))
+# # Preview
+# ggplot(capacity_germany) +
+#   geom_point(aes(x = year, y = cumCapacityKw))
 
 # World projections ---
 
-# Silicon price: Assume constant from 2018
 start_year_world <- max(data$world$year)
 num_years_world <- year_max_proj - start_year_world
 capacity_world <- data.frame(
@@ -148,50 +142,218 @@ capacity_world <- data$world %>%
       mutate(cumCapacityKw = beg_capacity + (year - start_year_world)*annualCap)
   )
   
-# Preview
-ggplot(capacity_world) +
-  geom_point(aes(x = year, y = cumCapacityKw))
+# # Preview
+# ggplot(capacity_world) +
+#   geom_point(aes(x = year, y = cumCapacityKw))
 
 # Cost calculations ------------------------------------------------------
 
+# Starting COSTS for global versus national learning in each country
+costPerKw_start <- cost$cost_scenarios %>%
+  filter(year == year_min_proj) %>%
+  select(country, scenario, costPerKw = cost_per_kw)
+costPerKw_start <- split(costPerKw_start, costPerKw_start$country)
+costPerKw_start_us <- split(costPerKw_start$U.S., costPerKw_start$U.S.$scenario)
+costPerKw_start_us_national <- costPerKw_start_us$national$costPerKw
+costPerKw_start_us_global <- costPerKw_start_us$global$costPerKw
+costPerKw_start_us_historical <- getStartingCost(lr$data_us, year_min_proj)
+costPerKw_start_china <- split(costPerKw_start$China, costPerKw_start$China$scenario)
+costPerKw_start_china_national <- costPerKw_start_china$national$costPerKw
+costPerKw_start_china_global <- costPerKw_start_china$global$costPerKw
+costPerKw_start_china_historical <- getStartingCost(lr$data_china, year_min_proj)
+costPerKw_start_germany <- split(costPerKw_start$Germany, costPerKw_start$Germany$scenario)
+costPerKw_start_germany_national <- costPerKw_start_germany$national$costPerKw
+costPerKw_start_germany_global <- costPerKw_start_germany$global$costPerKw
+costPerKw_start_germany_historical <- getStartingCost(lr$data_germany, year_min_proj)
+
+# Starting CAPACITIES for global versus national learning in each country
+cap_beg_us <- getStartingCapcity(capacity_us, year_min_proj)
+cap_beg_china <- getStartingCapcity(capacity_china, year_min_proj)
+cap_beg_germany <- getStartingCapcity(capacity_germany, year_min_proj)
+cap_beg_world <- getStartingCapcity(capacity_world, year_min_proj)
+
 # US projections ---
 
-capacity_us_global <- capacity_world %>% 
-    mutate(
-        costPerKw = costPerKw_start %>% 
-            filter(country == "U.S.", scenario == "global") %>% 
-            pull(costPerKw))
-cap_beg_us <- capacity_us[which(capacity_us$year == year_min_proj),]$cumCapacityKw
-cap_beg_world <- capacity_world[which(capacity_world$year == year_min_proj),]$cumCapacityKw
+# Global - Historical costs
+# Capacity: world projections from 2018 levels
+# Cost: Starting from historical 2018 levels
+us_global_hist_cost <- predict_cost(
+  model    = lr$model_us,
+  data     = capacity_world,
+  cost_beg = costPerKw_start_us_historical,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
+
+# Global - Modeled costs
+# Capacity: world projections from 2018 levels
+# Cost: Starting from modeled 2018 levels
+us_global_modeled_cost <- predict_cost(
+  model    = lr$model_us,
+  data     = capacity_world,
+  cost_beg = costPerKw_start_us_global,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
+
+# National - Historical costs
+# Capacity: US projections from 2018 levels
+# Cost: Starting from historical 2018 levels
 capacity_us_national <- capacity_us %>% 
     mutate(
-        costPerKw = costPerKw_start %>% 
-            filter(country == "U.S.", scenario == "national") %>% 
-            pull(costPerKw),
         cum_cap_addition = cumCapacityKw - cap_beg_us,
         cumCapacityKw = cap_beg_world + cum_cap_addition)
+us_national_hist_cost <- predict_cost(
+  model    = lr$model_us,
+  data     = capacity_us_national,
+  cost_beg = costPerKw_start_us_historical,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
 
-cost_proj_global_us <- predict_cost(
-    model    = lr$model_us,
-    data     = capacity_us_global,
-    year_min = year_min_proj,
-    ci       = 0.95)
-cost_proj_national_us <- predict_cost(
-    model    = lr$model_us,
-    data     = capacity_us_national,
-    year_min = year_min_proj,
-    ci       = 0.95)
+# National - Modeled costs
+# Capacity: US projections from 2018 levels
+# Cost: Starting from modeled 2018 levels
+us_national_modeled_cost <- predict_cost(
+  model    = lr$model_us,
+  data     = capacity_us_national,
+  cost_beg = costPerKw_start_us_national,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
 
+# China projections ---
+
+# Global - Historical costs
+# Capacity: world projections from 2018 levels
+# Cost: Starting from historical 2018 levels
+china_global_hist_cost <- predict_cost(
+  model    = lr$model_china,
+  data     = capacity_world,
+  cost_beg = costPerKw_start_china_historical,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
+
+# Global - Modeled costs
+# Capacity: world projections from 2018 levels
+# Cost: Starting from modeled 2018 levels
+china_global_modeled_cost <- predict_cost(
+  model    = lr$model_china,
+  data     = capacity_world,
+  cost_beg = costPerKw_start_china_global,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
+
+# National - Historical costs
+# Capacity: China projections from 2018 levels
+# Cost: Starting from historical 2018 levels
+capacity_china_national <- capacity_china %>%
+    mutate(
+        cum_cap_addition = cumCapacityKw - cap_beg_china,
+        cumCapacityKw = cap_beg_world + cum_cap_addition)
+china_national_hist_cost <- predict_cost(
+  model    = lr$model_china,
+  data     = capacity_china_national,
+  cost_beg = costPerKw_start_china_historical,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
+
+# National - Modeled costs
+# Capacity: China projections from 2018 levels
+# Cost: Starting from modeled 2018 levels
+china_national_modeled_cost <- predict_cost(
+  model    = lr$model_china,
+  data     = capacity_china_national,
+  cost_beg = costPerKw_start_china_national,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
+
+# Germany projections ---
+
+# Global - Historical costs
+# Capacity: world projections from 2018 levels
+# Cost: Starting from historical 2018 levels
+germany_global_hist_cost <- predict_cost(
+  model    = lr$model_germany,
+  data     = capacity_world,
+  cost_beg = costPerKw_start_germany_historical,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
+
+# Global - Modeled costs
+# Capacity: world projections from 2018 levels
+# Cost: Starting from modeled 2018 levels
+germany_global_modeled_cost <- predict_cost(
+  model    = lr$model_germany,
+  data     = capacity_world,
+  cost_beg = costPerKw_start_germany_global,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
+
+# National - Historical costs
+# Capacity: Germany projections from 2018 levels
+# Cost: Starting from historical 2018 levels
+capacity_germany_national <- capacity_germany %>%
+    mutate(
+        cum_cap_addition = cumCapacityKw - cap_beg_germany,
+        cumCapacityKw = cap_beg_world + cum_cap_addition)
+germany_national_hist_cost <- predict_cost(
+  model    = lr$model_germany,
+  data     = capacity_germany_national,
+  cost_beg = costPerKw_start_germany_historical,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
+
+# National - Modeled costs
+# Capacity: Germany projections from 2018 levels
+# Cost: Starting from modeled 2018 levels
+germany_national_modeled_cost <- predict_cost(
+  model    = lr$model_germany,
+  data     = capacity_germany_national,
+  cost_beg = costPerKw_start_germany_national,
+  cap_beg  = cap_beg_world,
+  si_beg   = price_si,
+  year_min = year_min_proj,
+  ci       = 0.95)
 # Save all formatted data as a list object ---
 
 saveRDS(list(
-  capacity_us      = capacity_us,
-  capacity_us_global = capacity_us_global, 
-  capacity_us_national = capacity_us_national,
-  cost_proj_global_us = cost_proj_global_us,
-  cost_proj_national_us = cost_proj_national_us,
-  capacity_china   = capacity_china,
-  capacity_germany = capacity_germany,
-  capacity_world   = capacity_world),
+  capacity_us               = capacity_us,
+  capacity_us_national      = capacity_us_national,
+  capacity_china            = capacity_china,
+  capacity_china_national   = capacity_china_national,
+  capacity_germany          = capacity_germany,
+  capacity_germany_national = capacity_germany_national,
+  capacity_world            = capacity_world,
+  us_global_hist_cost      = us_global_hist_cost,
+  us_global_modeled_cost   = us_global_modeled_cost,
+  us_national_hist_cost    = us_national_hist_cost,
+  us_national_modeled_cost = us_national_modeled_cost,
+  china_global_hist_cost      = china_global_hist_cost,
+  china_global_modeled_cost   = china_global_modeled_cost,
+  china_national_hist_cost    = china_national_hist_cost,
+  china_national_modeled_cost = china_national_modeled_cost,
+  germany_global_hist_cost      = germany_global_hist_cost,
+  germany_global_modeled_cost   = germany_global_modeled_cost,
+  germany_national_hist_cost    = germany_national_hist_cost,
+  germany_national_modeled_cost = germany_national_modeled_cost),
   dir$projection_scenarios
 )
