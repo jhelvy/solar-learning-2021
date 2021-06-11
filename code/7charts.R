@@ -10,6 +10,9 @@ lr <- readRDS(dir$lr_models)
 # Load historical cost scenario data
 cost <- readRDS(dir$historical_scenarios)
 
+# Load projections
+proj <- readRDS(dir$projection_scenarios)
+
 # Global PV production ------------
 
 # Read in and format data
@@ -94,6 +97,7 @@ cost_historical_plot <- cost$cost_scenarios %>%
         date_labels = "'%y",
         date_breaks = "2 years") +
     scale_y_continuous(labels = scales::dollar) +
+    expand_limits(y = 0) +
     scale_color_manual("Scenario", values = c("#E5601A", "#1A9FE5")) +
     scale_fill_manual("Scenario", values = c("#E5601A", "#1A9FE5")) +
     theme_minimal_grid(
@@ -130,9 +134,6 @@ cost_historical_plot <- cost$cost_scenarios %>%
         aes(x = x, y = y, xend = xend, yend = yend), 
         color = "grey60", size = 0.5
     )
-
-# # Check for color blindness
-# colorblindr::cvd_grid(cost_historical_plot)
 
 ggsave(
     file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
@@ -177,9 +178,6 @@ cum_savings_historical_plot <- cost$savings %>%
         x = NULL,
         y = "Cumulative savings (Billion 2018 $USD)",
         fill = "Country")
-
-# # Check for color blindness
-# colorblindr::cvd_grid(cum_savings_historical)
 
 ggsave(
     file.path(dir$figs, 'pdf', 'cum_savings_historical.pdf'),
@@ -244,34 +242,131 @@ ggsave(
     file.path(dir$figs, 'png', 'ann_savings_historical_plot.png'),
     ann_savings_historical_plot, height = 4, width = 12)
 
-# 2030 Projections -----
+# 2030 Projections - From historical 2018 levels-----
 
-# bau_s1_us2030 <- cost_us2030 %>%
-#      ggplot(aes(x = year, y = cost_per_kw, color = component)) +
-#      geom_line(aes(linetype = scenario), size = 1) +
-#      geom_point(aes(shape = scenario),
-#                 fill = 'white', size = 1.7) +
-#      facet_wrap(vars(component), nrow = 1) +
-#      scale_x_continuous(
-#          limits = c(2018, 2030),
-#          breaks = seq(2018, 2030, 2)) +
-#      # scale_y_continuous(
-#      #     limits = c(0, 5500),
-#      #     labels = scales::comma) +
-#      scale_shape_manual(values = c(21, 16)) +
-#      guides(color = FALSE, shape = FALSE) +
-#      theme_minimal_grid() +
-#      panel_border() +
-#      theme(
-#          legend.position = "bottom",
-#          strip.background = element_rect(fill = "grey"))+
-#      labs(title = 'Comparison of cost per kW (USA - Utility Only)',
-#           y = "Cost per kW (2018 $USD)",
-#           linetype = "Scenario:")
-# 
-# ggsave(
-#     file.path(dir$figs, 'cost_scenarios', 'bau_s1_us2030.pdf'),
-#     bau_s1_us2030, height = 4, width = 10)
+cost_proj_hist_cost <- rbind(
+  proj$us_national_hist_cost %>%
+    mutate(country = "U.S.", scenario = "National"),
+  proj$us_global_hist_cost %>%
+    mutate(country = "U.S.", scenario = "Global"),
+  proj$china_national_hist_cost %>%
+    mutate(country = "China", scenario = "National"),
+  proj$china_global_hist_cost %>%
+    mutate(country = "China", scenario = "Global"),
+  proj$germany_national_hist_cost %>%
+    mutate(country = "Germany", scenario = "National"),
+  proj$germany_global_hist_cost %>%
+    mutate(country = "Germany", scenario = "Global")) %>%
+  mutate(
+    scenario = fct_relevel(scenario, c("National", "Global")),
+    scenario = fct_recode(scenario,
+      "Global learning" = "Global",
+      "National learning" = "National"),
+    year = lubridate::ymd(paste0(year, "-01-01"))) %>%
+  ggplot() +
+  geom_ribbon(
+    aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
+        fill = scenario), alpha = 0.25) +
+  geom_line(
+    aes(x = year, y = cost_per_kw, color = scenario),
+    alpha = 0.6, size = 1) +
+  facet_wrap(vars(country), nrow = 1) +
+  scale_x_date(
+    limits = lubridate::ymd(c("2017-07-01", "2030-07-01")),
+    date_labels = "'%y",
+    date_breaks = "2 years") +
+  scale_y_continuous(labels = scales::dollar) +
+  expand_limits(y = 0) +
+  scale_color_manual("Scenario", values = c("#E5601A", "#1A9FE5")) +
+  scale_fill_manual("Scenario", values = c("#E5601A", "#1A9FE5")) +
+  theme_minimal_grid(
+    font_size = 16,
+    font_family = "Fira Sans Condensed") +
+  panel_border() +
+  theme(
+    plot.title.position = "plot",
+    legend.position = "right",
+    strip.background = element_rect(fill = "grey80"),
+    panel.grid.major = element_line(
+      size = 0.5, colour = "grey90")
+  ) +
+  labs(
+    title = 'Projected Module Costs Using Global vs. National Learning Rates',
+    y = "Cost per kW (2018 $USD)",
+    x = "Year")
+
+ggsave(
+  file.path(dir$figs, 'pdf', 'cost_proj_hist_cost.pdf'),
+  cost_proj_hist_cost, height = 4, width = 12, device = cairo_pdf)
+ggsave(
+  file.path(dir$figs, 'png', 'cost_proj_hist_cost.png'),
+  cost_proj_hist_cost, height = 4, width = 12)
+
+# 2030 Projections - From modeled 2018 levels-----
+
+cost_proj_modeled_cost <- rbind(
+  proj$us_national_modeled_cost %>%
+    mutate(country = "U.S.", scenario = "National"),
+  proj$us_global_modeled_cost %>%
+    mutate(country = "U.S.", scenario = "Global"),
+  proj$china_national_modeled_cost %>%
+    mutate(country = "China", scenario = "National"),
+  proj$china_global_modeled_cost %>%
+    mutate(country = "China", scenario = "Global"),
+  proj$germany_national_modeled_cost %>%
+    mutate(country = "Germany", scenario = "National"),
+  proj$germany_global_modeled_cost %>%
+    mutate(country = "Germany", scenario = "Global")) %>%
+  mutate(
+    scenario = fct_relevel(scenario, c("National", "Global")),
+    scenario = fct_recode(scenario,
+      "Global learning" = "Global",
+      "National learning" = "National"),
+    year = lubridate::ymd(paste0(year, "-01-01"))) %>%
+  ggplot() +
+  geom_ribbon(
+    aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
+        fill = scenario), alpha = 0.25) +
+  geom_line(
+    aes(x = year, y = cost_per_kw, color = scenario),
+    alpha = 0.6, size = 1) +
+  facet_wrap(vars(country), nrow = 1) +
+  scale_x_date(
+    limits = lubridate::ymd(c("2017-07-01", "2030-07-01")),
+    date_labels = "'%y",
+    date_breaks = "2 years") +
+  scale_y_continuous(labels = scales::dollar) +
+  expand_limits(y = 0) +
+  scale_color_manual("Scenario", values = c("#E5601A", "#1A9FE5")) +
+  scale_fill_manual("Scenario", values = c("#E5601A", "#1A9FE5")) +
+  theme_minimal_grid(
+    font_size = 16,
+    font_family = "Fira Sans Condensed") +
+  panel_border() +
+  theme(
+    plot.title.position = "plot",
+    legend.position = "right",
+    strip.background = element_rect(fill = "grey80"),
+    panel.grid.major = element_line(
+      size = 0.5, colour = "grey90")
+  ) +
+  labs(
+    title = 'Projected Module Costs Using Global vs. National Learning Rates',
+    y = "Cost per kW (2018 $USD)",
+    x = "Year")
+
+ggsave(
+  file.path(dir$figs, 'pdf', 'cost_proj_modeled_cost.pdf'),
+  cost_proj_modeled_cost, height = 4, width = 12, device = cairo_pdf)
+ggsave(
+  file.path(dir$figs, 'png', 'cost_proj_modeled_cost.png'),
+  cost_proj_modeled_cost, height = 4, width = 12)
 
 
 
+
+
+
+
+# # Check for color blindness
+# colorblindr::cvd_grid(plot)
