@@ -44,7 +44,14 @@ ci <- function(data, alpha = 0.025) {
   return(ests)
 }
 
-predict_cost <- function(model, data, year_min = NULL, ci = 0.95) {
+predict_cost <- function(
+  model, 
+  data,
+  cost_beg, 
+  cap_beg,
+  si_beg,
+  year_min = NULL, 
+  ci = 0.95) {
     if (is.null(year_min)) {
         year_min = min(data$year)
     }
@@ -53,10 +60,6 @@ predict_cost <- function(model, data, year_min = NULL, ci = 0.95) {
     # incorporate the full covariance matrix of the model
     draws <- data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
     colnames(draws) <- c('int', 'b', 'c')
-    # Compute starting values
-    cost_beg <- data[1,]$costPerKw
-    cap_beg <- data[1,]$cumCapacityKw
-    si_beg <- data[1,]$price_si
     result <- list()
     # Compute cost_per_kw with uncertainty using parameter draws
     for (i in seq(nrow(data))) {
