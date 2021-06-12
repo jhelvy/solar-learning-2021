@@ -368,5 +368,98 @@ ggsave(
 
 
 
+# 2008 - 2030 Projections - From historical 2018 levels-----
+
+cost_proj_modeled_cost_08_30 <- rbind(
+  cost$cost_scenarios,
+  proj$us_national_modeled_cost %>%
+    mutate(scenario = "national", country = "U.S."),
+  proj$us_global_modeled_cost %>%
+    mutate(scenario = "global", country = "U.S."),
+  proj$china_national_modeled_cost %>%
+    mutate(scenario = "national", country = "China"),
+  proj$china_global_modeled_cost %>%
+    mutate(scenario = "global", country = "China"),
+  proj$germany_national_modeled_cost %>%
+    mutate(scenario = "national", country = "Germany"),
+  proj$germany_global_modeled_cost %>%
+    mutate(scenario = "global", country = "Germany")) %>%
+  mutate(
+    scenario = fct_relevel(scenario, c("national", "global")),
+    scenario = fct_recode(scenario,
+                          "Global learning" = "global",
+                          "National learning" = "national"),
+    year = lubridate::ymd(paste0(year, "-01-01"))) %>%
+  ggplot() +
+  # First add historical cost line as dashed line
+  geom_line(
+    data = cost_historical %>%
+      filter(component == "Module") %>%
+      mutate(year = lubridate::ymd(paste0(year, "-01-01"))),
+    aes(x = year, y = costPerKw), linetype = 2, alpha = 0.4, size = 1) +
+  # Now add modeled costs
+  geom_ribbon(
+    aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
+        fill = scenario), alpha = 0.25) +
+  geom_line(
+    aes(x = year, y = cost_per_kw, color = scenario),
+    alpha = 0.6, size = 1) +
+  facet_wrap(vars(country), nrow = 1) +
+  scale_x_date(
+    limits = lubridate::ymd(c("2007-07-01", "2030-07-01")),
+    date_labels = "'%y",
+    date_breaks = "2 years") +
+  scale_y_continuous(labels = scales::dollar) +
+  expand_limits(y = 0) +
+  scale_color_manual("Scenario", values = c("#E5601A", "#1A9FE5")) +
+  scale_fill_manual("Scenario", values = c("#E5601A", "#1A9FE5")) +
+  theme_minimal_grid(
+    font_size = 16,
+    font_family = "Fira Sans Condensed") +
+  panel_border() +
+  theme(
+    plot.title.position = "plot",
+    legend.position = "right",
+    strip.background = element_rect(fill = "grey80"),
+    panel.grid.major = element_line(
+      size = 0.5, colour = "grey90")
+  ) +
+  labs(
+    title = 'Module Costs Using Global vs. National Learning Rates',
+    y = "Cost per kW (2018 $USD)",
+    x = "Year") +
+  # Add "historical" labels
+  geom_text(
+    data = data.frame(
+      x = lubridate::ymd(rep("2009-03-01", 3)),
+      y = c(500, 500, 500),
+      label = rep("Historical", 3)),
+    aes(x = x, y = y, label = label),
+    color = "grey60", size = 5, family = "Fira Sans Condensed"
+  ) +
+  geom_segment(
+    data = data.frame(
+      x = lubridate::ymd(rep("2011-01-01", 3)),
+      xend = lubridate::ymd(rep("2011-12-01", 3)),
+      y = c(500, 500, 500),
+      yend = c(700, 650, 800),
+      country = c("China", "Germany", "U.S.")),
+    aes(x = x, y = y, xend = xend, yend = yend),
+    color = "grey60", size = 0.5
+  )
+
+ggsave(
+  file.path(dir$figs, 'pdf', 'cost_proj_modeled_cost_08_30.pdf'),
+  cost_proj_modeled_cost_08_30, height = 4, width = 12, device = cairo_pdf)
+ggsave(
+  file.path(dir$figs, 'png', 'cost_proj_modeled_cost_08_30.png'),
+  cost_proj_modeled_cost_08_30, height = 4, width = 12)
+
+
+
+
+
+
+
 # # Check for color blindness
 # colorblindr::cvd_grid(plot)
