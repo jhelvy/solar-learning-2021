@@ -379,6 +379,80 @@ world <- left_join(world, silicon) %>%
   select(year, price_si, cumCapacityKw) %>%
   fill(price_si, .direction = "down")
 
+# -----------------------------------------------------------------------
+# Projections
+# -----------------------------------------------------------------------
+
+# Projection range
+year_min_proj <- 2018
+year_max_proj <- 2030
+#
+# Projections to 2030, based on achieving fixed capacity by 2030
+#
+# Targets:
+#
+# U.S.:    300 GW, taken from NAM, Committee on Accelerating Decarbonization
+#          in the United States (2021)
+# China:   570 GW, taken from total renewable goal of 1200 GW in 2030, using
+#          same proportions of wind + solar as in 2020
+# Germany: 100 GW, from Germany's Renewable Energy Act 2021  
+# World:   3100 GW, from WEO 2020 Sustainable Development Scenario
+
+target_capacity_us <- 300*1e6 
+target_capacity_china <- 570*1e6 
+target_capacity_germany <- 100*1e6 
+target_capacity_world <- 3100*1e6
+
+# Assuming silicon prices held constant at 2018 level
+price_si <- data$world[which(data$world$year == year_min_proj),]$price_si
+
+# Compute annual, linear capacity increase to meet target
+
+# US ---
+
+capacity_proj_us <- getFutureCapacities(
+  df = seiaCapacity %>% 
+    group_by(year) %>% 
+    summarise(cumCapacityKw = sum(cumCapacityKw)), 
+  year_max_proj = year_max_proj,
+  target_capacity = target_capacity_us) %>% 
+  mutate(price_si = price_si)
+
+# China ---
+
+capacity_proj_china <- getFutureCapacities(
+  df = china %>% 
+    filter(component == "Module"),
+  year_max_proj = year_max_proj,
+  target_capacity = target_capacity_china) %>% 
+  mutate(price_si = price_si)
+
+# Germany ---
+
+capacity_proj_germany <- getFutureCapacities(
+  df = germany %>% 
+    filter(component == "Module"),
+  year_max_proj = year_max_proj,
+  target_capacity = target_capacity_germany) %>% 
+  mutate(price_si = price_si)
+
+# World ---
+
+capacity_proj_world <- getFutureCapacities(
+  df = world,
+  year_max_proj = year_max_proj,
+  target_capacity = target_capacity_world) %>% 
+  mutate(price_si = price_si)
+
+# Preview linear projections
+rbind(
+  mutate(capacity_proj_us, country = "U.S."), 
+  mutate(capacity_proj_china, country = "China"),
+  mutate(capacity_proj_germany, country = "Germany")) %>% 
+  ggplot() +
+  geom_point(aes(x = year, y = cumCapacityKw)) + 
+  facet_wrap(vars(country))
+
 # Save all formatted data as a list object ---
 
 saveRDS(list(
@@ -393,6 +467,10 @@ saveRDS(list(
     usSeiaLbnl         = usSeiaLbnl,
     china              = china,
     germany            = germany,
-    world              = world),
+    world              = world, 
+    capacity_proj_us      = capacity_proj_us, 
+    capacity_proj_china   = capacity_proj_china,
+    capacity_proj_germany = capacity_proj_germany,
+    capacity_proj_world   = capacity_proj_world),
     dir$data_formatted
 )

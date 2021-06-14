@@ -28,6 +28,21 @@
 #   b = lnCap_estimate = learning coefficient on capacity
 #   c = lnSi_estimate = coefficient on silicon price
 
+getFutureCapacities <- function(
+  df, year_max_proj, target_capacity) {
+  start_year <- max(df$year)
+  num_years <- year_max_proj - start_year
+  result <- df %>%
+    filter(year >= start_year) %>%
+    mutate(annualCap = (target_capacity - cumCapacityKw) / num_years) %>%
+    select(begCap = cumCapacityKw, annualCap) %>%
+    repDf(num_years) %>%
+    mutate(year = start_year + seq(num_years)) %>%
+    mutate(cumCapacityKw = cumsum(annualCap) + begCap) %>%
+    select(year, cumCapacityKw)
+  return(result)
+}
+
 run_model <- function(data) {
     model <- lm(
         formula = log(costPerKw) ~ log(cumCapacityKw) + log(price_si),
