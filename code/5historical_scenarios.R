@@ -21,8 +21,15 @@ year_max <- 2018
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
+# Set beginning values
 us_beg <- lr$data_us %>%
     filter(year == year_min)
+china_beg <- lr$data_china %>%
+    filter(year == year_min)
+germany_beg <- lr$data_germany %>%
+    filter(year == year_min)
+
+# Compute cost scenarios by country
 cost_scenarios_global_us <- predict_cost(
     model    = lr$model_us,
     data     = lr$data_us,
@@ -32,8 +39,6 @@ cost_scenarios_global_us <- predict_cost(
     year_beg = year_min,
     ci       = 0.95)
 
-china_beg <- lr$data_china %>%
-    filter(year == year_min)
 cost_scenarios_global_china <- predict_cost(
     model    = lr$model_china,
     data     = lr$data_china,
@@ -43,8 +48,6 @@ cost_scenarios_global_china <- predict_cost(
     year_beg = year_min,
     ci       = 0.95)
 
-germany_beg <- lr$data_germany %>%
-    filter(year == year_min)
 cost_scenarios_global_germany <- predict_cost(
     model    = lr$model_germany,
     data     = lr$data_germany,
@@ -64,10 +67,21 @@ cost_scenarios_global_germany <- predict_cost(
 
 # Compute national cost predictions
 
+# Create national learning data for each country
 data_national_us <- makeNationalLearningData(
     df_country = data$usSeiaLbnl,
     df_model   = lr$data_us,
     year_beg   = year_min)
+data_national_china <- makeNationalLearningData(
+    df_country = data$china,
+    df_model   = lr$data_china,
+    year_beg   = year_min)
+data_national_germany <- makeNationalLearningData(
+    df_country = data$germany,
+    df_model   = lr$data_germany,
+    year_beg   = year_min)
+
+# Compute cost scenarios by country
 cost_scenarios_national_us <- predict_cost(
     model    = lr$model_us,
     data     = data_national_us,
@@ -77,10 +91,6 @@ cost_scenarios_national_us <- predict_cost(
     year_beg = year_min,
     ci       = 0.95)
 
-data_national_china <- makeNationalLearningData(
-    df_country = data$china,
-    df_model   = lr$data_china,
-    year_beg   = year_min)
 cost_scenarios_national_china <- predict_cost(
     model    = lr$model_china,
     data     = data_national_china,
@@ -90,10 +100,6 @@ cost_scenarios_national_china <- predict_cost(
     year_beg = year_min,
     ci       = 0.95)
 
-data_national_germany <- makeNationalLearningData(
-    df_country = data$germany,
-    df_model   = lr$data_germany,
-    year_beg   = year_min)
 cost_scenarios_national_germany <- predict_cost(
     model    = lr$model_germany,
     data     = data_national_germany,
