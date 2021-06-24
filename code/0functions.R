@@ -29,15 +29,15 @@
 #   c = lnSi_estimate = coefficient on silicon price
 
 getFutureCapacities <- function(
-  df, year_max_proj, target_capacity) {
-  start_year <- max(df$year)
-  num_years <- year_max_proj - start_year
+  df, year_min_proj, year_max_proj, target_capacity
+) {
+  num_years <- year_max_proj - year_min_proj
   result <- df %>%
-    filter(year >= start_year) %>%
+    filter(year == year_min_proj) %>%
     mutate(annualCap = (target_capacity - cumCapacityKw) / num_years) %>%
     select(begCap = cumCapacityKw, annualCap) %>%
     repDf(num_years) %>%
-    mutate(year = start_year + seq(num_years)) %>%
+    mutate(year = year_min_proj + seq(num_years)) %>%
     mutate(cumCapacityKw = cumsum(annualCap) + begCap) %>%
     select(year, cumCapacityKw)
   return(result)
@@ -99,6 +99,9 @@ predict_cost <- function(
 makeNationalLearningData <- function(df_country, df_model, year_beg = NULL) {
     if (is.null(year_beg)) {
         year_beg = min(data$year)
+    }
+    if (! "component" %in% names(df_country)) {
+      df_country$component <- "Module"
     }
     # Aggregate country installed capacity if data is broken down by 
     # install type 

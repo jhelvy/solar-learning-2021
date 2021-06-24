@@ -11,9 +11,7 @@ lr <- readRDS(dir$lr_models)
 year_min <- 2008
 year_max <- 2018
 
-# HISTORICAL COST SCENARIOS ---------------------------------------------------
-
-# Global Learning ----
+# GLOBAL LEARNING ---------------------------------------------------
 
 # Learning rates based on world cumulative capacity and local installed costs
 # Note: Since world data does not break down installation type
@@ -57,9 +55,9 @@ cost_scenarios_global_germany <- predict_cost(
     year_beg = year_min,
     ci       = 0.95)
 
-# National Learning ----
+# NATIONAL LEARNING ---------------------------------------------------
 
-# Learning rates based on world cumulative capacity and local installed costs
+# Learning rates based on local cumulative capacity and local installed costs
 # Note: Since world data does not break down installation type
 #       (Commercial, Residential, Utility),
 #       we replicate capacities across all types

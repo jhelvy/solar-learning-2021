@@ -416,12 +416,14 @@ proj_df_us <- seiaCapacity %>%
 
 proj_nat_trends_us <- getFutureCapacities(
   df = proj_df_us,
+  year_min_proj = year_min_proj,
   year_max_proj = year_max_proj,
   target_capacity = target_nat_trends_us) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_us <- getFutureCapacities(
   df = proj_df_us,
+  year_min_proj = year_min_proj,
   year_max_proj = year_max_proj,
   target_capacity = target_sus_dev_us) %>%
   mutate(price_si = price_si)
@@ -433,12 +435,14 @@ proj_df_china <- china %>%
 
 proj_nat_trends_china <- getFutureCapacities(
   df = proj_df_china,
+  year_min_proj = year_min_proj,
   year_max_proj = year_max_proj,
   target_capacity = target_nat_trends_china) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_china <- getFutureCapacities(
   df = proj_df_china,
+  year_min_proj = year_min_proj,
   year_max_proj = year_max_proj,
   target_capacity = target_sus_dev_china) %>%
   mutate(price_si = price_si)
@@ -450,12 +454,14 @@ proj_df_germany <- germany %>%
 
 proj_nat_trends_germany <- getFutureCapacities(
   df = proj_df_germany,
+  year_min_proj = year_min_proj,
   year_max_proj = year_max_proj,
   target_capacity = target_nat_trends_germany) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_germany <- getFutureCapacities(
   df = proj_df_germany,
+  year_min_proj = year_min_proj,
   year_max_proj = year_max_proj,
   target_capacity = target_sus_dev_germany) %>%
   mutate(price_si = price_si)
@@ -464,12 +470,14 @@ proj_sus_dev_germany <- getFutureCapacities(
 
 proj_nat_trends_world <- getFutureCapacities(
   df = world,
+  year_min_proj = year_min_proj,
   year_max_proj = year_max_proj,
   target_capacity = target_nat_trends_world) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_world <- getFutureCapacities(
   df = world,
+  year_min_proj = year_min_proj,
   year_max_proj = year_max_proj,
   target_capacity = target_sus_dev_world) %>%
   mutate(price_si = price_si)

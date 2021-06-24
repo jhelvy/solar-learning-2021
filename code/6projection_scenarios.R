@@ -16,6 +16,12 @@ year_max_proj <- 2030
 
 # GLOBAL LEARNING ---------------------------------------------------
 
+# Learning rates based on world cumulative capacity and local installed costs
+# Note: Since world data does not break down installation type
+#       (Commercial, Residential, Utility),
+#       we replicate capacities across all types
+#       (assuming in effect that learning is shared across installation type)
+
 # Set beginning values
 us_beg <- lr$data_us %>%
     filter(year == year_min_proj)
@@ -84,9 +90,39 @@ proj_sus_dev_global_germany <- predict_cost(
 
 # NATIONAL LEARNING ---------------------------------------------------
 
+# Learning rates based on local cumulative capacity and local installed costs
+# Note: Since world data does not break down installation type
+#       (Commercial, Residential, Utility),
+#       we replicate capacities across all types
+#       (assuming in effect that learning is shared across installation type)
 
+# Create national learning data for each country
+data_national_us <- makeNationalLearningData(
+    df_country = data$proj_nat_trends %>% filter(country == "U.S."),
+    df_model   = lr$data_us,
+    year_beg   = year_min_proj)
 
+# National trends projections ---
 
+proj_nat_trends_global_us <- predict_cost(
+  model    = lr$model_us,
+  data     = data$proj_nat_trends %>% filter(country == "World"),
+  cost_beg = us_beg$costPerKw,
+  cap_beg  = us_beg$cumCapacityKw,
+  si_beg   = us_beg$price_si,
+  year_beg = year_min_proj,
+  ci       = 0.95)
+
+# Sustainable development projections ---
+
+proj_sus_dev_global_us <- predict_cost(
+  model    = lr$model_us,
+  data     = data$proj_sus_dev %>% filter(country == "World"),
+  cost_beg = us_beg$costPerKw,
+  cap_beg  = us_beg$cumCapacityKw,
+  si_beg   = us_beg$price_si,
+  year_beg = year_min_proj,
+  ci       = 0.95)
 
 
 
