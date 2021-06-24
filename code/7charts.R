@@ -70,17 +70,13 @@ cost_historical_true <- rbind(
       year >= 2008, year <= 2018,
       component == "Module")
 
-colors_learning <- c(
-  "National learning" = "#E5601A", 
-  "Global learning" = "#1A9FE5")
+colors_learning <- c("National" = "#E5601A", "Global" = "#1A9FE5")
 
-cost_historical_plot <- cost$cost_scenarios %>% 
+cost_historical_plot <- cost$cost %>%
     mutate(
-        scenario = fct_relevel(scenario, c("national", "global")),
-        scenario = fct_recode(scenario,
-            "Global learning" = "global",
-            "National learning" = "national"),
-        year = lubridate::ymd(paste0(year, "-01-01"))) %>% 
+      learning = str_to_title(learning),
+      learning = fct_relevel(learning, c("National", "Global")),
+      year = lubridate::ymd(paste0(year, "-01-01"))) %>% 
     ggplot() +
     facet_wrap(vars(country), nrow = 1) +
     # First add historical cost line as dashed line
@@ -92,9 +88,9 @@ cost_historical_plot <- cost$cost_scenarios %>%
     # Now add modeled cost lines with uncertainty bands
     geom_ribbon(
         aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub, 
-            fill = scenario), alpha = 0.25) +
+            fill = learning), alpha = 0.22) +
     geom_line(
-        aes(x = year, y = cost_per_kw, color = scenario),
+        aes(x = year, y = cost_per_kw, color = learning),
         alpha = 0.6, size = 1) +
     scale_x_date(
         limits = lubridate::ymd(c("2007-07-01", "2018-07-01")),
@@ -102,8 +98,8 @@ cost_historical_plot <- cost$cost_scenarios %>%
         date_breaks = "2 years") +
     scale_y_continuous(labels = scales::dollar) +
     expand_limits(y = 0) +
-    scale_color_manual("Scenario", values = colors_learning) +
-    scale_fill_manual("Scenario", values = colors_learning) +
+    scale_color_manual("Learning", values = colors_learning) +
+    scale_fill_manual("Learning", values = colors_learning) +
     theme_minimal_grid(
         font_size = 16,
         font_family = "Fira Sans Condensed") +
@@ -111,20 +107,26 @@ cost_historical_plot <- cost$cost_scenarios %>%
     labs(
       title = paste0(
         "Estimated Module Costs Using <span style = 'color: ",
-        colors_learning["Global learning"], 
+        colors_learning["Global"], 
         ";'>Global</span> vs. <span style = 'color: ", 
-        colors_learning["National learning"], 
+        colors_learning["National"], 
         ";'>National</span> Learning"),
         y = "Cost per kW (2018 $USD)",
-        x = "Year") + 
+        x = "Year", 
+        caption = "Uncertainty bands represent 95% confidence interval from estimated learning model"
+    ) + 
     theme(
         plot.title.position = "plot",
         strip.background = element_rect(fill = "grey80"), 
         panel.grid.major = element_line(size = 0.5, colour = "grey90"),
-        legend.position = c(0.8, 0.78),
+        legend.position = c(0.87, 0.78),
         legend.margin = margin(6, 6, 6, 6),
         legend.background = element_rect(
             fill = "white", color = "black", size = 0.2),
+        plot.caption.position = "plot",
+        plot.caption = element_text(
+            hjust = 1, size = 11, face = "italic"
+        ),
         plot.title = element_markdown()
     ) +
     # Add "historical" labels
@@ -149,10 +151,10 @@ cost_historical_plot <- cost$cost_scenarios %>%
 
 ggsave(
     file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
-    cost_historical_plot, height = 4, width = 11, device = cairo_pdf)
+    cost_historical_plot, height = 4.25, width = 11, device = cairo_pdf)
 ggsave(
     file.path(dir$figs, 'png', 'cost_historical.png'),
-    cost_historical_plot, height = 4, width = 11)
+    cost_historical_plot, height = 4.25, width = 11)
 
 # Cumulative savings historical ----
 
