@@ -65,12 +65,12 @@ predict_cost <- function(
   cost_beg, 
   cap_beg,
   si_beg,
-  year_min = NULL, 
+  year_beg = NULL,
   ci = 0.95) {
-    if (is.null(year_min)) {
-        year_min = min(data$year)
+    if (is.null(year_beg)) {
+        year_beg = min(data$year)
     }
-    data <- filter(data, year >= year_min)
+    data <- filter(data, year >= year_beg)
     # Create multivariate normal draws of the model parameters to 
     # incorporate the full covariance matrix of the model
     draws <- data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
@@ -96,25 +96,25 @@ predict_cost <- function(
     return(result)
 }
 
-makeNationalLearningData <- function(df_country, df_model, year_min = NULL) {
-    if (is.null(year_min)) {
-        year_min = min(data$year)
+makeNationalLearningData <- function(df_country, df_model, year_beg = NULL) {
+    if (is.null(year_beg)) {
+        year_beg = min(data$year)
     }
     # Aggregate country installed capacity if data is broken down by 
     # install type 
     df_country <- df_country %>% 
-        filter(year >= year_min, component  == "Module") %>% 
+        filter(year >= year_beg, component  == "Module") %>%
         group_by(year) %>%
         summarise(cap_country = sum(cumCapacityKw))
     # Add first year capacity 
     df_country$cap_beg_country <- 
-        df_country[df_country$year == year_min,]$cap_country
-    # Get world capacity dat
+        df_country[df_country$year == year_beg,]$cap_country
+    # Get world capacity data
     df_model <- df_model %>% 
-        filter(year >= year_min) %>% 
+        filter(year >= year_beg) %>%
         mutate(cap_world = cumCapacityKw)
     # Add first year capacity 
-    df_model$cap_beg_world <- df_model[df_model$year == year_min,]$cap_world
+    df_model$cap_beg_world <- df_model[df_model$year == year_beg,]$cap_world
     # Join and compute national capacity
     result <- df_model %>% 
         left_join(df_country, by = "year") %>%

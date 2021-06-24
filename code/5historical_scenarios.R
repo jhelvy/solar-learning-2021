@@ -27,7 +27,7 @@ cost_scenarios_global_us <- predict_cost(
     cost_beg = lr$data_us[1,]$costPerKw,
     cap_beg  = lr$data_us[1,]$cumCapacityKw,
     si_beg   = lr$data_us[1,]$price_si,
-    year_min = year_min,
+    year_beg = year_min,
     ci       = 0.95)
 
 cost_scenarios_global_china <- predict_cost(
@@ -36,7 +36,7 @@ cost_scenarios_global_china <- predict_cost(
     cost_beg = lr$data_china[1,]$costPerKw,
     cap_beg  = lr$data_china[1,]$cumCapacityKw,
     si_beg   = lr$data_china[1,]$price_si,
-    year_min = year_min,
+    year_beg = year_min,
     ci       = 0.95)
 
 cost_scenarios_global_germany <- predict_cost(
@@ -45,7 +45,7 @@ cost_scenarios_global_germany <- predict_cost(
     cost_beg = lr$data_germany[1,]$costPerKw,
     cap_beg  = lr$data_germany[1,]$cumCapacityKw,
     si_beg   = lr$data_germany[1,]$price_si,
-    year_min = year_min,
+    year_beg = year_min,
     ci       = 0.95)
 
 # National Learning ----
@@ -61,43 +61,43 @@ cost_scenarios_global_germany <- predict_cost(
 data_national_us <- makeNationalLearningData(
     df_country = data$usSeiaLbnl,
     df_model   = lr$data_us,
-    year_min   = year_min)
+    year_beg   = year_min)
 cost_scenarios_national_us <- predict_cost(
     model    = lr$model_us,
     data     = data_national_us,
     cost_beg = data_national_us[1,]$costPerKw,
     cap_beg  = data_national_us[1,]$cumCapacityKw,
     si_beg   = data_national_us[1,]$price_si,
-    year_min = year_min,
+    year_beg = year_min,
     ci       = 0.95)
 
 data_national_china <- makeNationalLearningData(
     df_country = data$china,
     df_model   = lr$data_china,
-    year_min   = year_min)
+    year_beg   = year_min)
 cost_scenarios_national_china <- predict_cost(
     model    = lr$model_china,
     data     = data_national_china,
     cost_beg = data_national_china[1,]$costPerKw,
     cap_beg  = data_national_china[1,]$cumCapacityKw,
     si_beg   = data_national_china[1,]$price_si,
-    year_min = year_min,
+    year_beg = year_min,
     ci       = 0.95)
 
 data_national_germany <- makeNationalLearningData(
     df_country = data$germany,
     df_model   = lr$data_germany,
-    year_min   = year_min)
+    year_beg   = year_min)
 cost_scenarios_national_germany <- predict_cost(
     model    = lr$model_germany,
     data     = data_national_germany,
     cost_beg = data_national_germany[1,]$costPerKw,
     cap_beg  = data_national_germany[1,]$cumCapacityKw,
     si_beg   = data_national_germany[1,]$price_si,
-    year_min = year_min,
+    year_beg = year_min,
     ci       = 0.95)
 
-# Combine Global And National Cost Scenarios ----
+# Combine Cost Scenarios ----
 
 cost_scenarios <- rbind(
     mutate(cost_scenarios_global_us,
