@@ -70,6 +70,10 @@ cost_historical_true <- rbind(
       year >= 2008, year <= 2018,
       component == "Module")
 
+colors_learning <- c(
+  "National learning" = "#E5601A", 
+  "Global learning" = "#1A9FE5")
+
 cost_historical_plot <- cost$cost_scenarios %>% 
     mutate(
         scenario = fct_relevel(scenario, c("national", "global")),
@@ -78,6 +82,7 @@ cost_historical_plot <- cost$cost_scenarios %>%
             "National learning" = "national"),
         year = lubridate::ymd(paste0(year, "-01-01"))) %>% 
     ggplot() +
+    facet_wrap(vars(country), nrow = 1) +
     # First add historical cost line as dashed line
     geom_line(
         data = cost_historical_true %>% 
@@ -91,30 +96,37 @@ cost_historical_plot <- cost$cost_scenarios %>%
     geom_line(
         aes(x = year, y = cost_per_kw, color = scenario),
         alpha = 0.6, size = 1) +
-    facet_wrap(vars(country), nrow = 1) +
     scale_x_date(
         limits = lubridate::ymd(c("2007-07-01", "2018-07-01")),
         date_labels = "'%y",
         date_breaks = "2 years") +
     scale_y_continuous(labels = scales::dollar) +
     expand_limits(y = 0) +
-    scale_color_manual("Scenario", values = c("#E5601A", "#1A9FE5")) +
-    scale_fill_manual("Scenario", values = c("#E5601A", "#1A9FE5")) +
+    scale_color_manual("Scenario", values = colors_learning) +
+    scale_fill_manual("Scenario", values = colors_learning) +
     theme_minimal_grid(
         font_size = 16,
         font_family = "Fira Sans Condensed") +
     panel_border() +
-    theme(
-        plot.title.position = "plot",
-        legend.position = "right",
-        strip.background = element_rect(fill = "grey80"), 
-        panel.grid.major = element_line(
-            size = 0.5, colour = "grey90")
-    ) +
     labs(
-        title = 'Estimated Module Costs Using Global vs. National Learning Rates',
+      title = paste0(
+        "Estimated Module Costs Using <span style = 'color: ",
+        colors_learning["Global learning"], 
+        ";'>Global</span> vs. <span style = 'color: ", 
+        colors_learning["National learning"], 
+        ";'>National</span> Learning Rates"),
         y = "Cost per kW (2018 $USD)",
         x = "Year") + 
+    theme(
+        plot.title.position = "plot",
+        strip.background = element_rect(fill = "grey80"), 
+        panel.grid.major = element_line(size = 0.5, colour = "grey90"),
+        legend.position = c(0.8, 0.78),
+        legend.margin = margin(6, 6, 6, 6),
+        legend.background = element_rect(
+            fill = "white", color = "black", size = 0.2),
+        plot.title = element_markdown()
+    ) +
     # Add "historical" labels
     geom_text(
         data = data.frame(
@@ -137,10 +149,10 @@ cost_historical_plot <- cost$cost_scenarios %>%
 
 ggsave(
     file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
-    cost_historical_plot, height = 4, width = 12, device = cairo_pdf)
+    cost_historical_plot, height = 4, width = 11, device = cairo_pdf)
 ggsave(
     file.path(dir$figs, 'png', 'cost_historical.png'),
-    cost_historical_plot, height = 4, width = 12)
+    cost_historical_plot, height = 4, width = 11)
 
 # Cumulative savings historical ----
 

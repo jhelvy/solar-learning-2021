@@ -9,6 +9,7 @@ library(rjson)
 library(here)
 library(cowplot)
 library(priceR)
+library(ggtext)
 options(dplyr.width = Inf)
 
 # Load custom functions
