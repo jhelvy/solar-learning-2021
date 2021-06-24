@@ -38,6 +38,7 @@ usNrel2020FilePath <- file.path(
   dir$data, "nrel", "Data File (U.S. Solar Photovoltaic  BESS System Cost Benchmark Q1 2020 Report).xlsx")
 usLbnlFilePath <- file.path(
   dir$data, "lbnl", "tts_2019_summary_data_tables_0.xlsx")
+usSeiaEarlyFilePath <- file.path(dir$data, "seia", "seiaEarlyYears.csv")
 usSeiaFilePath <- file.path(dir$data, "seia", "seiaCapacity.json")
 irenaCapFilePath <- file.path(dir$data, "irena", "irenaCumCapacityMw.csv")
 germanyFilePath <- file.path(
@@ -90,27 +91,10 @@ pvProduction <- read_csv(productionFilePath) %>%
 
 # Capacity data from 2000 - 2013 are from this image in the raw data:
 # seia_2013_year_review_fig_2.1.jpg
-seiaEarlyYears <- tribble(
-  ~"year", ~"Residential", ~"Commercial", ~"Utility",
-  2000, 1, 2, 0,
-  2001, 5, 3, 3,
-  2002, 11, 9, 2,
-  2003, 15, 27, 3,
-  2004, 24, 32, 2,
-  2005, 27, 51, 1,
-  2006, 38, 67, 0,
-  2007, 58, 93, 9,
-  2008, 82, 200, 16,
-  2009, 164, 213, 58,
-  2010, 246, 339, 267,
-  2011, 304, 831, 784,
-  2012, 494, 1072, 1803,
-  2013, 792, 1112, 2847
-) %>%
+seiaEarlyYears <- read_csv(usSeiaEarlyFilePath) %>% 
   gather(
     key = "installType", value = "capacityMw",
-    Residential:Utility
-  ) %>%
+    Residential:Utility) %>% 
   select(year, capacityMw, installType) %>%
   group_by(installType) %>%
   mutate(cumCapacityMw = cumsum(capacityMw)) %>%
@@ -136,7 +120,7 @@ seiaEarlyYears %>%
   full_join(seiaCapacity, by = c("year", "installType")) %>%
   arrange(installType, year) %>%
   as.data.frame()
-# Looks good!
+# Looks good - the two data sets line up pretty well over common years
 
 # Add in years 2000 - 2004, hand-copied from the 2013 SEIA report
 seiaCapacity <- seiaCapacity %>%
@@ -275,21 +259,13 @@ nrelCapacity <- read_excel(usNrel2018FilePath, sheet="Figure 1") %>%
 usNrel <- nrelCost %>%
   left_join(nrelCapacity)
 
-# Merge SEIA capacity with LBNL cost data
-usSeia <- seiaCapacity %>%
+# Merge SEIA capacity with LBNL cost data ----
+usSeiaLbnl <- seiaCapacity %>%
   spread(key = installType, value = cumCapacityKw) %>%
   mutate(All = Commercial + Residential + Utility) %>%
   gather(
     key = "installType", value = "cumCapacityKw",
     Commercial:All) %>%
-  left_join(lbnlCost) %>%
-  filter(!is.na(costPerKw)) %>%
-  select(
-    year, component, componentType, installType, costPerKw, cumCapacityKw)
-
-# Merge SEIA capacity with LBNL cost data ----
-
-usSeiaLbnl <- seiaCapacity %>%
   left_join(lbnlCost) %>%
   filter(!is.na(costPerKw)) %>%
   select(
