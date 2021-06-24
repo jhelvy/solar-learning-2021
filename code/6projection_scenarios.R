@@ -10,33 +10,6 @@ lr <- readRDS(dir$lr_models)
 # Load historical cost scenario data
 cost <- readRDS(dir$historical_scenarios)
 
-# -----------------------------------------------------------------------
-# NOTES
-#
-# Projection range
-year_min_proj <- 2018
-year_max_proj <- 2030
-num_years_proj <- year_max_proj - year_min_proj
-#
-# Projections to 2030, based on achieving fixed capacity by 2030
-#
-# Targets:
-#
-# U.S.:    300 GW, taken from NAM, Committee on Accelerating Decarbonization
-#          in the United States (2021)
-# China:   570 GW, taken from total renewable goal of 1200 GW in 2030, using
-#          same proportions of wind + solar as in 2020
-# Germany: 100 GW, from Germany's Renewable Energy Act 2021  
-# World:   3100 GW, from WEO 2020 Sustainable Development Scenario
-
-target_capacity_us <- 300*1e6 
-target_capacity_china <- 570*1e6 
-target_capacity_germany <- 100*1e6 
-target_capacity_world <- 3100*1e6
-
-# Assuming silicon prices held constant at 2018 level
-price_si <- data$world[which(data$world$year == year_min_proj),]$price_si
-
 # Capacity calculations --------------------------------------------------
 
 # Compute annual, linear capacity increase to meet target

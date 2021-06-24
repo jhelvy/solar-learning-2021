@@ -420,7 +420,7 @@ proj_nat_trends_us <- getFutureCapacities(
   target_capacity = target_nat_trends_us) %>%
   mutate(price_si = price_si)
 
-proj_nat_sus_dev_us <- getFutureCapacities(
+proj_sus_dev_us <- getFutureCapacities(
   df = proj_df_us,
   year_max_proj = year_max_proj,
   target_capacity = target_sus_dev_us) %>%
@@ -437,7 +437,7 @@ proj_nat_trends_china <- getFutureCapacities(
   target_capacity = target_nat_trends_china) %>%
   mutate(price_si = price_si)
 
-proj_nat_sus_dev_china <- getFutureCapacities(
+proj_sus_dev_china <- getFutureCapacities(
   df = proj_df_china,
   year_max_proj = year_max_proj,
   target_capacity = target_sus_dev_china) %>%
@@ -454,7 +454,7 @@ proj_nat_trends_germany <- getFutureCapacities(
   target_capacity = target_nat_trends_germany) %>%
   mutate(price_si = price_si)
 
-proj_nat_sus_dev_germany <- getFutureCapacities(
+proj_sus_dev_germany <- getFutureCapacities(
   df = proj_df_germany,
   year_max_proj = year_max_proj,
   target_capacity = target_sus_dev_germany) %>%
@@ -468,11 +468,27 @@ proj_nat_trends_world <- getFutureCapacities(
   target_capacity = target_nat_trends_world) %>%
   mutate(price_si = price_si)
 
-proj_nat_sus_dev_world <- getFutureCapacities(
+proj_sus_dev_world <- getFutureCapacities(
   df = world,
   year_max_proj = year_max_proj,
   target_capacity = target_sus_dev_world) %>%
   mutate(price_si = price_si)
+
+# Combine ---
+
+proj_nat_trends <- rbind(
+  proj_nat_trends_us %>% mutate(country = "U.S."),
+  proj_nat_trends_germany %>% mutate(country = "Germany"),
+  proj_nat_trends_china %>% mutate(country = "China"),
+  proj_nat_trends_world %>% mutate(country = "World")
+)
+
+proj_sus_dev <- rbind(
+  proj_sus_dev_us %>% mutate(country = "U.S."),
+  proj_sus_dev_germany %>% mutate(country = "Germany"),
+  proj_sus_dev_china %>% mutate(country = "China"),
+  proj_sus_dev_world %>% mutate(country = "World")
+)
 
 # Save all formatted data as a list object ---
 
@@ -489,13 +505,7 @@ saveRDS(list(
     china              = china,
     germany            = germany,
     world              = world, 
-    proj_nat_trends_us       = proj_nat_trends_us,
-    proj_nat_sus_dev_us      = proj_nat_sus_dev_us,
-    proj_nat_trends_china    = proj_nat_trends_china,
-    proj_nat_sus_dev_china   = proj_nat_sus_dev_china,
-    proj_nat_trends_germany  = proj_nat_trends_germany,
-    proj_nat_sus_dev_germany = proj_nat_sus_dev_germany,
-    proj_nat_trends_world    = proj_nat_trends_world,
-    proj_nat_sus_dev_world   = proj_nat_sus_dev_world),
+    proj_nat_trends    = proj_nat_trends,
+    proj_sus_dev       = proj_sus_dev),
     dir$data_formatted
 )
