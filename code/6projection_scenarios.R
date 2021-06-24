@@ -185,30 +185,44 @@ proj_sus_dev_national_germany <- predict_cost(
   year_beg = year_min_proj,
   ci       = 0.95)
 
-# FORMATING -------------------------------------------------------
+# Saving Results -------------------------------------------------------
 
-projections
+projections <- rbind(
   proj_nat_trends_global_us %>% 
     mutate(
-      country = "U.S.", 
-      scenario = "global", 
-      
-    )
-proj_nat_trends_global_china
-proj_nat_trends_global_germany
-proj_sus_dev_global_us
-proj_sus_dev_global_china
-proj_sus_dev_global_germany
+      country = "U.S.", learning = "global", scenario = "nat_trends"),
+  proj_sus_dev_global_us %>%
+    mutate(
+      country = "U.S.", learning = "global", scenario = "sus_dev"),
+  proj_nat_trends_national_us %>%
+    mutate(
+      country = "U.S.", learning = "national", scenario = "nat_trends"),
+  proj_sus_dev_national_us %>%
+    mutate(
+      country = "U.S.", learning = "national", scenario = "sus_dev"),
+  proj_nat_trends_global_china %>%
+    mutate(
+      country = "China", learning = "global", scenario = "nat_trends"),
+  proj_sus_dev_global_china %>%
+    mutate(
+      country = "China", learning = "global", scenario = "sus_dev"),
+  proj_nat_trends_national_china %>%
+    mutate(
+      country = "China", learning = "national", scenario = "nat_trends"),
+  proj_sus_dev_national_china %>%
+    mutate(
+      country = "China", learning = "national", scenario = "sus_dev"),
+  proj_nat_trends_global_germany %>%
+    mutate(
+      country = "Germany", learning = "global", scenario = "nat_trends"),
+  proj_sus_dev_global_germany %>%
+    mutate(
+      country = "Germany", learning = "global", scenario = "sus_dev"),
+  proj_nat_trends_national_germany %>%
+    mutate(
+      country = "Germany", learning = "national", scenario = "nat_trends"),
+  proj_sus_dev_national_germany %>%
+    mutate(
+      country = "Germany", learning = "national", scenario = "sus_dev"))
 
-proj_nat_trends_national_us
-proj_nat_trends_national_china
-proj_nat_trends_national_germany
-proj_sus_dev_national_us
-proj_sus_dev_national_china
-proj_sus_dev_national_germany
-
-# Save all formatted data as a list object ---
-
-saveRDS(list(
-  dir$projection_scenarios
-)
+saveRDS(projections, dir$projection_scenarios)
