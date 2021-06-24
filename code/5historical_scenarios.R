@@ -21,30 +21,36 @@ year_max <- 2018
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
+us_beg <- lr$data_us %>%
+    filter(year == year_min)
 cost_scenarios_global_us <- predict_cost(
     model    = lr$model_us,
     data     = lr$data_us,
-    cost_beg = lr$data_us[1,]$costPerKw,
-    cap_beg  = lr$data_us[1,]$cumCapacityKw,
-    si_beg   = lr$data_us[1,]$price_si,
+    cost_beg = us_beg$costPerKw,
+    cap_beg  = us_beg$cumCapacityKw,
+    si_beg   = us_beg$price_si,
     year_beg = year_min,
     ci       = 0.95)
 
+china_beg <- lr$data_china %>%
+    filter(year == year_min)
 cost_scenarios_global_china <- predict_cost(
     model    = lr$model_china,
     data     = lr$data_china,
-    cost_beg = lr$data_china[1,]$costPerKw,
-    cap_beg  = lr$data_china[1,]$cumCapacityKw,
-    si_beg   = lr$data_china[1,]$price_si,
+    cost_beg = china_beg$costPerKw,
+    cap_beg  = china_beg$cumCapacityKw,
+    si_beg   = china_beg$price_si,
     year_beg = year_min,
     ci       = 0.95)
 
+germany_beg <- lr$data_germany %>%
+    filter(year == year_min)
 cost_scenarios_global_germany <- predict_cost(
     model    = lr$model_germany,
     data     = lr$data_germany,
-    cost_beg = lr$data_germany[1,]$costPerKw,
-    cap_beg  = lr$data_germany[1,]$cumCapacityKw,
-    si_beg   = lr$data_germany[1,]$price_si,
+    cost_beg = germany_beg$costPerKw,
+    cap_beg  = germany_beg$cumCapacityKw,
+    si_beg   = germany_beg$price_si,
     year_beg = year_min,
     ci       = 0.95)
 

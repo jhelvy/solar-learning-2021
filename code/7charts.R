@@ -57,7 +57,7 @@ ggsave(here::here(dir$figs, 'png', "pvProduction.png"),
 # Cost per kw for global vs. national learning ------
 
 # True historical cost per kW
-cost_historical <- rbind(
+cost_historical_true <- rbind(
     data$usSeiaLbnl %>%
         filter(installType == "Utility") %>% 
         mutate(country = "U.S."),
@@ -80,7 +80,7 @@ cost_historical_plot <- cost$cost_scenarios %>%
     ggplot() +
     # First add historical cost line as dashed line
     geom_line(
-        data = cost_historical %>% 
+        data = cost_historical_true %>% 
             filter(component == "Module") %>% 
             mutate(year = lubridate::ymd(paste0(year, "-01-01"))),
         aes(x = year, y = costPerKw), linetype = 2, alpha = 0.4, size = 1) +
