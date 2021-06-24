@@ -11,14 +11,6 @@ lr <- readRDS(dir$lr_models)
 year_min <- 2008
 year_max <- 2018
 
-# GLOBAL LEARNING ---------------------------------------------------
-
-# Learning rates based on world cumulative capacity and local installed costs
-# Note: Since world data does not break down installation type
-#       (Commercial, Residential, Utility),
-#       we replicate capacities across all types
-#       (assuming in effect that learning is shared across installation type)
-
 # Set beginning values
 us_beg <- lr$data_us %>%
     filter(year == year_min)
@@ -27,8 +19,15 @@ china_beg <- lr$data_china %>%
 germany_beg <- lr$data_germany %>%
     filter(year == year_min)
 
-# Compute cost scenarios by country
-cost_scenarios_global_us <- predict_cost(
+# GLOBAL LEARNING ---------------------------------------------------
+
+# Learning rates based on world cumulative capacity and local installed costs
+# Note: Since world data does not break down installation type
+#       (Commercial, Residential, Utility),
+#       we replicate capacities across all types
+#       (assuming in effect that learning is shared across installation type)
+
+cost_global_us <- predict_cost(
     model    = lr$model_us,
     data     = lr$data_us,
     cost_beg = us_beg$costPerKw,
@@ -37,7 +36,7 @@ cost_scenarios_global_us <- predict_cost(
     year_beg = year_min,
     ci       = 0.95)
 
-cost_scenarios_global_china <- predict_cost(
+cost_global_china <- predict_cost(
     model    = lr$model_china,
     data     = lr$data_china,
     cost_beg = china_beg$costPerKw,
@@ -46,7 +45,7 @@ cost_scenarios_global_china <- predict_cost(
     year_beg = year_min,
     ci       = 0.95)
 
-cost_scenarios_global_germany <- predict_cost(
+cost_global_germany <- predict_cost(
     model    = lr$model_germany,
     data     = lr$data_germany,
     cost_beg = germany_beg$costPerKw,
@@ -63,65 +62,63 @@ cost_scenarios_global_germany <- predict_cost(
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
-# Compute national cost predictions
-
-# Create national learning data for each country
-data_national_us <- makeNationalLearningData(
+# Create national learning capacity data for each country
+data_national_us <- makeNationalCapData(
     df_country = data$usSeiaLbnl,
-    df_model   = lr$data_us,
+    df_world   = lr$data_us,
     year_beg   = year_min)
-data_national_china <- makeNationalLearningData(
+data_national_china <- makeNationalCapData(
     df_country = data$china,
-    df_model   = lr$data_china,
+    df_world   = lr$data_china,
     year_beg   = year_min)
-data_national_germany <- makeNationalLearningData(
+data_national_germany <- makeNationalCapData(
     df_country = data$germany,
-    df_model   = lr$data_germany,
+    df_world   = lr$data_germany,
     year_beg   = year_min)
 
 # Compute cost scenarios by country
-cost_scenarios_national_us <- predict_cost(
+cost_national_us <- predict_cost(
     model    = lr$model_us,
     data     = data_national_us,
-    cost_beg = data_national_us[1,]$costPerKw,
-    cap_beg  = data_national_us[1,]$cumCapacityKw,
-    si_beg   = data_national_us[1,]$price_si,
+    cost_beg = us_beg$costPerKw,
+    cap_beg  = us_beg$cumCapacityKw,
+    si_beg   = us_beg$price_si,
     year_beg = year_min,
     ci       = 0.95)
 
-cost_scenarios_national_china <- predict_cost(
+cost_national_china <- predict_cost(
     model    = lr$model_china,
     data     = data_national_china,
-    cost_beg = data_national_china[1,]$costPerKw,
-    cap_beg  = data_national_china[1,]$cumCapacityKw,
-    si_beg   = data_national_china[1,]$price_si,
+    cost_beg = china_beg$costPerKw,
+    cap_beg  = china_beg$cumCapacityKw,
+    si_beg   = china_beg$price_si,
     year_beg = year_min,
     ci       = 0.95)
 
-cost_scenarios_national_germany <- predict_cost(
+cost_national_germany <- predict_cost(
     model    = lr$model_germany,
     data     = data_national_germany,
-    cost_beg = data_national_germany[1,]$costPerKw,
-    cap_beg  = data_national_germany[1,]$cumCapacityKw,
-    si_beg   = data_national_germany[1,]$price_si,
+    cost_beg = germany_beg$costPerKw,
+    cap_beg  = germany_beg$cumCapacityKw,
+    si_beg   = germany_beg$price_si,
     year_beg = year_min,
     ci       = 0.95)
 
 # Combine Cost Scenarios ----
 
-cost_scenarios <- rbind(
-    mutate(cost_scenarios_global_us,
-           scenario = "global", country = "U.S."),
-    mutate(cost_scenarios_national_us,
-           scenario = "national", country = "U.S."),
-    mutate(cost_scenarios_global_china,
-           scenario = "global", country = "China"),
-    mutate(cost_scenarios_national_china,
-           scenario = "national", country = "China"),
-    mutate(cost_scenarios_global_germany,
-           scenario = "global", country = "Germany"),
-    mutate(cost_scenarios_national_germany,
-           scenario = "national", country = "Germany")
+cost <- rbind(
+    mutate(cost_global_us,
+           learning = "global", country = "U.S."),
+    mutate(cost_national_us,
+           learning = "national", country = "U.S."),
+    mutate(cost_global_china,
+           learning = "global", country = "China"),
+    mutate(cost_national_china,
+           learning = "national", country = "China"),
+    mutate(cost_global_germany,
+           learning = "global", country = "Germany"),
+    mutate(cost_national_germany,
+           learning = "national", country = "Germany")
 )
 
 # Calculate savings between national and global learning scenarios
@@ -134,19 +131,19 @@ cap_additions <- rbind(
     select(year, country, cum_cap_addition) %>% 
     mutate(ann_cap_addition = cum_cap_addition - lag(cum_cap_addition, 1))
 
-savings_mean <- cost_scenarios %>%
-    select(year, scenario, country, cost_per_kw) %>% 
-    spread(key = scenario, value = cost_per_kw) %>%
+savings_mean <- cost %>%
+    select(year, learning, country, cost_per_kw) %>%
+    spread(key = learning, value = cost_per_kw) %>%
     computeSavings(cap_additions, year_min)
 
-savings_lb <- cost_scenarios %>%
-    select(year, scenario, country, cost_per_kw_lb) %>% 
-    spread(key = scenario, value = cost_per_kw_lb) %>% 
+savings_lb <- cost %>%
+    select(year, learning, country, cost_per_kw_lb) %>%
+    spread(key = learning, value = cost_per_kw_lb) %>%
     computeSavings(cap_additions, year_min)
 
-savings_ub <- cost_scenarios %>%
-    select(year, scenario, country, cost_per_kw_ub) %>% 
-    spread(key = scenario, value = cost_per_kw_ub) %>% 
+savings_ub <- cost %>%
+    select(year, learning, country, cost_per_kw_ub) %>%
+    spread(key = learning, value = cost_per_kw_ub) %>%
     computeSavings(cap_additions, year_min)
 
 # Merge savings 
@@ -169,7 +166,7 @@ savings <- rbind(
 # Save outputs ----
 
 saveRDS(list(
-    cost_scenarios = cost_scenarios,
+    cost = cost,
     savings = savings),
     dir$historical_scenarios
 )

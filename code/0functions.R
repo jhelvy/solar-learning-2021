@@ -32,15 +32,18 @@ getFutureCapacities <- function(
   df, year_min_proj, year_max_proj, target_capacity
 ) {
   num_years <- year_max_proj - year_min_proj
+  # Get starting year capacities
   begCap <- df %>%
     filter(year == year_min_proj) %>%
     mutate(annualCap = (target_capacity - cumCapacityKw) / num_years) %>%
     select(begCap = cumCapacityKw, annualCap)
+  # Linearly add capacity to reach target
   result <- begCap %>% 
     repDf(num_years) %>%
     mutate(year = year_min_proj + seq(num_years)) %>%
     mutate(cumCapacityKw = cumsum(annualCap) + begCap) %>%
     select(year, cumCapacityKw)
+  # Insert starting year values at the top
   result <- rbind(data.frame(
     year = year_min_proj, 
     cumCapacityKw = begCap$begCap),
@@ -101,10 +104,11 @@ predict_cost <- function(
     return(result)
 }
 
-makeNationalLearningData <- function(df_country, df_model, year_beg = NULL) {
+makeNationalCapData <- function(df_country, df_world, year_beg = NULL) {
     if (is.null(year_beg)) {
         year_beg = min(data$year)
     }
+    # Need to add in a component variable if it's not in the df_country data
     if (! "component" %in% names(df_country)) {
       df_country$component <- "Module"
     }
@@ -118,19 +122,19 @@ makeNationalLearningData <- function(df_country, df_model, year_beg = NULL) {
     df_country$cap_beg_country <- 
         df_country[df_country$year == year_beg,]$cap_country
     # Get world capacity data
-    df_model <- df_model %>% 
+    df_world <- df_world %>%
         filter(year >= year_beg) %>%
         mutate(cap_world = cumCapacityKw)
     # Add first year capacity 
-    df_model$cap_beg_world <- df_model[df_model$year == year_beg,]$cap_world
+    df_world$cap_beg_world <- df_world[df_world$year == year_beg,]$cap_world
     # Join and compute national capacity
-    result <- df_model %>% 
+    result <- df_world %>%
         left_join(df_country, by = "year") %>%
         mutate(
             cum_cap_addition = cap_country - cap_beg_country,
             cumCapacityKw = cap_beg_world + cum_cap_addition) %>% 
         select(
-            year, costPerKw, price_si, cumCapacityKw, cap_beg_country,
+            year, price_si, cumCapacityKw, cap_beg_country,
             cum_cap_addition)
     return(result)
 }

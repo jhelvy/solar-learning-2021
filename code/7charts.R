@@ -114,7 +114,7 @@ cost_historical_plot <- cost$cost_scenarios %>%
         colors_learning["Global learning"], 
         ";'>Global</span> vs. <span style = 'color: ", 
         colors_learning["National learning"], 
-        ";'>National</span> Learning Rates"),
+        ";'>National</span> Learning"),
         y = "Cost per kW (2018 $USD)",
         x = "Year") + 
     theme(
