@@ -32,14 +32,19 @@ getFutureCapacities <- function(
   df, year_min_proj, year_max_proj, target_capacity
 ) {
   num_years <- year_max_proj - year_min_proj
-  result <- df %>%
+  begCap <- df %>%
     filter(year == year_min_proj) %>%
     mutate(annualCap = (target_capacity - cumCapacityKw) / num_years) %>%
-    select(begCap = cumCapacityKw, annualCap) %>%
+    select(begCap = cumCapacityKw, annualCap)
+  result <- begCap %>% 
     repDf(num_years) %>%
     mutate(year = year_min_proj + seq(num_years)) %>%
     mutate(cumCapacityKw = cumsum(annualCap) + begCap) %>%
     select(year, cumCapacityKw)
+  result <- rbind(data.frame(
+    year = year_min_proj, 
+    cumCapacityKw = begCap$begCap),
+    result)
   return(result)
 }
 
