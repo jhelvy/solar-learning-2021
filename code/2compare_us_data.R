@@ -4,7 +4,7 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
-year_max <- 2020
+year_max_charts <- 2020
 
 # Compare capacity data from NREL, SEIA, and IRENA ----------------------------
 
@@ -22,11 +22,11 @@ nrelSeia <- data$nrelCapacity %>%
 
 # Plot NREL vs. SEIA capacity comparison 
 nrelSeia %>% 
-  filter(year >= year_min, year <= year_max) %>% # Our study period
+  filter(year >= year_min, year <= year_max_charts) %>% # Our study period
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line() +
   geom_point(pch = 21, fill = "white") +
-  scale_x_continuous(breaks = seq(year_min, year_max, 2)) +
+  scale_x_continuous(breaks = seq(year_min, year_max_charts, 2)) +
   scale_color_manual(
     values = c("red", "dodgerblue"),
     breaks = c("NREL", "SEIA")) +
@@ -53,11 +53,11 @@ nrelSeia %>%
         cumCapacityGw = usa / 10^3) %>% 
       select(year, source, cumCapacityGw)
   ) %>%
-  filter(year >= year_min, year <= year_max) %>% # Our study period
+  filter(year >= year_min, year <= year_max_charts) %>% # Our study period
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line(alpha = 0.5) +
   geom_point(pch = 21, fill = "white") +
-  scale_x_continuous(breaks = seq(year_min, year_max, 2)) +
+  scale_x_continuous(breaks = seq(year_min, year_max_charts, 2)) +
   scale_color_manual(
     values = c("red", "dodgerblue", "black"),
     breaks = c("NREL", "SEIA", "IRENA")) +
@@ -77,20 +77,16 @@ nrelSeia %>%
 # Compare NREL and LBNL Cost data ---------------------------------------------
 
 nrel_lbnl_compare <- data$nrelCost %>%
-  ungroup() %>%
-  filter(component == "Module") %>%
-  select(year, installType, costPerKw) %>%
   mutate(source = "NREL") %>%
-  rbind(
-    mutate(lbnlCost, source = "LBNL"))
+  rbind(mutate(lbnlCost, source = "LBNL"))
 
 nrel_lbnl_compare %>%
-  filter(year >= year_min, year <= year_max) %>% # Our study period
+  filter(year >= year_min, year <= year_max_charts) %>% # Our study period
   ggplot(aes(x = year, y = costPerKw, color = source, group = source)) +
   geom_line() +
   geom_point(pch = 21, fill = "white") +
   facet_wrap(vars(installType)) +
-  scale_x_continuous(breaks = seq(year_min, year_max, 2)) +
+  scale_x_continuous(breaks = seq(year_min, year_max_charts, 2)) +
   scale_color_manual(
     values = c("red", "dodgerblue"),
     breaks = c("NREL", "LBNL")) +
