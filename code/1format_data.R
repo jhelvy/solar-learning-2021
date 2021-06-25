@@ -169,37 +169,29 @@ nrelCost <- read_excel(
   usNrel2020FilePath, sheet = "Figures ES-1 and ES-2", skip = 1) %>%
   clean_names() %>%
   rename(component = x1) %>%
-  select(-c(x24, x36)) %>%
-  gather(key = "year", value = "cost", -component) %>%
-  filter(
-    !is.na(cost),
-    !component %in% c("Total", "Total Soft Costs", "Soft Cost %"))
-nrelTypes <- nrelCost %>%
-  filter(is.na(component)) %>%
-  select(year, installType = cost)
-nrelCost <- nrelCost %>%
-  left_join(nrelTypes) %>%
-  filter(!is.na(component)) %>%
-  mutate(year = str_replace(year, "x", "")) %>%
-  separate(
-    year, into = c("year", "drop"), sep = "_", convert = T) %>%
-  select(-drop) %>%
-  filter(!is.na(installType)) %>%
+  select(-c(x24, x36)) %>% 
+  slice(1:2) %>%
+  gather(key = "year", value = "cost", -component) %>% 
+  mutate(year = str_replace(year, "x", "")) %>% 
+  separate(year, into = c("year", "drop"), sep = "_", convert = TRUE) %>% 
+  select(-drop)
+nrelCost_type <- nrelCost %>% 
+  filter(is.na(component)) %>% 
+  select(year, type = cost)
+nrelCost_type <- unique(na.omit(nrelCost_type$type))
+nrelCost <- nrelCost %>% 
+  filter(!is.na(component)) %>% 
+  select(-component) %>% 
+  mutate(
+    installType = rep(nrelCost_type, each = length(unique(nrelCost$year)))) %>% 
   mutate(
     costPerKw = as.numeric(cost) * 10^3,
-    component = fct_recode(component,
-      "BOS" = "Hardware BOS - Structural and Electrical Components",
-      "Labor" =  "Soft Costs - Install Labor",
-      "Other" = "Soft Costs - Others (PII, Land Acquisition, Transmission Line, Sales Tax, Overhead, and Profit)"
-    ),
     installType = fct_recode(installType,
       "utility_fixed" = "Utility ground mount (Fixed axis)",
-      "utility_tracker" = "Utility ground mount (one-axis tracker)"
+      "utility_tracker" = "Utility ground mount (one-axis tracker)", 
+      "Commercial" = "Commercial Rooftop"
     )) %>%
-  filter(!is.na(cost)) %>%
-  select(-cost) %>%
-  left_join(components) %>%
-  select(year, component, componentType, installType, costPerKw)
+  select(year, installType, costPerKw)
 
 # Take the mean of the utility installType for fixed vs. tracker
 nrelUtility <- nrelCost %>%
@@ -208,23 +200,14 @@ nrelUtility <- nrelCost %>%
   mutate(
     costPerKw = (utility_fixed + utility_tracker) / 2,
     installType = "Utility") %>%
-  select(year, component, componentType, installType, costPerKw)
+  select(year, installType, costPerKw)
 nrelCost <- nrelCost %>%
   filter(! str_detect(installType, "utility")) %>%
-  rbind(nrelUtility) %>%
-  # 2020 data have other category called
-  # "Additional Costs from Model Updates (including some soft costs)"
-  # Merging this into "Other"
-  mutate(component = fct_other(component, keep = c(
-    "Module", "Inverter", "BOS", "Labor", "Other")),
-    installType = str_replace(installType, " Rooftop", "")) %>%
-  group_by(year, component, componentType, installType) %>%
-  summarise(costPerKw = sum(costPerKw)) %>%
-  arrange(year, component)
+  rbind(nrelUtility)
 
 # Format NREL capacity data (US) --------------------------------------------
 
-nrelCapacity <- read_excel(usNrel2018FilePath, sheet="Figure 1") %>%
+nrelCapacity <- read_excel(usNrel2018FilePath, sheet = "Figure 1") %>%
   clean_names() %>%
   rename(installType = usa_installation_mw) %>%
   filter(!is.na(installType)) %>%

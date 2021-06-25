@@ -27,12 +27,12 @@ dir <- list(
 )
 
 # Model range
-year_min_model <- 2007
+year_min_model <- 2006
 year_max_model <- 2019
 
 # Historical range
 year_min <- 2008
-year_max <- 2018
+year_max <- 2019
 
 # Projection range
 year_min_proj <- year_max

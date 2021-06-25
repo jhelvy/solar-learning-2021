@@ -172,11 +172,13 @@ savings_cum_historical_plot <- cost$savings %>%
     ggplot() +
     geom_area(aes(x = year, y = cum_savings_bil, fill = country)) +
     scale_fill_manual(values = colors_country) +
-    scale_x_continuous(breaks = seq(year_min, year_max, 2)) +
+    scale_x_continuous(
+      breaks = seq(year_min, year_max, 2), 
+      limits = c(year_min, year_max)) +
     scale_y_continuous(
         labels = dollar,
-        breaks = seq(0, 150, 50),
-        limits = c(0, 150),
+        # breaks = seq(0, 150, 50),
+        # limits = c(0, 150),
         expand = expansion(mult = c(0, 0.05))) +
     theme_minimal_hgrid(font_family = font_main) +
     scale_color_manual(values = c("white", "black", "white")) +
