@@ -6,7 +6,7 @@
 
 ### Germany data
 
-**PV Module Cost**: Data are in the `digitize/germany/fraunhofer_fig2.csv` file. These data were extracted using the {digitize} package from the `digitize/germany/Fraunhofer-recent-facts-about-photovoltaics-in-germany-Fig2.png` image, which was sourced from the Fraunhofer report located at `digitize/germany/Fraunhofer_recent-facts-about-photovoltaics-in-germany.pdf`.
+**PV Module Cost**: Data are in the `germany/fraunhofer_fig2.csv` file. These data were extracted using the [Engauge Digitizer](https://markummitchell.github.io/engauge-digitizer/) tool to digitize the data in the `germany/Fraunhofer-recent-facts-about-photovoltaics-in-germany-Fig2.png` image, which was sourced from the Fraunhofer report located at `germany/recent-facts-about-photovoltaics-in-germany.pdf`.
 
 **PV Installed Capacity**: Data are in the `irena/irenaCumCapacityMw.csv` file and were copied from two PDFs from IRENA: `irena/IRENA_RE_Statistics_2016.pdf` and `irena/IRENA_RE_Capacity_Statistics_2021.pdf`, available for download [here](https://www.irena.org/Statistics/Download-Data). Direct links: [2016](https://www.irena.org/publications/2016/Jul/Renewable-Energy-Statistics-2016), [2021](https://www.irena.org/publications/2021/March/Renewable-Capacity-Statistics-2021)
 
@@ -27,7 +27,7 @@ Global PV production data by country are from Arnulf Jäger-Waldau's 2020 paper 
     Energies, 13(4), 930. https://doi.org/10.3390/en13040930
     https://www.mdpi.com/1996-1073/13/4/930/htm
 
-Since the raw data were not available, we used the [Engauge Digitizer](https://markummitchell.github.io/engauge-digitizer/) tool to digitize the data in Figure 1 from the paper. The paper, figure, and digitized data are available in the `digitize/production` folder.
+Since the raw data were not available, we used the [Engauge Digitizer](https://markummitchell.github.io/engauge-digitizer/) tool to digitize the data in Figure 1 from the paper. The paper, figure, and digitized data are available in the `production` folder.
 
 Global installed capacity data are in the `irena/irenaCumCapacityMw.csv` file and were copied from two PDFs from IRENA: `irena/IRENA_RE_Statistics_2016.pdf` and `irena/IRENA_RE_Capacity_Statistics_2021.pdf`, available for download [here](https://www.irena.org/Statistics/Download-Data). Direct links: [2016](https://www.irena.org/publications/2016/Jul/Renewable-Energy-Statistics-2016), [2021](https://www.irena.org/publications/2021/March/Renewable-Capacity-Statistics-2021)
 
