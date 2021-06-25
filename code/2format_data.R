@@ -37,7 +37,7 @@ usNrel2018FilePath <- file.path(
 usNrel2020FilePath <- file.path(
   dir$data, "nrel", "Data File (U.S. Solar Photovoltaic  BESS System Cost Benchmark Q1 2020 Report).xlsx")
 usLbnlFilePath <- file.path(
-  dir$data, "lbnl", "tts_2019_summary_data_tables_0.xlsx")
+  dir$data, "lbnl", "summary_tables_and_figures.xlsx")
 usSeiaEarlyFilePath <- file.path(dir$data, "seia", "seiaEarlyYears.csv")
 usSeiaFilePath <- file.path(dir$data, "seia", "seiaCapacity.json")
 irenaCapFilePath <- file.path(dir$data, "irena", "irenaCumCapacityMw.csv")
@@ -136,44 +136,34 @@ seiaCapacity <- seiaCapacity %>%
 
 # Format LBNL cost data (US) -----------------------------------------------
 
-lbnlCost <- read_excel(usLbnlFilePath, sheet = "Fig 17", skip = 3) %>%
+lbnlCost <- read_excel(
+  usLbnlFilePath, sheet = "Component Cost Trends", skip = 1) %>%
   clean_names() %>%
-  rename(
-    soft_cost_residential = residential,
-    soft_cost_commercial = small_non_residential,
-    soft_cost_utility = large_non_residential
-  ) %>%
+  select(
+    year, 
+    Residential = module_price_index, 
+    Commercial = x6, 
+    Utility = x7) %>% 
+  filter(!is.na(year)) %>%
   gather(
-    key = "component", 
+    key = "installType", 
     value = "costPerW", 
-    module_price_index:soft_cost_utility) %>%
+    -year) %>% 
   mutate(
-    component = str_to_title(str_replace(component, "_price_index", "")),
-    costPerW = str_replace(costPerW, "-", ""),
     costPerW = as.numeric(costPerW),
-    costPerKw = costPerW * 1000) %>%
-  select(year = x1, component, costPerKw)
+    costPerKw = costPerW * 1000) %>% 
+  select(year, installType, costPerKw)
 
-# Separate out "soft" cost and installType
-lbnlCost_soft <- lbnlCost %>%
-  filter(str_detect(component, "Soft_")) %>%
-  separate(
-    component, into = c("d1", "d2", "installType"), sep = "_") %>%
-  mutate(
-    component = "Other",
-    componentType = "Soft",
-    installType = str_to_title(installType)) %>%
-  select(year, component, componentType, installType, costPerKw)
-lbnlCost_hard <- lbnlCost %>%
-  filter(! str_detect(component, "Soft_")) %>%
-  mutate(
-    component = ifelse(
-      component == "Inverter_residential", "Inverter", component),
-    componentType = "Hard") %>%
-    merge(expand.grid(installType = unique(lbnlCost_soft$installType))) %>%
-  select(year, component, componentType, installType, costPerKw)
-lbnlCost <- rbind(lbnlCost_hard, lbnlCost_soft) %>%
-  filter(!is.na(costPerKw))
+# Merge SEIA capacity with LBNL cost data ----
+usSeiaLbnl <- seiaCapacity %>%
+  spread(key = installType, value = cumCapacityKw) %>%
+  mutate(All = Commercial + Residential + Utility) %>%
+  gather(
+    key = "installType", value = "cumCapacityKw",
+    Commercial:All) %>%
+  left_join(lbnlCost, by = c("year", "installType")) %>%
+  filter(!is.na(costPerKw)) %>%
+  select(year, installType, costPerKw, cumCapacityKw)
 
 # Format NREL cost data (US) -------------------------------------------------
 
@@ -253,23 +243,10 @@ nrelCapacity <- read_excel(usNrel2018FilePath, sheet="Figure 1") %>%
     cumCapacityKw = cumCapacityMw * 10^3) %>% 
   select(year, installType, cumCapacityKw)
 
-# Format all U.S. data -----------------------------------------------------
-
 # Merge NREL cost and capacity data
 usNrel <- nrelCost %>%
-  left_join(nrelCapacity)
-
-# Merge SEIA capacity with LBNL cost data ----
-usSeiaLbnl <- seiaCapacity %>%
-  spread(key = installType, value = cumCapacityKw) %>%
-  mutate(All = Commercial + Residential + Utility) %>%
-  gather(
-    key = "installType", value = "cumCapacityKw",
-    Commercial:All) %>%
-  left_join(lbnlCost) %>%
-  filter(!is.na(costPerKw)) %>%
-  select(
-    year, component, componentType, installType, costPerKw, cumCapacityKw)
+  left_join(nrelCapacity) %>% 
+  ungroup()
 
 # -----------------------------------------------------------------------
 # Germany
@@ -292,7 +269,7 @@ germany <- read_csv(germanyFilePath) %>%
   mutate(
     costPerKw = costPerKw / average_of_rate,
     costPerKw = priceR::adjust_for_inflation(
-      costPerKw, year, "US", to_date = 2018)) %>%
+      costPerKw, year, "US", to_date = year_max)) %>%
   left_join(germany_cap) %>%
   mutate(
     component = str_to_title(component),
@@ -358,10 +335,6 @@ world <- left_join(world, silicon) %>%
 # -----------------------------------------------------------------------
 # Projections
 # -----------------------------------------------------------------------
-
-# Projection range
-year_min_proj <- 2018
-year_max_proj <- 2030
 #
 # Projections to 2030, based on achieving fixed capacity by 2030
 #
@@ -484,7 +457,6 @@ saveRDS(list(
     seiaCapacity       = seiaCapacity,
     lbnlCost           = lbnlCost,
     usNrel             = usNrel,
-    usSeia             = usSeia,
     usSeiaLbnl         = usSeiaLbnl,
     china              = china,
     germany            = germany,

@@ -10,10 +10,6 @@ lr <- readRDS(dir$lr_models)
 # Load historical cost scenario data
 cost <- readRDS(dir$historical_scenarios)
 
-# Projection range
-year_min_proj <- 2018
-year_max_proj <- 2030
-
 # Set beginning values
 us_beg <- lr$data_us %>%
     filter(year == year_min_proj)

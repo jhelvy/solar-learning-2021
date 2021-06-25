@@ -4,8 +4,6 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
-year_max <- 2018
-
 # Notes -----------------------------------------------------------------------
 
 # Basic learning curve model: Y_x = A*x^b
@@ -43,8 +41,8 @@ year_max <- 2018
 # Prep data
 data_us <- data$usSeiaLbnl %>%
     filter(
-        year <= year_max,
-        component == 'Module',
+        year >= year_min_model,
+        year <= year_max_model,
         installType == "Utility") %>%
     select(year, costPerKw) %>%
     left_join(
@@ -62,7 +60,8 @@ summary(model_us)
 # Prep data
 data_china <- data$china %>%
     filter(
-        year <= year_max,
+        year >= year_min_model,
+        year <= year_max_model,
         component == 'Module') %>%
     select(year, costPerKw) %>%
     left_join(
@@ -79,7 +78,8 @@ summary(model_china)
 # Prep data
 data_germany <- data$germany %>%
     filter(
-        year <= year_max,
+        year >= year_min_model,
+        year <= year_max_model,
         component == 'Module') %>%
     select(year, costPerKw) %>%
     left_join(

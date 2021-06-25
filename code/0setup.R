@@ -25,3 +25,15 @@ dir <- list(
     historical_scenarios = here::here('output', 'historical_scenarios.Rds'),
     projection_scenarios = here::here('output', 'projection_scenarios.Rds')
 )
+
+# Model range
+year_min_model <- 2007
+year_max_model <- 2019
+
+# Historical range
+year_min <- 2008
+year_max <- 2018
+
+# Projection range
+year_min_proj <- year_max
+year_max_proj <- 2030

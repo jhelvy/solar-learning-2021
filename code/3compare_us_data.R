@@ -4,6 +4,8 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
+year_max <- 2020
+
 # Compare capacity data from NREL, SEIA, and IRENA ----------------------------
 
 # Merge NREL and SEIA capacity data
@@ -20,11 +22,11 @@ nrelSeia <- data$nrelCapacity %>%
 
 # Plot NREL vs. SEIA capacity comparison 
 nrelSeia %>% 
-  filter(year >= 2008, year <= 2018) %>% # Our study period
+  filter(year >= year_min, year <= year_max) %>% # Our study period
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line() +
   geom_point(pch = 21, fill = "white") +
-  scale_x_continuous(breaks = seq(2008, 2018, 2)) +
+  scale_x_continuous(breaks = seq(year_min, year_max, 2)) +
   scale_color_manual(
     values = c("red", "dodgerblue"),
     breaks = c("NREL", "SEIA")) +
@@ -37,7 +39,7 @@ nrelSeia %>%
     title = "Cumulative Installed Capacity (GW)")
 
 # During the overlapping period, NREL and SEIA data match quite closely
-# Only major deviation is that NREL Commercial installations are slightly lower
+# Only deviation is that NREL Commercial installations are slightly lower
 # than those in SEIA
 
 # Merge in IRENA data to compare total capacity across all 3 sources
@@ -51,11 +53,11 @@ nrelSeia %>%
         cumCapacityGw = usa / 10^3) %>% 
       select(year, source, cumCapacityGw)
   ) %>%
-  filter(year >= 2008, year <= 2018) %>% # Our study period
+  filter(year >= year_min, year <= year_max) %>% # Our study period
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line(alpha = 0.5) +
   geom_point(pch = 21, fill = "white") +
-  scale_x_continuous(breaks = seq(2008, 2018, 2)) +
+  scale_x_continuous(breaks = seq(year_min, year_max, 2)) +
   scale_color_manual(
     values = c("red", "dodgerblue", "black"),
     breaks = c("NREL", "SEIA", "IRENA")) +
@@ -69,31 +71,26 @@ nrelSeia %>%
 # IRENA data track differently from NREL and SEIA. 
 # They're slightly higher in the period before 2014 and lower afterwards
 
+# Based on these comparisons, we use SEIA data for installed capacity as
+# it tracks with NREL and covers a longer time period
+
 # Compare NREL and LBNL Cost data ---------------------------------------------
 
 nrel_lbnl_compare <- data$nrelCost %>%
-  select(year, component, installType, costPerKw) %>%
-  spread(key = component, value = costPerKw) %>%
-  mutate(Soft = BOS + Labor + Other) %>%
-  select(-BOS, -Labor, -Other) %>%
-  gather(key = "component", value = "costPerKw", Inverter:Soft) %>%
-  select(year, component, installType, costPerKw) %>%
+  ungroup() %>%
+  filter(component == "Module") %>%
+  select(year, installType, costPerKw) %>%
   mutate(source = "NREL") %>%
-  rbind(lbnlCost %>%
-    select(year, component, componentType, installType, costPerKw) %>%
-    mutate(
-      component = ifelse(componentType == "Soft", "Soft", component),
-      source = "LBNL") %>%
-    select(-componentType)) %>%
-    mutate(sourceType = paste0(source, ": ", installType))
+  rbind(
+    mutate(lbnlCost, source = "LBNL"))
 
 nrel_lbnl_compare %>%
-  filter(year >= 2008, year <= 2018) %>% # Our study period
+  filter(year >= year_min, year <= year_max) %>% # Our study period
   ggplot(aes(x = year, y = costPerKw, color = source, group = source)) +
   geom_line() +
   geom_point(pch = 21, fill = "white") +
-  facet_grid(component ~ installType) +
-  scale_x_continuous(breaks = seq(2008, 2018, 2)) +
+  facet_wrap(vars(installType)) +
+  scale_x_continuous(breaks = seq(year_min, year_max, 2)) +
   scale_color_manual(
     values = c("red", "dodgerblue"),
     breaks = c("NREL", "LBNL")) +
@@ -103,8 +100,6 @@ nrel_lbnl_compare %>%
        color = "Data source",
        title = "NREL vs. LBNL: Cost Comparison")
 
-# NREL and LBNL cost data are quite similar for inverters and modules, with 
-# only small variations. But there are large differences in soft costs. 
-# Since we only look at module costs, we use LBNL cost data as it covers 
-# a larger period.
-
+# NREL and LBNL cost data are relatively similar for modules, with 
+# the biggest disagreement in the earlier years. We decided to use LBNL cost
+# data as it covers a larger historical period.
