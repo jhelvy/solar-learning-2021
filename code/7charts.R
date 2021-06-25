@@ -67,16 +67,22 @@ ggsave(here::here(dir$figs, 'png', "pvProduction.png"),
 cost_historical_true <- rbind(
     data$usSeiaLbnl %>%
         filter(installType == "Utility") %>% 
+        select(year, costPerKw, cumCapacityKw) %>% 
         mutate(country = "U.S."),
     data$china %>%
+        filter(component == "Module") %>% 
+        select(year, costPerKw, cumCapacityKw) %>% 
         mutate(country = "China"),
     data$germany %>%
+        filter(component == "Module") %>% 
+        select(year, costPerKw, cumCapacityKw) %>% 
         mutate(country = "Germany")
     ) %>% 
-    filter(
-      year >= 2008, year <= 2018,
-      component == "Module")
+    filter(year >= year_min, year <= year_max)
 
+x_lim <- lubridate::ymd(c(
+    paste0(year_min - 1, "-07-01"),
+    paste0(year_max, "-07-01")))
 cost_historical_plot <- cost$cost %>%
     mutate(
       learning = str_to_title(learning),
@@ -87,7 +93,6 @@ cost_historical_plot <- cost$cost %>%
     # First add historical cost line as dashed line
     geom_line(
         data = cost_historical_true %>% 
-            filter(component == "Module") %>% 
             mutate(year = lubridate::ymd(paste0(year, "-01-01"))),
         aes(x = year, y = costPerKw), linetype = 2, alpha = 0.4, size = 1) +
     # Now add modeled cost lines with uncertainty bands
@@ -98,7 +103,7 @@ cost_historical_plot <- cost$cost %>%
         aes(x = year, y = cost_per_kw, color = learning),
         alpha = 0.6, size = 1) +
     scale_x_date(
-        limits = lubridate::ymd(c("2007-07-01", "2018-07-01")),
+        limits = x_lim,
         date_labels = "'%y",
         date_breaks = "2 years") +
     scale_y_continuous(labels = scales::dollar) +
@@ -116,7 +121,7 @@ cost_historical_plot <- cost$cost %>%
         ";'>Global</span> vs. <span style = 'color: ", 
         colors_learning["National"], 
         ";'>National</span> learning"),
-        y = "Cost per kW (2018 $USD)",
+        y = paste0("Cost per kW (", year_min, " $USD)"),
         x = "Year", 
         caption = "Uncertainty bands represent 95% confidence interval from estimated learning model"
     ) + 
@@ -167,7 +172,7 @@ savings_cum_historical_plot <- cost$savings %>%
     ggplot() +
     geom_area(aes(x = year, y = cum_savings_bil, fill = country)) +
     scale_fill_manual(values = colors_country) +
-    scale_x_continuous(breaks = seq(2008, 2018, 2)) +
+    scale_x_continuous(breaks = seq(year_min, year_max, 2)) +
     scale_y_continuous(
         labels = dollar,
         breaks = seq(0, 150, 50),
@@ -178,7 +183,7 @@ savings_cum_historical_plot <- cost$savings %>%
     labs(
         title = "Cumulative module cost savings from global vs. national learning",
         x = "Year",
-        y = "Cumulative savings (Billion 2018 $USD)",
+        y = paste0("Cumulative savings (Billion ", year_min, " $USD)"),
         fill = "Country") +
     theme(
         plot.title.position = "plot",
@@ -207,7 +212,7 @@ ggsave(
 # Annual savings historical ----
 
 cum_savings_labels <- cost$savings %>% 
-    filter(year == 2018) %>% 
+    filter(year == year_max) %>%
     mutate(
         mean = scales::dollar(round(cum_savings_bil)), 
         lb = scales::dollar(round(cum_savings_bil_lb)),
@@ -217,7 +222,7 @@ cum_savings_labels <- cost$savings %>%
         label = paste0(
             "Cumulative savings:\n", mean, " (", lb, " - ", ub, ") billion"))
 savings_ann_historical_plot <- cost$savings %>% 
-    filter(year > 2008) %>%
+    filter(year > year_min) %>%
     mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
     ggplot() + 
     facet_wrap(vars(country), nrow = 1) +
@@ -244,7 +249,7 @@ savings_ann_historical_plot <- cost$savings %>%
      labs(
         title = "Annual module cost savings from global vs. national learning",
         x = NULL,
-        y = "Annual savings (Billion 2018 $USD)",
+        y = paste0("Annual savings (Billion ", year_min, " $USD)"),
         fill = "Country") + 
     # Add totals
     geom_text(
@@ -260,7 +265,7 @@ ggsave(
     file.path(dir$figs, 'png', 'savings_ann_historical_plot.png'),
     savings_ann_historical_plot, height = 4, width = 12)
 
-# 2030 Projections - From historical 2018 levels-----
+# 2030 Projections -----
 
 cost_proj <- proj %>% 
   mutate(
@@ -300,7 +305,7 @@ cost_proj <- proj %>%
     plot.caption = element_text(hjust = 1, size = 11, face = "italic")
   ) +
   labs(
-    y = "Cost per kW (2018 $USD)",
+    y = paste0("Cost per kW (", year_min, " $USD)"),
     x = "Year",
     title = paste0(
       "Projected module costs using <span style = 'color: ",
@@ -308,9 +313,7 @@ cost_proj <- proj %>%
       ";'>Global</span> vs. <span style = 'color: ", 
       colors_learning["National"], 
       ";'>National</span> learning"),
-      y = "Cost per kW (2018 $USD)",
-      x = "Year", 
-      caption = "Uncertainty bands represent 95% confidence interval from estimated learning model")
+    caption = "Uncertainty bands represent 95% confidence interval from estimated learning model")
 
 ggsave(
   file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
@@ -318,3 +321,4 @@ ggsave(
 ggsave(
   file.path(dir$figs, 'png', 'cost_proj.png'),
   cost_proj, height = 8, width = 8)
+

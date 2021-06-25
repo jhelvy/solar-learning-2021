@@ -245,7 +245,8 @@ nrelCapacity <- read_excel(usNrel2018FilePath, sheet="Figure 1") %>%
 
 # Merge NREL cost and capacity data
 usNrel <- nrelCost %>%
-  left_join(nrelCapacity)
+  left_join(nrelCapacity) %>% 
+  ungroup()
 
 # -----------------------------------------------------------------------
 # Germany
@@ -268,7 +269,7 @@ germany <- read_csv(germanyFilePath) %>%
   mutate(
     costPerKw = costPerKw / average_of_rate,
     costPerKw = priceR::adjust_for_inflation(
-      costPerKw, year, "US", to_date = 2018)) %>%
+      costPerKw, year, "US", to_date = year_max)) %>%
   left_join(germany_cap) %>%
   mutate(
     component = str_to_title(component),
@@ -334,10 +335,6 @@ world <- left_join(world, silicon) %>%
 # -----------------------------------------------------------------------
 # Projections
 # -----------------------------------------------------------------------
-
-# Projection range
-year_min_proj <- 2018
-year_max_proj <- 2030
 #
 # Projections to 2030, based on achieving fixed capacity by 2030
 #

@@ -7,10 +7,6 @@ data <- readRDS(dir$data_formatted)
 # Load estimated LR models
 lr <- readRDS(dir$lr_models)
 
-# Historical range
-year_min <- 2008
-year_max <- 2018
-
 # Set beginning values
 us_beg <- lr$data_us %>%
     filter(year == year_min)
