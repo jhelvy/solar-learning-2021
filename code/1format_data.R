@@ -52,12 +52,16 @@ productionFilePath <- file.path(dir$data, "production", "production.csv")
 exchangeRatesRMB <- read_excel(
   exchangeRatesPath, sheet = "usd-rmb", skip = 2) %>%
   clean_names() %>%
-  rename(year = row_labels)
+  rename(year = row_labels) %>% 
+  mutate(year = as.numeric(year)) %>% 
+  filter(!is.na(year))
     
 exchangeRatesEUR <- read_excel(
   exchangeRatesPath, sheet = "usd-euro", skip = 2) %>%
   clean_names() %>%
-  rename(year = row_labels)
+  rename(year = row_labels) %>% 
+  mutate(year = as.numeric(year)) %>% 
+  filter(!is.na(year))
 
 # Format PV production data ----------------------------------------------------
 
@@ -242,35 +246,19 @@ germany_cap <- irenaCumCapacityMw %>%
   select(year, capacityCumulativeMw = germany)
 
 germany <- read_csv(germanyFilePath) %>% 
-  rename(year = x, costPerKw = Curve1) %>% 
-  mutate(year = round(year)) %>% 
-  filter(costPerKw > 10) %>% 
-  group_by(year) %>% 
-  mutate(
-    minCost = min(costPerKw),
-    component = ifelse(costPerKw == minCost, "module", "total"), 
-    bos_inverter = costPerKw - minCost,
-    costPerKw = ifelse(component == "module", costPerKw, bos_inverter), 
-    component = ifelse(costPerKw == minCost, "module", "bos_inverter")) %>% 
-  select(year, component, costPerKw) %>% 
-  ungroup() %>% 
-  arrange(component, year) %>% 
+  filter(type == "module") %>% 
+  select(year, costPerKw = y) %>% 
   # Currency conversion first, then adjust for inflation
-  merge(exchangeRatesEUR) %>%
+  left_join(exchangeRatesEUR, by = "year") %>%
   mutate(
     costPerKw = costPerKw / average_of_rate,
     costPerKw = priceR::adjust_for_inflation(
       costPerKw, year, "US", to_date = year_max)) %>%
   left_join(germany_cap) %>%
   mutate(
-    component = str_to_title(component),
-    component = ifelse(
-      component == "Bos_inverter", "BOS_Inverter", component),
     cumCapacityKw = capacityCumulativeMw * 10^3,
     installType = "All") %>%
-  left_join(components) %>%
-  select(
-    year, component, componentType, installType, costPerKw, cumCapacityKw)
+  select(year, costPerKw, cumCapacityKw)
 
 # -----------------------------------------------------------------------
 # China
@@ -389,8 +377,7 @@ proj_sus_dev_china <- getFutureCapacities(
 
 # Germany ---
 
-proj_df_germany <- germany %>%
-    filter(component == "Module")
+proj_df_germany <- germany
 
 proj_nat_trends_germany <- getFutureCapacities(
   df = proj_df_germany,

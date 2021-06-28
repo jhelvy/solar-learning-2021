@@ -41,8 +41,8 @@ data <- readRDS(dir$data_formatted)
 # Prep data
 data_us <- data$usSeiaLbnl %>%
     filter(
-        year >= year_min_model,
-        year <= year_max_model,
+        year >= year_min,
+        year <= year_max,
         installType == "Utility") %>%
     select(year, costPerKw) %>%
     left_join(
@@ -55,13 +55,16 @@ data_us <- data$usSeiaLbnl %>%
 model_us <- run_model(data_us)
 summary(model_us)
 
+# Learning rate:
+1 - 2^coef(model_us)["log(cumCapacityKw)"]
+
  # China ----------------------------------------------------------------------
 
 # Prep data
 data_china <- data$china %>%
     filter(
-        year >= year_min_model,
-        year <= year_max_model,
+        year >= year_min,
+        year <= year_max,
         component == 'Module') %>%
     select(year, costPerKw) %>%
     left_join(
@@ -73,13 +76,16 @@ data_china <- data$china %>%
 model_china <- run_model(data_china)
 summary(model_china)
 
+# Learning rate:
+1 - 2^coef(model_china)["log(cumCapacityKw)"]
+
 # Germany ---------------------------------------------------------------------
 
 # Prep data
 data_germany <- data$germany %>%
     filter(
-        year >= year_min_model,
-        year <= year_max_model,
+        year >= year_min,
+        year <= year_max,
         component == 'Module') %>%
     select(year, costPerKw) %>%
     left_join(
@@ -102,3 +108,9 @@ saveRDS(list(
     data_germany  = data_germany),
     dir$lr_models
 )
+
+
+# Print learning rates:
+1 - 2^coef(model_us)["log(cumCapacityKw)"]
+1 - 2^coef(model_china)["log(cumCapacityKw)"]
+1 - 2^coef(model_germany)["log(cumCapacityKw)"]

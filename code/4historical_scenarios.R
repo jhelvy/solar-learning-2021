@@ -14,6 +14,8 @@ china_beg <- lr$data_china %>%
     filter(year == year_min)
 germany_beg <- lr$data_germany %>%
     filter(year == year_min)
+world_beg <- data$world %>%
+    filter(year == year_min)
 
 # GLOBAL LEARNING ---------------------------------------------------
 
@@ -23,9 +25,11 @@ germany_beg <- lr$data_germany %>%
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
+data_global <- data$world
+
 cost_global_us <- predict_cost(
     model    = lr$model_us,
-    data     = lr$data_us,
+    data     = data_global,
     cost_beg = us_beg$costPerKw,
     cap_beg  = us_beg$cumCapacityKw,
     si_beg   = us_beg$price_si,
@@ -34,7 +38,7 @@ cost_global_us <- predict_cost(
 
 cost_global_china <- predict_cost(
     model    = lr$model_china,
-    data     = lr$data_china,
+    data     = data_global,
     cost_beg = china_beg$costPerKw,
     cap_beg  = china_beg$cumCapacityKw,
     si_beg   = china_beg$price_si,
@@ -43,7 +47,7 @@ cost_global_china <- predict_cost(
 
 cost_global_germany <- predict_cost(
     model    = lr$model_germany,
-    data     = lr$data_germany,
+    data     = data_global,
     cost_beg = germany_beg$costPerKw,
     cap_beg  = germany_beg$cumCapacityKw,
     si_beg   = germany_beg$price_si,
@@ -58,18 +62,29 @@ cost_global_germany <- predict_cost(
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
+# Define country capacity data
+cap_data_us <- data$usSeiaLbnl %>%
+    group_by(year) %>% 
+    summarise(cumCapacityKw = sum(cumCapacityKw))
+cap_data_china <- data$china %>%
+    filter(component == "Module") %>% 
+    select(year, cumCapacityKw)
+cap_data_germany <- data$germany %>%
+    filter(component == "Module") %>% 
+    select(year, cumCapacityKw)
+
 # Create national learning capacity data for each country
 data_national_us <- makeNationalCapData(
-    df_country = data$usSeiaLbnl,
-    df_world   = lr$data_us,
+    data_country = cap_data_us,
+    data_world   = data$world,
     year_beg   = year_min)
 data_national_china <- makeNationalCapData(
-    df_country = data$china,
-    df_world   = lr$data_china,
+    data_country = cap_data_china,
+    data_world   = data$world,
     year_beg   = year_min)
 data_national_germany <- makeNationalCapData(
-    df_country = data$germany,
-    df_world   = lr$data_germany,
+    data_country = cap_data_germany,
+    data_world   = data$world,
     year_beg   = year_min)
 
 # Compute cost scenarios by country
@@ -99,6 +114,17 @@ cost_national_germany <- predict_cost(
     si_beg   = germany_beg$price_si,
     year_beg = year_min,
     ci       = 0.95)
+
+# cost_global_us %>%
+# cost_national_us %>% 
+# cost_global_china %>%
+# cost_national_china %>%
+# cost_national_germany %>% 
+    ggplot() + 
+    geom_line(aes(x = year, y = cost_per_kw)) + 
+    geom_line(aes(x = year, y = cost_per_kw_lb), color = "blue") + 
+    geom_line(aes(x = year, y = cost_per_kw_ub), color = "blue") + 
+    geom_line(data = lr$data_china, aes(x = year, y = costPerKw), color = "red") 
 
 # Combine Cost Scenarios ----
 

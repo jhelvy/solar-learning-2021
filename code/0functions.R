@@ -70,13 +70,13 @@ ci <- function(data, alpha = 0.025) {
 predict_cost <- function(
   model, 
   data,
-  cost_beg, 
+  cost_beg,
   cap_beg,
   si_beg,
   year_beg = NULL,
   ci = 0.95) {
     if (is.null(year_beg)) {
-        year_beg = min(data$year)
+        year_beg <-min(data$year)
     }
     data <- filter(data, year >= year_beg)
     # Create multivariate normal draws of the model parameters to 
@@ -104,38 +104,24 @@ predict_cost <- function(
     return(result)
 }
 
-makeNationalCapData <- function(df_country, df_world, year_beg = NULL) {
+makeNationalCapData <- function(data_country, data_world, year_beg = NULL) {
     if (is.null(year_beg)) {
         year_beg = min(data$year)
     }
-    # Need to add in a component variable if it's not in the df_country data
-    if (! "component" %in% names(df_country)) {
-      df_country$component <- "Module"
-    }
-    # Aggregate country installed capacity if data is broken down by 
-    # install type 
-    df_country <- df_country %>% 
-        filter(year >= year_beg, component  == "Module") %>%
-        group_by(year) %>%
-        summarise(cap_country = sum(cumCapacityKw))
-    # Add first year capacity 
-    df_country$cap_beg_country <- 
-        df_country[df_country$year == year_beg,]$cap_country
-    # Get world capacity data
-    df_world <- df_world %>%
-        filter(year >= year_beg) %>%
-        mutate(cap_world = cumCapacityKw)
-    # Add first year capacity 
-    df_world$cap_beg_world <- df_world[df_world$year == year_beg,]$cap_world
-    # Join and compute national capacity
-    result <- df_world %>%
-        left_join(df_country, by = "year") %>%
-        mutate(
-            cum_cap_addition = cap_country - cap_beg_country,
-            cumCapacityKw = cap_beg_world + cum_cap_addition) %>% 
-        select(
-            year, price_si, cumCapacityKw, cap_beg_country,
-            cum_cap_addition)
+    # Setup data
+    data_country <- data_country %>%
+        filter(year >= year_beg)
+    cap_beg_country <- data_country[1,]$cumCapacityKw
+    data_world <- data_world %>%
+        filter(year >= year_beg)
+    cap_beg_world <- data_world[1,]$cumCapacityKw
+    # Compute national cumulative capacity additions
+    result <- data_country %>%
+      mutate(
+        cumCapacityKw = cumCapacityKw - cap_beg_country + cap_beg_world) %>% 
+      # Add on silicon price data 
+      left_join(data_world %>% 
+          select(year, price_si), by = "year")
     return(result)
 }
 
