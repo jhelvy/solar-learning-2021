@@ -78,7 +78,7 @@ nrelSeia %>%
 
 nrel_lbnl_compare <- data$nrelCost %>%
   mutate(source = "NREL") %>%
-  rbind(mutate(lbnlCost, source = "LBNL"))
+  rbind(mutate(data$lbnlCost, source = "LBNL"))
 
 nrel_lbnl_compare %>%
   filter(year >= year_min, year <= year_max_charts) %>% # Our study period
