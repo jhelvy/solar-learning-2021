@@ -46,7 +46,8 @@ chinaFilePath <- file.path(dir$data, "china", "wang_ndrc_data.csv")
 siliconFilePath <- file.path(dir$data, "nemet_silicon.csv")
 exchangeRatesPath <- file.path(dir$data, "exchange-rates.xlsx")
 productionFilePath <- file.path(dir$data, "production", "production.csv")
-
+inflationPath <- file.path(dir$data, "inflation.Rds")
+  
 # Load exchange rates --------------------------------------------------------
 
 exchangeRatesRMB <- read_excel(
@@ -62,6 +63,20 @@ exchangeRatesEUR <- read_excel(
   rename(year = row_labels) %>% 
   mutate(year = as.numeric(year)) %>% 
   filter(!is.na(year))
+
+# Format PV production data ----------------------------------------------------
+
+# # Get inflation and country data frames from priceR package
+# inflation_df <- priceR::retrieve_inflation_data(country = "US")
+# countries_df <- priceR::show_countries()
+# # Save
+# saveRDS(list(
+#   inflation_df = inflation_df, countries_df = countries_df),
+#   inflationPath
+# )
+
+# Read in from previously-saved values
+inflation <- readRDS(inflationPath)
 
 # Format PV production data ----------------------------------------------------
 
@@ -158,11 +173,6 @@ lbnlCost <- read_excel(
 
 # Merge SEIA capacity with LBNL cost data ----
 usSeiaLbnl <- seiaCapacity %>%
-  spread(key = installType, value = cumCapacityKw) %>%
-  mutate(All = Commercial + Residential + Utility) %>%
-  gather(
-    key = "installType", value = "cumCapacityKw",
-    Commercial:All) %>%
   left_join(lbnlCost, by = c("year", "installType")) %>%
   filter(!is.na(costPerKw)) %>%
   select(year, installType, costPerKw, cumCapacityKw)
@@ -246,14 +256,19 @@ germany_cap <- irenaCumCapacityMw %>%
   select(year, capacityCumulativeMw = germany)
 
 germany <- read_csv(germanyFilePath) %>% 
-  filter(type == "module") %>% 
-  select(year, costPerKw = y) %>% 
+  select(year = x, costPerKw = Curve1) %>%
+  mutate(year = round(year)) %>% 
   # Currency conversion first, then adjust for inflation
   left_join(exchangeRatesEUR, by = "year") %>%
   mutate(
     costPerKw = costPerKw / average_of_rate,
     costPerKw = priceR::adjust_for_inflation(
-      costPerKw, year, "US", to_date = year_max)) %>%
+      price = costPerKw, 
+      from_date = year, 
+      country = "US", 
+      to_date = year_max,
+      inflation_dataframe = inflation$inflation_df,
+      countries_dataframe = inflation$countries_df)) %>%
   left_join(germany_cap) %>%
   mutate(
     cumCapacityKw = capacityCumulativeMw * 10^3,
@@ -281,7 +296,13 @@ china <- read_csv(chinaFilePath) %>%
   merge(exchangeRatesRMB) %>%
   mutate(
     costPerKw = costPerKw / average_of_rate,
-    costPerKw = adjust_for_inflation(costPerKw, year, "US", to_date = 2018),
+    costPerKw = priceR::adjust_for_inflation(
+      price = costPerKw, 
+      from_date = year, 
+      country = "US", 
+      to_date = year_max, 
+      inflation_dataframe = inflation$inflation_df, 
+      countries_dataframe = inflation$countries_df),
     component = str_to_title(
       str_replace_all(component, "_price_rmb_w", "")),
     component = ifelse(component == "System", "BOS", component)
@@ -331,7 +352,7 @@ target_sus_dev_china <- 1106*1e6
 target_sus_dev_germany <- 147*1e6
 target_sus_dev_world <- 3125*1e6
 
-# Assuming silicon prices held constant at 2018 level
+# Assuming silicon prices held constant level from last data point
 price_si <- world[which(world$year == year_min_proj),]$price_si
 
 # Compute annual, linear capacity increase to meet target

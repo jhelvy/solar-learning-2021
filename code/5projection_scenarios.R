@@ -99,28 +99,28 @@ proj_sus_dev_global_germany <- predict_cost(
 
 # Create national learning data for each country
 data_nat_trends_national_us <- makeNationalCapData(
-    df_country = data$proj_nat_trends %>% filter(country == "U.S."),
-    df_world   = data$proj_nat_trends %>% filter(country == "World"),
+    data_country = data$proj_nat_trends %>% filter(country == "U.S."),
+    data_world   = data$proj_nat_trends %>% filter(country == "World"),
     year_beg   = year_min_proj)
 data_sus_dev_national_us <- makeNationalCapData(
-    df_country = data$proj_sus_dev %>% filter(country == "U.S."),
-    df_world   = data$proj_sus_dev %>% filter(country == "World"),
+    data_country = data$proj_sus_dev %>% filter(country == "U.S."),
+    data_world   = data$proj_sus_dev %>% filter(country == "World"),
     year_beg   = year_min_proj)
 data_nat_trends_national_china <- makeNationalCapData(
-    df_country = data$proj_nat_trends %>% filter(country == "China"),
-    df_world   = data$proj_nat_trends %>% filter(country == "World"),
+    data_country = data$proj_nat_trends %>% filter(country == "China"),
+    data_world   = data$proj_nat_trends %>% filter(country == "World"),
     year_beg   = year_min_proj)
 data_sus_dev_national_china <- makeNationalCapData(
-    df_country = data$proj_sus_dev %>% filter(country == "China"),
-    df_world   = data$proj_sus_dev %>% filter(country == "World"),
+    data_country = data$proj_sus_dev %>% filter(country == "China"),
+    data_world   = data$proj_sus_dev %>% filter(country == "World"),
     year_beg   = year_min_proj)
 data_nat_trends_national_germany <- makeNationalCapData(
-    df_country = data$proj_nat_trends %>% filter(country == "Germany"),
-    df_world   = data$proj_nat_trends %>% filter(country == "World"),
+    data_country = data$proj_nat_trends %>% filter(country == "Germany"),
+    data_world   = data$proj_nat_trends %>% filter(country == "World"),
     year_beg   = year_min_proj)
 data_sus_dev_national_germany <- makeNationalCapData(
-    df_country = data$proj_sus_dev %>% filter(country == "Germany"),
-    df_world   = data$proj_sus_dev %>% filter(country == "World"),
+    data_country = data$proj_sus_dev %>% filter(country == "Germany"),
+    data_world   = data$proj_sus_dev %>% filter(country == "World"),
     year_beg   = year_min_proj)
 
 # National trends projections ---

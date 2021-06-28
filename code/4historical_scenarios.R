@@ -25,11 +25,9 @@ world_beg <- data$world %>%
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
-data_global <- data$world
-
 cost_global_us <- predict_cost(
     model    = lr$model_us,
-    data     = data_global,
+    data     = data$world,
     cost_beg = us_beg$costPerKw,
     cap_beg  = us_beg$cumCapacityKw,
     si_beg   = us_beg$price_si,
@@ -38,7 +36,7 @@ cost_global_us <- predict_cost(
 
 cost_global_china <- predict_cost(
     model    = lr$model_china,
-    data     = data_global,
+    data     = data$world,
     cost_beg = china_beg$costPerKw,
     cap_beg  = china_beg$cumCapacityKw,
     si_beg   = china_beg$price_si,
@@ -47,7 +45,7 @@ cost_global_china <- predict_cost(
 
 cost_global_germany <- predict_cost(
     model    = lr$model_germany,
-    data     = data_global,
+    data     = data$world,
     cost_beg = germany_beg$costPerKw,
     cap_beg  = germany_beg$cumCapacityKw,
     si_beg   = germany_beg$price_si,
@@ -70,7 +68,6 @@ cap_data_china <- data$china %>%
     filter(component == "Module") %>% 
     select(year, cumCapacityKw)
 cap_data_germany <- data$germany %>%
-    filter(component == "Module") %>% 
     select(year, cumCapacityKw)
 
 # Create national learning capacity data for each country
@@ -115,17 +112,6 @@ cost_national_germany <- predict_cost(
     year_beg = year_min,
     ci       = 0.95)
 
-# cost_global_us %>%
-# cost_national_us %>% 
-# cost_global_china %>%
-# cost_national_china %>%
-# cost_national_germany %>% 
-    ggplot() + 
-    geom_line(aes(x = year, y = cost_per_kw)) + 
-    geom_line(aes(x = year, y = cost_per_kw_lb), color = "blue") + 
-    geom_line(aes(x = year, y = cost_per_kw_ub), color = "blue") + 
-    geom_line(data = lr$data_china, aes(x = year, y = costPerKw), color = "red") 
-
 # Combine Cost Scenarios ----
 
 cost <- rbind(
@@ -143,6 +129,24 @@ cost <- rbind(
            learning = "national", country = "Germany")
 )
 
+# Preview results
+cost %>% 
+    filter(year <= year_max, year >= year_min) %>% 
+    ggplot() + 
+    facet_wrap(vars(country)) +
+    geom_line(
+        aes(x = year, y = cost_per_kw, color = learning)) + 
+    geom_ribbon(
+        aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub, 
+            fill = learning), alpha = 0.22) +
+    geom_line(
+        data = rbind(
+            lr$data_us %>% mutate(country = "U.S."),
+            lr$data_china %>% mutate(country = "China"),
+            lr$data_germany %>% mutate(country = "Germany")) %>% 
+            filter(year >= year_min, year <= year_max), 
+        aes(x = year, y = costPerKw), linetype = 2)
+
 # Calculate savings between national and global learning scenarios
 
 # Combine additional capacity data for each country into one data frame
@@ -151,22 +155,35 @@ cap_additions <- rbind(
     mutate(data_national_china, country = "China"),
     mutate(data_national_germany, country = "Germany")) %>% 
     select(year, country, cum_cap_addition) %>% 
-    mutate(ann_cap_addition = cum_cap_addition - lag(cum_cap_addition, 1))
+    mutate(ann_cap_addition = cum_cap_addition - lag(cum_cap_addition, 1)) %>% 
+    select(year, country, ann_cap_addition)
 
-savings_mean <- cost %>%
-    select(year, learning, country, cost_per_kw) %>%
-    spread(key = learning, value = cost_per_kw) %>%
-    computeSavings(cap_additions, year_min)
+savings_mean <- computeSavings(
+    cost_national = cost %>% 
+        filter(learning == "national") %>% 
+        select(year, country, national = cost_per_kw),
+    cost_global = cost %>% 
+        filter(learning == "global") %>% 
+        select(year, country, global = cost_per_kw), 
+    cap_additions)
 
-savings_lb <- cost %>%
-    select(year, learning, country, cost_per_kw_lb) %>%
-    spread(key = learning, value = cost_per_kw_lb) %>%
-    computeSavings(cap_additions, year_min)
+savings_lb <- computeSavings(
+    cost_national = cost %>% 
+        filter(learning == "national") %>% 
+        select(year, country, national = cost_per_kw_lb),
+    cost_global = cost %>% 
+        filter(learning == "global") %>% 
+        select(year, country, global = cost_per_kw_ub), 
+    cap_additions)
 
-savings_ub <- cost %>%
-    select(year, learning, country, cost_per_kw_ub) %>%
-    spread(key = learning, value = cost_per_kw_ub) %>%
-    computeSavings(cap_additions, year_min)
+savings_ub <- computeSavings(
+    cost_national = cost %>% 
+        filter(learning == "national") %>% 
+        select(year, country, national = cost_per_kw_ub),
+    cost_global = cost %>% 
+        filter(learning == "global") %>% 
+        select(year, country, global = cost_per_kw_lb), 
+    cap_additions)
 
 # Merge savings 
 savings <- rbind(
@@ -178,12 +195,13 @@ savings <- rbind(
         ann_savings_bil = mean, 
         ann_savings_bil_lb = lb, 
         ann_savings_bil_ub = ub) %>% 
+    filter(year > year_min, year <= year_max) %>% 
     group_by(country) %>% 
     mutate(
         cum_savings_bil = cumsum(ann_savings_bil), 
         cum_savings_bil_lb = cumsum(ann_savings_bil_lb),
         cum_savings_bil_ub = cumsum(ann_savings_bil_ub)) %>% 
-    ungroup()
+    ungroup() 
 
 # Save outputs ----
 

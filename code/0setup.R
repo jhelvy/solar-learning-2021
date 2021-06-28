@@ -27,7 +27,7 @@ dir <- list(
 )
 
 # Historical range
-year_min <- 2006
+year_min <- 2008
 year_max <- 2019
 
 # Projection range

@@ -110,7 +110,8 @@ makeNationalCapData <- function(data_country, data_world, year_beg = NULL) {
     }
     # Setup data
     data_country <- data_country %>%
-        filter(year >= year_beg)
+        filter(year >= year_beg) %>% 
+        select(year, cumCapacityKw)
     cap_beg_country <- data_country[1,]$cumCapacityKw
     data_world <- data_world %>%
         filter(year >= year_beg)
@@ -118,17 +119,18 @@ makeNationalCapData <- function(data_country, data_world, year_beg = NULL) {
     # Compute national cumulative capacity additions
     result <- data_country %>%
       mutate(
-        cumCapacityKw = cumCapacityKw - cap_beg_country + cap_beg_world) %>% 
+        cum_cap_addition = cumCapacityKw - cap_beg_country,
+        cumCapacityKw = cap_beg_world + cum_cap_addition) %>%
       # Add on silicon price data 
       left_join(data_world %>% 
           select(year, price_si), by = "year")
     return(result)
 }
 
-computeSavings <- function(df, cap_additions, year_min) {
-    result <- df %>% 
+computeSavings <- function(cost_national, cost_global, cap_additions) {
+    result <- cost_national %>% 
+        left_join(cost_global, by = c("year", "country")) %>% 
         left_join(cap_additions, by = c("year", "country")) %>% 
-        filter(year > year_min) %>% 
         mutate(
             ann_savings_bil = ann_cap_addition*(national - global) / 10^9) %>% 
         select(year, country, ann_savings_bil)

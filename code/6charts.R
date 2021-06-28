@@ -65,19 +65,9 @@ ggsave(here::here(dir$figs, 'png', "pvProduction.png"),
 
 # True historical cost per kW
 cost_historical_true <- rbind(
-    data$usSeiaLbnl %>%
-        filter(installType == "Utility") %>% 
-        select(year, costPerKw, cumCapacityKw) %>% 
-        mutate(country = "U.S."),
-    data$china %>%
-        filter(component == "Module") %>% 
-        select(year, costPerKw, cumCapacityKw) %>% 
-        mutate(country = "China"),
-    data$germany %>%
-        filter(component == "Module") %>% 
-        select(year, costPerKw, cumCapacityKw) %>% 
-        mutate(country = "Germany")
-    ) %>% 
+    lr$data_us %>% mutate(country = "U.S."),
+    lr$data_china %>% mutate(country = "China"),
+    lr$data_germany %>% mutate(country = "Germany")) %>%
     filter(year >= year_min, year <= year_max)
 
 x_lim <- lubridate::ymd(c(
@@ -106,7 +96,9 @@ cost_historical_plot <- cost$cost %>%
         limits = x_lim,
         date_labels = "'%y",
         date_breaks = "2 years") +
-    scale_y_continuous(labels = scales::dollar) +
+    scale_y_continuous(
+      breaks = seq(0, 5000, 1000),
+      labels = scales::dollar) +
     expand_limits(y = 0) +
     scale_color_manual("Learning", values = colors_learning) +
     scale_fill_manual("Learning", values = colors_learning) +
