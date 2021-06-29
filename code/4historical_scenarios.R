@@ -11,7 +11,7 @@ lr <- readRDS(dir$lr_models)
 us_beg <- lr$data_us %>%
     filter(year == year_min)
 china_beg <- lr$data_china %>%
-    filter(year == year_min)
+    filter(year == year_min_china)
 germany_beg <- lr$data_germany %>%
     filter(year == year_min)
 world_beg <- data$world %>%
@@ -27,7 +27,7 @@ world_beg <- data$world %>%
 
 cost_global_us <- predict_cost(
     model    = lr$model_us,
-    data     = data$world,
+    data     = data$world %>% filter(year <= year_max),
     cost_beg = us_beg$costPerKw,
     cap_beg  = us_beg$cumCapacityKw,
     si_beg   = us_beg$price_si,
@@ -36,16 +36,16 @@ cost_global_us <- predict_cost(
 
 cost_global_china <- predict_cost(
     model    = lr$model_china,
-    data     = data$world,
+    data     = data$world %>% filter(year <= year_max),
     cost_beg = china_beg$costPerKw,
     cap_beg  = china_beg$cumCapacityKw,
     si_beg   = china_beg$price_si,
-    year_beg = year_min,
+    year_beg = year_min_china,
     ci       = 0.95)
 
 cost_global_germany <- predict_cost(
     model    = lr$model_germany,
-    data     = data$world,
+    data     = data$world %>% filter(year <= year_max),
     cost_beg = germany_beg$costPerKw,
     cap_beg  = germany_beg$cumCapacityKw,
     si_beg   = germany_beg$price_si,
@@ -61,12 +61,15 @@ cost_global_germany <- predict_cost(
 #       (assuming in effect that learning is shared across installation type)
 
 # Define country capacity data
-cap_data_us <- data$us
+cap_data_us <- data$us %>% 
+    filter(year <= year_max)
 cap_data_china <- data$china %>%
     filter(component == "Module") %>% 
+    filter(year <= year_max) %>% 
     select(year, cumCapacityKw)
 cap_data_germany <- data$germany %>%
-    select(year, cumCapacityKw)
+    select(year, cumCapacityKw) %>% 
+    filter(year <= year_max)
 
 # Create national learning capacity data for each country
 data_national_us <- makeNationalCapData(
@@ -76,7 +79,7 @@ data_national_us <- makeNationalCapData(
 data_national_china <- makeNationalCapData(
     data_country = cap_data_china,
     data_world   = data$world,
-    year_beg   = year_min)
+    year_beg   = year_min_china)
 data_national_germany <- makeNationalCapData(
     data_country = cap_data_germany,
     data_world   = data$world,
@@ -98,7 +101,7 @@ cost_national_china <- predict_cost(
     cost_beg = china_beg$costPerKw,
     cap_beg  = china_beg$cumCapacityKw,
     si_beg   = china_beg$price_si,
-    year_beg = year_min,
+    year_beg = year_min_china,
     ci       = 0.95)
 
 cost_national_germany <- predict_cost(
@@ -129,7 +132,6 @@ cost <- rbind(
 
 # Preview results
 cost %>% 
-    filter(year <= year_max, year >= year_min) %>% 
     ggplot() + 
     facet_wrap(vars(country)) +
     geom_line(
@@ -152,9 +154,11 @@ cap_additions <- rbind(
     mutate(data_national_us, country = "U.S."),
     mutate(data_national_china, country = "China"),
     mutate(data_national_germany, country = "Germany")) %>% 
-    select(year, country, cum_cap_addition) %>% 
+    select(year, country, cum_cap_addition) %>%
+    group_by(country) %>% 
     mutate(ann_cap_addition = cum_cap_addition - lag(cum_cap_addition, 1)) %>% 
-    select(year, country, ann_cap_addition)
+    select(year, country, ann_cap_addition) %>% 
+    filter(!is.na(ann_cap_addition))
 
 savings_mean <- computeSavings(
     cost_national = cost %>% 
@@ -188,12 +192,12 @@ savings <- rbind(
     mutate(savings_mean, est = "mean"),
     mutate(savings_lb, est = "lb"),
     mutate(savings_ub, est = "ub")) %>%
+    filter(!is.na(ann_savings_bil)) %>% 
     spread(key = est, value = ann_savings_bil) %>% 
     rename(
         ann_savings_bil = mean, 
         ann_savings_bil_lb = lb, 
         ann_savings_bil_ub = ub) %>% 
-    filter(year > year_min, year <= year_max) %>% 
     group_by(country) %>% 
     mutate(
         cum_savings_bil = cumsum(ann_savings_bil), 

@@ -266,9 +266,9 @@ usNrel <- nrelCost %>%
   left_join(nrelCapacity) %>% 
   ungroup()
 
-# Create final U.S. data set using: 
+# Create final U.S. data -----
 # Capacity: SEIA 
-# Cost: LBNL (2006 - 2018) NREL (2018 - 2020)
+# Cost: LBNL (2006 - 2017) NREL (2018 - 2020)
 
 us <- seiaCapacity %>%
   group_by(year) %>%

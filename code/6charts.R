@@ -97,9 +97,9 @@ cost_historical_plot <- cost$cost %>%
         date_labels = "'%y",
         date_breaks = "2 years") +
     scale_y_continuous(
-      breaks = seq(0, 5000, 1000),
+      limits = c(0, 6200),
+      breaks = seq(0, 6000, 1000),
       labels = scales::dollar) +
-    expand_limits(y = 0) +
     scale_color_manual("Learning", values = colors_learning) +
     scale_fill_manual("Learning", values = colors_learning) +
     theme_minimal_grid(
@@ -113,7 +113,7 @@ cost_historical_plot <- cost$cost %>%
         ";'>Global</span> vs. <span style = 'color: ", 
         colors_learning["National"], 
         ";'>National</span> learning"),
-        y = paste0("Cost per kW (", year_min, " $USD)"),
+        y = paste0("Cost per kW (", year_min_proj, " $USD)"),
         x = "Year", 
         caption = "Uncertainty bands represent 95% confidence interval from estimated learning model"
     ) + 
@@ -121,14 +121,15 @@ cost_historical_plot <- cost$cost %>%
         plot.title.position = "plot",
         strip.background = element_rect(fill = "grey80"), 
         panel.grid.major = element_line(size = 0.5, colour = "grey90"),
+        axis.line.x = element_blank(),
+        plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 1, size = 11, face = "italic"),
+        plot.title = element_markdown(),
+        legend.position = "none"
         # legend.position = c(0.87, 0.78),
         # legend.margin = margin(6, 6, 6, 6),
         # legend.background = element_rect(
         #     fill = "white", color = "black", size = 0.2),
-        legend.position = "none",
-        plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 1, size = 11, face = "italic"),
-        plot.title = element_markdown()
     ) +
     # Add "historical" labels
     geom_text(
@@ -165,19 +166,19 @@ savings_cum_historical_plot <- cost$savings %>%
     geom_area(aes(x = year, y = cum_savings_bil, fill = country)) +
     scale_fill_manual(values = colors_country) +
     scale_x_continuous(
-      breaks = seq(year_min, year_max, 2), 
-      limits = c(year_min, year_max)) +
+      breaks = seq(year_min_china, year_max, 2), 
+      limits = c(year_min_china, year_max)) +
     scale_y_continuous(
-        labels = dollar,
-        # breaks = seq(0, 150, 50),
-        # limits = c(0, 150),
-        expand = expansion(mult = c(0, 0.05))) +
+      labels = dollar,
+      breaks = seq(0, 200, 50),
+      limits = c(0, 200),
+      expand = expansion(mult = c(0, 0.05))) +
     theme_minimal_hgrid(font_family = font_main) +
     scale_color_manual(values = c("white", "black", "white")) +
     labs(
         title = "Cumulative module cost savings from global vs. national learning",
         x = "Year",
-        y = paste0("Cumulative savings (Billion ", year_min, " $USD)"),
+        y = paste0("Cumulative savings (Billion ", year_min_proj, " $USD)"),
         fill = "Country") +
     theme(
         plot.title.position = "plot",
@@ -186,14 +187,14 @@ savings_cum_historical_plot <- cost$savings %>%
     # Add country labels
     geom_text(
         data = data.frame(
-            x = c(2017, 2017, 2016), 
-            y = c(30, 85, 130), 
+            x = c(2018, 2018, 2016), 
+            y = c(45, 120, 175), 
             label = c("China", "U.S.", "Germany")), 
         aes(x = x, y = y, label = label, color = label), 
         size = 6, family = font_main
     ) +
     annotate(
-        "segment", x = 2016.8, xend = 2017.5, y = 128, yend = 117,
+        "segment", x = 2017.1, xend = 2018.2, y = 171, yend = 160,
         colour = "black")
 
 ggsave(
@@ -208,13 +209,13 @@ ggsave(
 cum_savings_labels <- cost$savings %>% 
     filter(year == year_max) %>%
     mutate(
-        mean = scales::dollar(round(cum_savings_bil)), 
-        lb = scales::dollar(round(cum_savings_bil_lb)),
-        ub = scales::dollar(round(cum_savings_bil_ub)),
-        x = 2009, 
-        y = 22,
+        mean = round(cum_savings_bil), 
+        lb = round(cum_savings_bil_lb),
+        ub = round(cum_savings_bil_ub),
+        x = 2007, 
+        y = 26,
         label = paste0(
-            "Cumulative savings:\n", mean, " (", lb, " - ", ub, ") billion"))
+            "Cumulative savings:\nB $ ", mean, " (", lb, " - ", ub, ")"))
 savings_ann_historical_plot <- cost$savings %>% 
     filter(year > year_min) %>%
     mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
@@ -224,9 +225,11 @@ savings_ann_historical_plot <- cost$savings %>%
     geom_errorbar(
         aes(x = year, ymin = ann_savings_bil_lb, ymax = ann_savings_bil_ub), 
         color = "grey42", width = 0.5) + 
-    scale_x_continuous(breaks = seq(2009, 2017, 2)) +
+    scale_x_continuous(breaks = seq(year_min_china, year_max, 2)) +
     scale_y_continuous(
         labels = scales::dollar, 
+        breaks = seq(0, 30, 10),
+        limits = c(-3, 30),
         expand = expansion(mult = c(0, 0.05))) +
     scale_fill_manual(values = colors_country) +
     theme_minimal_hgrid(
@@ -236,6 +239,7 @@ savings_ann_historical_plot <- cost$savings %>%
     theme(
         plot.title.position = "plot",
         legend.position = "none",
+        axis.line.x = element_blank(),
         strip.background = element_rect(fill = "grey80"), 
         panel.grid.major = element_line(
             size = 0.5, colour = "grey90")
@@ -243,7 +247,7 @@ savings_ann_historical_plot <- cost$savings %>%
      labs(
         title = "Annual module cost savings from global vs. national learning",
         x = NULL,
-        y = paste0("Annual savings (Billion ", year_min, " $USD)"),
+        y = paste0("Annual savings (Billion ", year_min_proj, " $USD)"),
         fill = "Country") + 
     # Add totals
     geom_text(
@@ -299,7 +303,7 @@ cost_proj <- proj %>%
     plot.caption = element_text(hjust = 1, size = 11, face = "italic")
   ) +
   labs(
-    y = paste0("Cost per kW (", year_min, " $USD)"),
+    y = paste0("Cost per kW (", year_min_proj, " $USD)"),
     x = "Year",
     title = paste0(
       "Projected module costs using <span style = 'color: ",
