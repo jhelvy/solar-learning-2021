@@ -61,9 +61,7 @@ cost_global_germany <- predict_cost(
 #       (assuming in effect that learning is shared across installation type)
 
 # Define country capacity data
-cap_data_us <- data$usSeiaLbnl %>%
-    group_by(year) %>% 
-    summarise(cumCapacityKw = sum(cumCapacityKw))
+cap_data_us <- data$us
 cap_data_china <- data$china %>%
     filter(component == "Module") %>% 
     select(year, cumCapacityKw)

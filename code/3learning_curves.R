@@ -39,11 +39,8 @@ data <- readRDS(dir$data_formatted)
 # US cost data: LBNL
 
 # Prep data
-data_us <- data$usSeiaLbnl %>%
-    filter(
-        year >= year_min,
-        year <= year_max,
-        installType == "Utility") %>%
+data_us <- data$us %>%
+    filter(year >= year_min, year <= year_max) %>%
     select(year, costPerKw) %>%
     left_join(
         data$world %>%

@@ -37,7 +37,7 @@ usNrel2018FilePath <- file.path(
 usNrel2020FilePath <- file.path(
   dir$data, "nrel", "Data File (U.S. Solar Photovoltaic  BESS System Cost Benchmark Q1 2020 Report).xlsx")
 usLbnlFilePath <- file.path(
-  dir$data, "lbnl", "summary_tables_and_figures.xlsx")
+  dir$data, "lbnl", "tts_2019_summary_data_tables_0.xlsx")
 usSeiaEarlyFilePath <- file.path(dir$data, "seia", "seiaEarlyYears.csv")
 usSeiaFilePath <- file.path(dir$data, "seia", "seiaCapacity.json")
 irenaCapFilePath <- file.path(dir$data, "irena", "irenaCumCapacityMw.csv")
@@ -101,7 +101,7 @@ pvProduction <- read_csv(productionFilePath) %>%
   gather(key = "country", value = "production_gw", china:row) 
 
 # -----------------------------------------------------------------------
-# U.S.
+# U.S. ----
 # -----------------------------------------------------------------------
 
 # Format SEIA capacity data (US) ---------------------------------------------
@@ -153,28 +153,51 @@ seiaCapacity <- seiaCapacity %>%
 
 # Format LBNL cost data (US) -----------------------------------------------
 
-lbnlCost <- read_excel(
-  usLbnlFilePath, sheet = "Component Cost Trends", skip = 1) %>%
+lbnlCost <- read_excel(usLbnlFilePath, sheet = "Fig 17", skip = 3) %>%
   clean_names() %>%
-  select(
-    year, 
-    Residential = module_price_index, 
-    Commercial = x6, 
-    Utility = x7) %>% 
-  filter(!is.na(year)) %>%
+  rename(
+    soft_cost_residential = residential,
+    soft_cost_commercial = small_non_residential,
+    soft_cost_utility = large_non_residential
+  ) %>%
   gather(
-    key = "installType", 
+    key = "component", 
     value = "costPerW", 
-    -year) %>% 
+    module_price_index:soft_cost_utility) %>%
   mutate(
+    component = str_to_title(str_replace(component, "_price_index", "")),
+    costPerW = str_replace(costPerW, "-", ""),
     costPerW = as.numeric(costPerW),
-    costPerKw = costPerW * 1000) %>% 
-  select(year, installType, costPerKw)
+    costPerKw = costPerW * 1000) %>%
+  select(year = x1, component, costPerKw)
+
+# Separate out "soft" cost and installType
+lbnlCost_soft <- lbnlCost %>%
+  filter(str_detect(component, "Soft_")) %>%
+  separate(
+    component, into = c("d1", "d2", "installType"), sep = "_") %>%
+  mutate(
+    component = "Other",
+    componentType = "Soft",
+    installType = str_to_title(installType)) %>%
+  select(year, component, componentType, installType, costPerKw)
+lbnlCost_hard <- lbnlCost %>%
+  filter(! str_detect(component, "Soft_")) %>%
+  mutate(
+    component = ifelse(
+      component == "Inverter_residential", "Inverter", component),
+    componentType = "Hard") %>%
+    merge(expand.grid(installType = unique(lbnlCost_soft$installType))) %>%
+  select(year, component, componentType, installType, costPerKw)
+lbnlCost <- rbind(lbnlCost_hard, lbnlCost_soft) %>%
+  filter(!is.na(costPerKw))
 
 # Merge SEIA capacity with LBNL cost data ----
 usSeiaLbnl <- seiaCapacity %>%
-  left_join(lbnlCost, by = c("year", "installType")) %>%
-  filter(!is.na(costPerKw)) %>%
+  left_join(
+    lbnlCost %>% 
+      filter(component == "Module") %>% 
+      select(year, installType, costPerKw)) %>%
   select(year, installType, costPerKw, cumCapacityKw)
 
 # Format NREL cost data (US) -------------------------------------------------
@@ -243,8 +266,30 @@ usNrel <- nrelCost %>%
   left_join(nrelCapacity) %>% 
   ungroup()
 
+# Create final U.S. data set using: 
+# Capacity: SEIA 
+# Cost: LBNL (2006 - 2018) NREL (2018 - 2020)
+
+us <- seiaCapacity %>%
+  group_by(year) %>%
+  summarise(cumCapacityKw = sum(cumCapacityKw)) %>% 
+  left_join(
+    nrelCost %>% 
+      filter(installType == "Utility", year >= 2018) %>% 
+      select(year, costPerKw), by = "year") %>% 
+  left_join(
+    lbnlCost %>% 
+      filter(
+        installType == "Utility", component == "Module", 
+        year < 2018) %>% 
+      select(year, costPerKw), by = "year") %>% 
+  mutate(
+    costPerKw = ifelse(
+      is.na(costPerKw.x), costPerKw.y, costPerKw.x)) %>% 
+  select(year, cumCapacityKw, costPerKw)
+
 # -----------------------------------------------------------------------
-# Germany
+# Germany ----
 # -----------------------------------------------------------------------
 
 # Fraunhofer -- costs
@@ -276,7 +321,7 @@ germany <- read_csv(germanyFilePath) %>%
   select(year, costPerKw, cumCapacityKw)
 
 # -----------------------------------------------------------------------
-# China
+# China ----
 # -----------------------------------------------------------------------
 
 # Format Wang NDRC data 
@@ -457,6 +502,7 @@ saveRDS(list(
     lbnlCost           = lbnlCost,
     usNrel             = usNrel,
     usSeiaLbnl         = usSeiaLbnl,
+    us                 = us,
     china              = china,
     germany            = germany,
     world              = world, 
