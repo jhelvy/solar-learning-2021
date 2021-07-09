@@ -18,6 +18,10 @@ colors_learning <- c("National" = "#E5601A", "Global" = "#1A9FE5")
 colors_country <- c("#E5C61A", "#1A9FE5", "#E5601A")
 font_main <- "Fira Sans Condensed"
 
+# Set boundaries for plots 
+min_year <- min(year_model$china_min, year_model$us_min, year_model$germany_min)
+max_year <- max(year_model$china_max, year_model$us_max, year_model$germany_max)
+
 # # Check for color blindness
 # colorblindr::cvd_grid(plot)
 
@@ -67,12 +71,11 @@ ggsave(here::here(dir$figs, 'png', "pvProduction.png"),
 cost_historical_true <- rbind(
     lr$data_us %>% mutate(country = "U.S."),
     lr$data_china %>% mutate(country = "China"),
-    lr$data_germany %>% mutate(country = "Germany")) %>%
-    filter(year >= year_min, year <= year_max)
+    lr$data_germany %>% mutate(country = "Germany"))
 
 x_lim <- lubridate::ymd(c(
-    paste0(year_min - 1, "-07-01"),
-    paste0(year_max, "-07-01")))
+    paste0(min_year - 1, "-07-01"),
+    paste0(max_year, "-07-01")))
 cost_historical_plot <- cost$cost %>%
     mutate(
       learning = str_to_title(learning),
@@ -97,7 +100,7 @@ cost_historical_plot <- cost$cost %>%
         date_labels = "'%y",
         date_breaks = "2 years") +
     scale_y_continuous(
-      limits = c(0, 6200),
+      limits = c(0, 6500),
       breaks = seq(0, 6000, 1000),
       labels = scales::dollar) +
     scale_color_manual("Learning", values = colors_learning) +
@@ -113,7 +116,7 @@ cost_historical_plot <- cost$cost %>%
         ";'>Global</span> vs. <span style = 'color: ", 
         colors_learning["National"], 
         ";'>National</span> learning"),
-        y = paste0("Cost per kW (", year_min_proj, " $USD)"),
+        y = paste0("Cost per kW (", year_proj$min, " $USD)"),
         x = "Year", 
         caption = "Uncertainty bands represent 95% confidence interval from estimated learning model"
     ) + 
@@ -166,8 +169,8 @@ savings_cum_historical_plot <- cost$savings %>%
     geom_area(aes(x = year, y = cum_savings_bil, fill = country)) +
     scale_fill_manual(values = colors_country) +
     scale_x_continuous(
-      breaks = seq(year_min_china, year_max, 2), 
-      limits = c(year_min_china, year_max)) +
+      breaks = seq(year_savings$min, year_savings$max, 2), 
+      limits = c(year_savings$min, year_savings$max)) +
     scale_y_continuous(
       labels = dollar,
       breaks = seq(0, 200, 50),
@@ -178,7 +181,7 @@ savings_cum_historical_plot <- cost$savings %>%
     labs(
         title = "Cumulative module cost savings from global vs. national learning",
         x = "Year",
-        y = paste0("Cumulative savings (Billion ", year_min_proj, " $USD)"),
+        y = paste0("Cumulative savings (Billion ", year_proj$min, " $USD)"),
         fill = "Country") +
     theme(
         plot.title.position = "plot",
@@ -207,7 +210,7 @@ ggsave(
 # Annual savings historical ----
 
 cum_savings_labels <- cost$savings %>% 
-    filter(year == year_max) %>%
+    filter(year == max(year)) %>%
     mutate(
         mean = round(cum_savings_bil), 
         lb = round(cum_savings_bil_lb),
@@ -217,7 +220,6 @@ cum_savings_labels <- cost$savings %>%
         label = paste0(
             "Cumulative savings:\nB $ ", mean, " (", lb, " - ", ub, ")"))
 savings_ann_historical_plot <- cost$savings %>% 
-    filter(year > year_min) %>%
     mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
     ggplot() + 
     facet_wrap(vars(country), nrow = 1) +
@@ -225,7 +227,7 @@ savings_ann_historical_plot <- cost$savings %>%
     geom_errorbar(
         aes(x = year, ymin = ann_savings_bil_lb, ymax = ann_savings_bil_ub), 
         color = "grey42", width = 0.5) + 
-    scale_x_continuous(breaks = seq(year_min_china, year_max, 2)) +
+    scale_x_continuous(breaks = seq(year_savings$min, year_savings$max, 2)) +
     scale_y_continuous(
         labels = scales::dollar, 
         breaks = seq(0, 30, 10),
@@ -247,7 +249,7 @@ savings_ann_historical_plot <- cost$savings %>%
      labs(
         title = "Annual module cost savings from global vs. national learning",
         x = NULL,
-        y = paste0("Annual savings (Billion ", year_min_proj, " $USD)"),
+        y = paste0("Annual savings (Billion ", year_proj$min, " $USD)"),
         fill = "Country") + 
     # Add totals
     geom_text(
@@ -303,7 +305,7 @@ cost_proj <- proj %>%
     plot.caption = element_text(hjust = 1, size = 11, face = "italic")
   ) +
   labs(
-    y = paste0("Cost per kW (", year_min_proj, " $USD)"),
+    y = paste0("Cost per kW (", year_proj$min, " $USD)"),
     x = "Year",
     title = paste0(
       "Projected module costs using <span style = 'color: ",

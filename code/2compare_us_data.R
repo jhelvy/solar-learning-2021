@@ -4,8 +4,6 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
-year_max_charts <- 2020
-
 # Compare capacity data from NREL, SEIA, and IRENA ----------------------------
 
 # Merge NREL and SEIA capacity data
@@ -22,11 +20,9 @@ nrelSeia <- data$nrelCapacity %>%
 
 # Plot NREL vs. SEIA capacity comparison 
 nrelSeia %>% 
-  filter(year >= year_min, year <= year_max_charts) %>% # Our study period
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line() +
   geom_point(pch = 21, fill = "white") +
-  scale_x_continuous(breaks = seq(year_min, year_max_charts, 2)) +
   scale_color_manual(
     values = c("red", "dodgerblue"),
     breaks = c("NREL", "SEIA")) +
@@ -53,11 +49,9 @@ nrelSeia %>%
         cumCapacityGw = usa / 10^3) %>% 
       select(year, source, cumCapacityGw)
   ) %>%
-  filter(year >= year_min, year <= year_max_charts) %>% # Our study period
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line(alpha = 0.5) +
   geom_point(pch = 21, fill = "white") +
-  scale_x_continuous(breaks = seq(year_min, year_max_charts, 2)) +
   scale_color_manual(
     values = c("red", "dodgerblue", "black"),
     breaks = c("NREL", "SEIA", "IRENA")) +
@@ -78,15 +72,17 @@ nrelSeia %>%
 
 nrel_lbnl_compare <- data$nrelCost %>%
   mutate(source = "NREL") %>%
-  rbind(mutate(data$lbnlCost, source = "LBNL"))
+  rbind(
+    data$lbnlCost %>%
+      filter(component == "Module") %>% 
+      mutate(source = "LBNL") %>% 
+      select(-component, -componentType))
 
 nrel_lbnl_compare %>%
-  filter(year >= year_min, year <= year_max_charts) %>% # Our study period
   ggplot(aes(x = year, y = costPerKw, color = source, group = source)) +
   geom_line() +
   geom_point(pch = 21, fill = "white") +
   facet_wrap(vars(installType)) +
-  scale_x_continuous(breaks = seq(year_min, year_max_charts, 2)) +
   scale_color_manual(
     values = c("red", "dodgerblue"),
     breaks = c("NREL", "LBNL")) +

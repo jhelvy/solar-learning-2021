@@ -268,20 +268,20 @@ usNrel <- nrelCost %>%
 
 # Create final U.S. data -----
 # Capacity: SEIA 
-# Cost: LBNL (2006 - 2017) NREL (2018 - 2020)
+# Cost: LBNL (2006 - 2018) NREL (2019 - 2020)
 
 us <- seiaCapacity %>%
   group_by(year) %>%
   summarise(cumCapacityKw = sum(cumCapacityKw)) %>% 
   left_join(
     nrelCost %>% 
-      filter(installType == "Utility", year >= 2018) %>% 
+      filter(installType == "Utility", year >= 2019) %>%
       select(year, costPerKw), by = "year") %>% 
   left_join(
     lbnlCost %>% 
       filter(
         installType == "Utility", component == "Module", 
-        year < 2018) %>% 
+        year <= 2018) %>%
       select(year, costPerKw), by = "year") %>% 
   mutate(
     costPerKw = ifelse(
@@ -311,7 +311,7 @@ germany <- read_csv(germanyFilePath) %>%
       price = costPerKw, 
       from_date = year, 
       country = "US", 
-      to_date = year_max,
+      to_date = year_model$germany_max,
       inflation_dataframe = inflation$inflation_df,
       countries_dataframe = inflation$countries_df)) %>%
   left_join(germany_cap) %>%
@@ -345,7 +345,7 @@ china <- read_csv(chinaFilePath) %>%
       price = costPerKw, 
       from_date = year, 
       country = "US", 
-      to_date = year_max, 
+      to_date = year_model$china_max,
       inflation_dataframe = inflation$inflation_df, 
       countries_dataframe = inflation$countries_df),
     component = str_to_title(
@@ -381,24 +381,10 @@ world <- left_join(world, silicon) %>%
 # Projections
 # -----------------------------------------------------------------------
 #
-# Projections to 2030, based on achieving fixed capacity by 2030
-#
-# National trends scenario is based on capacity at end of 2020 plus continuation of recent trends. Note that this lines up well with Germany's stated national target of 100GW, and is equivalent to China solar share in solar+wind reaching ~ 63% of the 1200GW target (currently at 47%). There are analyses that indicate China will need to exceed 1200 to reach its other targets, and I expect solar growth to increase relative to wind for the next decade. The U.S. scenario is also in line with other scenarios (e.g. EIA low-RE cost, NAM decarbonization study). World capacity is computed by taking the shares of the three countries in current world capacity (2019 from IRENA), which comes out to 54%, then scaling up capacity linearly to 2030.
-#
-# Sustainable development scenario is from IEA WEO 2020 (the net zero study does not provide a country breakdown), then splitting up EU into Germany via the 2019 shares of capacity (IRENA).
-#
-# Targets:
-target_nat_trends_us <- 295*1e6
-target_nat_trends_china <- 750*1e6
-target_nat_trends_germany <- 103*1e6
-target_nat_trends_world <- 2115*1e6
-target_sus_dev_us <- 628*1e6
-target_sus_dev_china <- 1106*1e6
-target_sus_dev_germany <- 147*1e6
-target_sus_dev_world <- 3125*1e6
+# Projections to 2030, based on linear growth to achieve fixed capacity target
 
 # Assuming silicon prices held constant level from last data point
-price_si <- world[which(world$year == year_min_proj),]$price_si
+price_si <- world[which(world$year == year_proj$min),]$price_si
 
 # Compute annual, linear capacity increase to meet target
 
@@ -410,16 +396,16 @@ proj_df_us <- seiaCapacity %>%
 
 proj_nat_trends_us <- getFutureCapacities(
   df = proj_df_us,
-  year_min_proj = year_min_proj,
-  year_max_proj = year_max_proj,
-  target_capacity = target_nat_trends_us) %>%
+  year_min_proj = year_proj$min,
+  year_max_proj = year_proj$max,
+  target_capacity = targets$nat_trends_us) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_us <- getFutureCapacities(
   df = proj_df_us,
-  year_min_proj = year_min_proj,
-  year_max_proj = year_max_proj,
-  target_capacity = target_sus_dev_us) %>%
+  year_min_proj = year_proj$min,
+  year_max_proj = year_proj$max,
+  target_capacity = targets$sus_dev_us) %>%
   mutate(price_si = price_si)
 
 # China ---
@@ -429,16 +415,16 @@ proj_df_china <- china %>%
 
 proj_nat_trends_china <- getFutureCapacities(
   df = proj_df_china,
-  year_min_proj = year_min_proj,
-  year_max_proj = year_max_proj,
-  target_capacity = target_nat_trends_china) %>%
+  year_min_proj = year_proj$min,
+  year_max_proj = year_proj$max,
+  target_capacity = targets$nat_trends_china) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_china <- getFutureCapacities(
   df = proj_df_china,
-  year_min_proj = year_min_proj,
-  year_max_proj = year_max_proj,
-  target_capacity = target_sus_dev_china) %>%
+  year_min_proj = year_proj$min,
+  year_max_proj = year_proj$max,
+  target_capacity = targets$sus_dev_china) %>%
   mutate(price_si = price_si)
 
 # Germany ---
@@ -447,32 +433,32 @@ proj_df_germany <- germany
 
 proj_nat_trends_germany <- getFutureCapacities(
   df = proj_df_germany,
-  year_min_proj = year_min_proj,
-  year_max_proj = year_max_proj,
-  target_capacity = target_nat_trends_germany) %>%
+  year_min_proj = year_proj$min,
+  year_max_proj = year_proj$max,
+  target_capacity = targets$nat_trends_germany) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_germany <- getFutureCapacities(
   df = proj_df_germany,
-  year_min_proj = year_min_proj,
-  year_max_proj = year_max_proj,
-  target_capacity = target_sus_dev_germany) %>%
+  year_min_proj = year_proj$min,
+  year_max_proj = year_proj$max,
+  target_capacity = targets$sus_dev_germany) %>%
   mutate(price_si = price_si)
 
 # World ---
 
 proj_nat_trends_world <- getFutureCapacities(
   df = world,
-  year_min_proj = year_min_proj,
-  year_max_proj = year_max_proj,
-  target_capacity = target_nat_trends_world) %>%
+  year_min_proj = year_proj$min,
+  year_max_proj = year_proj$max,
+  target_capacity = targets$nat_trends_world) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_world <- getFutureCapacities(
   df = world,
-  year_min_proj = year_min_proj,
-  year_max_proj = year_max_proj,
-  target_capacity = target_sus_dev_world) %>%
+  year_min_proj = year_proj$min,
+  year_max_proj = year_proj$max,
+  target_capacity = targets$sus_dev_world) %>%
   mutate(price_si = price_si)
 
 # Combine ---

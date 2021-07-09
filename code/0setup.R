@@ -26,11 +26,56 @@ dir <- list(
     projection_scenarios = here::here('output', 'projection_scenarios.Rds')
 )
 
-# Historical range
-year_min <- 2006
-year_min_china <- 2007
-year_max <- 2019
+# Historical range for model estimation (limited by data)
+year_model <- list(
+    china_min   = 2007,
+    china_max   = 2020,
+    us_min      = 2006,
+    us_max      = 2019,
+    germany_min = 2006,
+    germany_max = 2019,
+    world_min   = 2006,
+    world_max   = 2020
+)
 
-# Projection range
-year_min_proj <- year_max
-year_max_proj <- 2030
+# Historical savings - same for all countries
+year_savings <- list(
+    min = 2008,
+    max = 2019
+)
+
+# Projection range - same for all countries
+year_proj <- list(
+    min = 2019,
+    max = 2030
+)
+
+# Projections Targets:
+#
+#    Project out to 2030, based on achieving fixed capacity target
+#
+# National trends scenario is based on capacity at end of 2020 plus
+# continuation of recent trends. Note that this lines up well with Germany's
+# stated national target of 100GW, and is equivalent to China solar share in
+# solar+wind reaching ~ 63% of the 1200GW target (currently at 47%). There are
+# analyses that indicate China will need to exceed 1200 to reach its other
+# targets, and I expect solar growth to increase relative to wind for the next decade. The U.S. scenario is also in line with other scenarios (e.g. EIA low-RE
+# cost, NAM decarbonization study). World capacity is computed by taking the
+# shares of the three countries in current world capacity (2019 from IRENA),
+# which comes out to 54%, then scaling up capacity linearly to 2030.
+#
+# Sustainable development scenario is from IEA WEO 2020 (the net zero study
+# does not provide a country breakdown), then splitting up EU into Germany via
+# the 2019 shares of capacity (IRENA).
+#
+# Targets:
+targets <- list(
+  nat_trends_us      = 295*1e6,
+  nat_trends_china   = 750*1e6,
+  nat_trends_germany = 103*1e6,
+  nat_trends_world   = 2115*1e6,
+  sus_dev_us         = 628*1e6,
+  sus_dev_china      = 1106*1e6,
+  sus_dev_germany    = 147*1e6,
+  sus_dev_world      = 3125*1e6
+)
