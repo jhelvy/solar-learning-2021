@@ -56,7 +56,7 @@ pvProduction <- data$pvProduction %>%
     plot.title.position = "plot") +
   labs(x = NULL,
        y = 'Annual Cell Production (GW)',
-       title = 'Annual Solar Voltaic Cell Production (GW)',
+       title = 'Annual Solar Photovoltaic Cell Production (GW)',
        fill  = 'Origin', 
        caption = "Data from Jäger-Waldau, A. (2020) https://doi.org/10.3390/en13040930")
 
