@@ -247,7 +247,7 @@ savings_ann_historical_plot <- cost$savings %>%
             size = 0.5, colour = "grey90")
     ) +
      labs(
-        title = "Annual module cost savings from global vs. national learning",
+        title = "Annual module cost savings from global vs. national learning (2008 - 2019)",
         x = NULL,
         y = paste0("Annual savings (Billion ", year_proj$min, " $USD)"),
         fill = "Country") + 

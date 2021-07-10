@@ -117,6 +117,7 @@ usSpvCost <- read_excel(usSpvFilePath) %>%
   slice(-1) %>% 
   mutate(
     year = as.numeric(x1), 
+    # Already in 2020 dollars, so no need for inflation adjustment
     costPerKw = 1000*as.numeric(x7)) %>% 
   select(year, costPerKw)
     
@@ -169,6 +170,7 @@ seiaCapacity <- seiaCapacity %>%
 
 # Format LBNL cost data (US) -----------------------------------------------
 
+# LBNL cost data are in 2018 dollars
 lbnlCost <- read_excel(usLbnlFilePath, sheet = "Fig 17", skip = 3) %>%
   clean_names() %>%
   rename(
@@ -184,7 +186,14 @@ lbnlCost <- read_excel(usLbnlFilePath, sheet = "Fig 17", skip = 3) %>%
     component = str_to_title(str_replace(component, "_price_index", "")),
     costPerW = str_replace(costPerW, "-", ""),
     costPerW = as.numeric(costPerW),
-    costPerKw = costPerW * 1000) %>%
+    costPerKw = costPerW * 1000,
+    costPerKw = priceR::adjust_for_inflation(
+      price = costPerKw, 
+      from_date = 2018, 
+      country = "US", 
+      to_date = year_inflation,
+      inflation_dataframe = inflation$inflation_df,
+      countries_dataframe = inflation$countries_df)) %>% 
   select(year = x1, component, costPerKw)
 
 # Separate out "soft" cost and installType
@@ -196,7 +205,15 @@ lbnlCost_soft <- lbnlCost %>%
     component = "Other",
     componentType = "Soft",
     installType = str_to_title(installType)) %>%
-  select(year, component, componentType, installType, costPerKw)
+  select(year, component, componentType, installType, costPerKw) %>% 
+  mutate(
+    costPerKw = priceR::adjust_for_inflation(
+      price = costPerKw, 
+      from_date = 2018, 
+      country = "US", 
+      to_date = year_inflation,
+      inflation_dataframe = inflation$inflation_df,
+      countries_dataframe = inflation$countries_df))
 lbnlCost_hard <- lbnlCost %>%
   filter(! str_detect(component, "Soft_")) %>%
   mutate(
@@ -218,6 +235,7 @@ usSeiaLbnl <- seiaCapacity %>%
 
 # Format NREL cost data (US) -------------------------------------------------
 
+# NREL cost data are in 2019 dollars
 nrelCost <- read_excel(
   usNrel2020FilePath, sheet = "Figures ES-1 and ES-2", skip = 1) %>%
   clean_names() %>%
@@ -239,6 +257,13 @@ nrelCost <- nrelCost %>%
     installType = rep(nrelCost_type, each = length(unique(nrelCost$year)))) %>% 
   mutate(
     costPerKw = as.numeric(cost) * 10^3,
+    costPerKw = priceR::adjust_for_inflation(
+      price = costPerKw, 
+      from_date = 2019, 
+      country = "US", 
+      to_date = year_inflation,
+      inflation_dataframe = inflation$inflation_df,
+      countries_dataframe = inflation$countries_df),
     installType = fct_recode(installType,
       "utility_fixed" = "Utility ground mount (Fixed axis)",
       "utility_tracker" = "Utility ground mount (one-axis tracker)", 
@@ -285,8 +310,6 @@ usNrel <- nrelCost %>%
 # Create final U.S. data -----
 # Capacity: SEIA 
 # Cost: SPV
-usSpvCost
-
 us <- seiaCapacity %>%
   group_by(year) %>%
   summarise(cumCapacityKw = sum(cumCapacityKw)) %>% 
@@ -304,6 +327,7 @@ irenaCumCapacityMw <- read_csv(irenaCapFilePath)
 germany_cap <- irenaCumCapacityMw %>%
   select(year, capacityCumulativeMw = germany)
 
+# Germany cost data are in real dollars (not inflation adjusted)
 germany <- read_csv(germanyFilePath) %>% 
   select(year = x, costPerKw = Curve1) %>%
   mutate(year = round(year)) %>% 
@@ -315,7 +339,7 @@ germany <- read_csv(germanyFilePath) %>%
       price = costPerKw, 
       from_date = year, 
       country = "US", 
-      to_date = year_model$germany_max,
+      to_date = year_inflation,
       inflation_dataframe = inflation$inflation_df,
       countries_dataframe = inflation$countries_df)) %>%
   left_join(germany_cap) %>%
@@ -330,6 +354,7 @@ germany <- read_csv(germanyFilePath) %>%
 
 # Format Wang NDRC data 
 
+# China cost data are in real dollars (not inflation adjusted)
 china <- read_csv(chinaFilePath) %>%
   gather(key = "year", value = "value", `2007`:`2020`) %>%
   spread(key = "Year", value = "value") %>%
@@ -349,7 +374,7 @@ china <- read_csv(chinaFilePath) %>%
       price = costPerKw, 
       from_date = year, 
       country = "US", 
-      to_date = year_model$china_max,
+      to_date = year_inflation,
       inflation_dataframe = inflation$inflation_df, 
       countries_dataframe = inflation$countries_df),
     component = str_to_title(

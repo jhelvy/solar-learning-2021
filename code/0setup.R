@@ -26,6 +26,9 @@ dir <- list(
     projection_scenarios = here::here('output', 'projection_scenarios.Rds')
 )
 
+# Set year for aligning all inflation adjustment 
+year_inflation <- 2020
+
 # Historical range for model estimation (limited by data)
 year_model <- list(
     china_min   = 2007,
