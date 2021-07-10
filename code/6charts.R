@@ -116,7 +116,7 @@ cost_historical_plot <- cost$cost %>%
         ";'>Global</span> vs. <span style = 'color: ", 
         colors_learning["National"], 
         ";'>National</span> learning"),
-        y = paste0("Cost per kW (", year_proj$min, " $USD)"),
+        y = paste0("Cost per kW (", year_inflation, " $USD)"),
         x = "Year", 
         caption = "Uncertainty bands represent 95% confidence interval from estimated learning model"
     ) + 
@@ -181,7 +181,7 @@ savings_cum_historical_plot <- cost$savings %>%
     labs(
         title = "Cumulative module cost savings from global vs. national learning",
         x = "Year",
-        y = paste0("Cumulative savings (Billion ", year_proj$min, " $USD)"),
+        y = paste0("Cumulative savings (Billion ", year_inflation, " $USD)"),
         fill = "Country") +
     theme(
         plot.title.position = "plot",
@@ -249,7 +249,7 @@ savings_ann_historical_plot <- cost$savings %>%
      labs(
         title = "Annual module cost savings from global vs. national learning (2008 - 2019)",
         x = NULL,
-        y = paste0("Annual savings (Billion ", year_proj$min, " $USD)"),
+        y = paste0("Annual savings (Billion ", year_inflation, " $USD)"),
         fill = "Country") + 
     # Add totals
     geom_text(
@@ -276,7 +276,7 @@ cost_proj <- proj %>%
       "Sustainable Development" = "sus_dev"),
     year = lubridate::ymd(paste0(year, "-01-01"))) %>%
   ggplot() +
-  facet_grid(country ~ scenario) +
+  facet_grid(scenario ~ country) +
   geom_ribbon(
     aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
         fill = learning), alpha = 0.25) +
@@ -305,20 +305,20 @@ cost_proj <- proj %>%
     plot.caption = element_text(hjust = 1, size = 11, face = "italic")
   ) +
   labs(
-    y = paste0("Cost per kW (", year_proj$min, " $USD)"),
+    y = paste0("Cost per kW (", year_inflation, " $USD)"),
     x = "Year",
     title = paste0(
       "Projected module costs using <span style = 'color: ",
       colors_learning["Global"], 
       ";'>Global</span> vs. <span style = 'color: ", 
       colors_learning["National"], 
-      ";'>National</span> learning"),
+      ";'>National</span> learning (2019 - 2030)"),
     caption = "Uncertainty bands represent 95% confidence interval from estimated learning model")
 
 ggsave(
   file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
-  cost_proj, height = 8, width = 8, device = cairo_pdf)
+  cost_proj, height = 6.5, width = 11, device = cairo_pdf)
 ggsave(
   file.path(dir$figs, 'png', 'cost_proj.png'),
-  cost_proj, height = 8, width = 8)
+  cost_proj, height = 6.5, width = 11)
 
