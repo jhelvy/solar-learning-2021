@@ -31,6 +31,8 @@ components <- tribble(
 
 # Set paths to data files----------------------------------------------------
 
+usSpvFilePath <- file.path(
+  dir$data, "spv", "Table 4.2 - Module Pricing Trends 1995-2020.xlsx")
 usNrel2018FilePath <- file.path(
   dir$data, "nrel",
 "Data File (U.S. Solar Photovoltaic System Cost Benchmark Q1 2018 Report).xlsx")
@@ -104,6 +106,20 @@ pvProduction <- read_csv(productionFilePath) %>%
 # U.S. ----
 # -----------------------------------------------------------------------
 
+# Format SPV cost data (US) ---------------------------------------------
+
+# "Constant 2020 $" = adjusted for inflation
+# "Current $" = no adjustment for inflation
+
+usSpvCost <- read_excel(usSpvFilePath) %>% 
+  clean_names() %>% 
+  select(x1, x7) %>% 
+  slice(-1) %>% 
+  mutate(
+    year = as.numeric(x1), 
+    costPerKw = 1000*as.numeric(x7)) %>% 
+  select(year, costPerKw)
+    
 # Format SEIA capacity data (US) ---------------------------------------------
 
 # Capacity data from 2000 - 2013 are from this image in the raw data:
@@ -268,25 +284,13 @@ usNrel <- nrelCost %>%
 
 # Create final U.S. data -----
 # Capacity: SEIA 
-# Cost: LBNL (2006 - 2018) NREL (2019 - 2020)
+# Cost: SPV
+usSpvCost
 
 us <- seiaCapacity %>%
   group_by(year) %>%
   summarise(cumCapacityKw = sum(cumCapacityKw)) %>% 
-  left_join(
-    nrelCost %>% 
-      filter(installType == "Utility", year >= 2019) %>%
-      select(year, costPerKw), by = "year") %>% 
-  left_join(
-    lbnlCost %>% 
-      filter(
-        installType == "Utility", component == "Module", 
-        year <= 2018) %>%
-      select(year, costPerKw), by = "year") %>% 
-  mutate(
-    costPerKw = ifelse(
-      is.na(costPerKw.x), costPerKw.y, costPerKw.x)) %>% 
-  select(year, cumCapacityKw, costPerKw)
+  left_join(usSpvCost, by = "year")
 
 # -----------------------------------------------------------------------
 # Germany ----
@@ -482,6 +486,7 @@ proj_sus_dev <- rbind(
 saveRDS(list(
     pvProduction       = pvProduction,
     irenaCumCapacityMw = irenaCumCapacityMw,
+    usSpvCost          = usSpvCost,
     nrelCapacity       = nrelCapacity,
     nrelCost           = nrelCost,
     seiaCapacity       = seiaCapacity,

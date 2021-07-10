@@ -31,7 +31,7 @@ year_model <- list(
     china_min   = 2007,
     china_max   = 2020,
     us_min      = 2006,
-    us_max      = 2019,
+    us_max      = 2020,
     germany_min = 2006,
     germany_max = 2019,
     world_min   = 2006,
