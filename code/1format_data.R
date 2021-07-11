@@ -188,12 +188,12 @@ lbnlCost <- read_excel(usLbnlFilePath, sheet = "Fig 17", skip = 3) %>%
     costPerW = as.numeric(costPerW),
     costPerKw = costPerW * 1000,
     costPerKw = priceR::adjust_for_inflation(
-      price = costPerKw, 
-      from_date = 2018, 
-      country = "US", 
+      price = costPerKw,
+      from_date = 2018,
+      country = "US",
       to_date = year_inflation,
       inflation_dataframe = inflation$inflation_df,
-      countries_dataframe = inflation$countries_df)) %>% 
+      countries_dataframe = inflation$countries_df)) %>%
   select(year = x1, component, costPerKw)
 
 # Separate out "soft" cost and installType
@@ -310,10 +310,24 @@ usNrel <- nrelCost %>%
 # Create final U.S. data -----
 # Capacity: SEIA 
 # Cost: SPV
-us <- seiaCapacity %>%
+us1 <- seiaCapacity %>%
   group_by(year) %>%
   summarise(cumCapacityKw = sum(cumCapacityKw)) %>% 
   left_join(usSpvCost, by = "year")
+
+us2 <- seiaCapacity %>%
+  group_by(year) %>%
+  summarise(cumCapacityKw = sum(cumCapacityKw)) %>%
+  left_join(
+    lbnlCost %>%
+      filter(component == "Module", installType == "Utility") %>%
+      select(-component, -componentType, -installType),
+    by = "year"
+  )
+us2$costPerKw[which(us2$year == 2019)] <- usSpvCost$costPerKw[which(usSpvCost$year == 2019)]
+us2$costPerKw[which(us2$year == 2020)] <- usSpvCost$costPerKw[which(usSpvCost$year == 2020)]
+
+us <- us1
 
 # -----------------------------------------------------------------------
 # Germany ----

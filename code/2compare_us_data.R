@@ -96,6 +96,21 @@ cost_compare %>%
        color = "Data source",
        title = "Cost Comparison")
 
+# Closer look at LBNL vs SPV
+cost_compare %>% 
+  filter(year >= 2006, source != "NREL") %>% 
+  ggplot(aes(x = year, y = costPerKw, color = source, group = source)) +
+  geom_line(alpha = 0.5) +
+  geom_point(pch = 21, fill = "white") +
+  scale_color_manual(
+    values = c("red", "dodgerblue", "black"),
+    breaks = c("NREL", "LBNL", "SPV")) +
+  theme_bw() +
+  labs(x = NULL,
+       y = "Cost per Kw ($USD)",
+       color = "Data source",
+       title = "Cost Comparison")
+
 # NREL and LBNL cost data are relatively similar for modules, with 
 # the biggest disagreement in the earlier years. We decided to use LBNL cost
 # data as it covers a larger historical period.
