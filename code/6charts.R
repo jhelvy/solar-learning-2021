@@ -19,8 +19,8 @@ colors_country <- c("#E5C61A", "#1A9FE5", "#E5601A")
 font_main <- "Fira Sans Condensed"
 
 # Set boundaries for plots 
-min_year <- min(year_model$china_min, year_model$us_min, year_model$germany_min)
-max_year <- max(year_model$china_max, year_model$us_max, year_model$germany_max)
+min_year <- min(year_model_china_min, year_model_us_min, year_model_germany_min)
+max_year <- max(year_model_china_max, year_model_us_max, year_model_germany_max)
 
 # # Check for color blindness
 # colorblindr::cvd_grid(plot)
@@ -66,12 +66,6 @@ ggsave(here::here(dir$figs, 'png', "pvProduction.png"),
        pvProduction, width = 8, height = 6, dpi = 300)
 
 # Cost per kw for global vs. national learning ------
-
-# True historical cost per kW
-cost_historical_true <- rbind(
-    lr$data_us %>% mutate(country = "U.S."),
-    lr$data_china %>% mutate(country = "China"),
-    lr$data_germany %>% mutate(country = "Germany"))
 
 x_lim <- lubridate::ymd(c(
     paste0(min_year - 1, "-07-01"),
@@ -169,8 +163,8 @@ savings_cum_historical_plot <- cost$savings %>%
     geom_area(aes(x = year, y = cum_savings_bil, fill = country)) +
     scale_fill_manual(values = colors_country) +
     scale_x_continuous(
-      breaks = seq(year_savings$min, year_savings$max, 2), 
-      limits = c(year_savings$min, year_savings$max)) +
+      breaks = seq(year_savings_min, year_savings_max, 2),
+      limits = c(year_savings_min, year_savings_max)) +
     scale_y_continuous(
       labels = dollar,
       breaks = seq(0, 200, 50),
@@ -190,14 +184,14 @@ savings_cum_historical_plot <- cost$savings %>%
     # Add country labels
     geom_text(
         data = data.frame(
-            x = c(2018, 2018, 2016), 
-            y = c(45, 120, 175), 
+            x = c(2018, 2018, 2016.5), 
+            y = c(45, 110, 175), 
             label = c("China", "U.S.", "Germany")), 
         aes(x = x, y = y, label = label, color = label), 
         size = 6, family = font_main
     ) +
     annotate(
-        "segment", x = 2017.1, xend = 2018.2, y = 171, yend = 160,
+        "segment", x = 2017.5, xend = 2018.2, y = 171, yend = 155,
         colour = "black")
 
 ggsave(
@@ -227,7 +221,7 @@ savings_ann_historical_plot <- cost$savings %>%
     geom_errorbar(
         aes(x = year, ymin = ann_savings_bil_lb, ymax = ann_savings_bil_ub), 
         color = "grey42", width = 0.5) + 
-    scale_x_continuous(breaks = seq(year_savings$min, year_savings$max, 2)) +
+    scale_x_continuous(breaks = seq(year_savings_min, year_savings_max, 2)) +
     scale_y_continuous(
         labels = scales::dollar, 
         breaks = seq(0, 30, 10),

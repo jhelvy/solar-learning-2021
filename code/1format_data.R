@@ -413,7 +413,7 @@ world <- left_join(world, silicon) %>%
 # Projections to 2030, based on linear growth to achieve fixed capacity target
 
 # Assuming silicon prices held constant level from last data point
-price_si <- world[which(world$year == year_proj$min),]$price_si
+price_si <- world[which(world$year == year_proj_min),]$price_si
 
 # Compute annual, linear capacity increase to meet target
 
@@ -425,16 +425,16 @@ proj_df_us <- seiaCapacity %>%
 
 proj_nat_trends_us <- getFutureCapacities(
   df = proj_df_us,
-  year_min_proj = year_proj$min,
-  year_max_proj = year_proj$max,
-  target_capacity = targets$nat_trends_us) %>%
+  year_min_proj = year_proj_min,
+  year_max_proj = year_proj_max,
+  target_capacity = target_nat_trends_us) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_us <- getFutureCapacities(
   df = proj_df_us,
-  year_min_proj = year_proj$min,
-  year_max_proj = year_proj$max,
-  target_capacity = targets$sus_dev_us) %>%
+  year_min_proj = year_proj_min,
+  year_max_proj = year_proj_max,
+  target_capacity = target_sus_dev_us) %>%
   mutate(price_si = price_si)
 
 # China ---
@@ -444,16 +444,16 @@ proj_df_china <- china %>%
 
 proj_nat_trends_china <- getFutureCapacities(
   df = proj_df_china,
-  year_min_proj = year_proj$min,
-  year_max_proj = year_proj$max,
-  target_capacity = targets$nat_trends_china) %>%
+  year_min_proj = year_proj_min,
+  year_max_proj = year_proj_max,
+  target_capacity = target_nat_trends_china) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_china <- getFutureCapacities(
   df = proj_df_china,
-  year_min_proj = year_proj$min,
-  year_max_proj = year_proj$max,
-  target_capacity = targets$sus_dev_china) %>%
+  year_min_proj = year_proj_min,
+  year_max_proj = year_proj_max,
+  target_capacity = target_sus_dev_china) %>%
   mutate(price_si = price_si)
 
 # Germany ---
@@ -462,32 +462,32 @@ proj_df_germany <- germany
 
 proj_nat_trends_germany <- getFutureCapacities(
   df = proj_df_germany,
-  year_min_proj = year_proj$min,
-  year_max_proj = year_proj$max,
-  target_capacity = targets$nat_trends_germany) %>%
+  year_min_proj = year_proj_min,
+  year_max_proj = year_proj_max,
+  target_capacity = target_nat_trends_germany) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_germany <- getFutureCapacities(
   df = proj_df_germany,
-  year_min_proj = year_proj$min,
-  year_max_proj = year_proj$max,
-  target_capacity = targets$sus_dev_germany) %>%
+  year_min_proj = year_proj_min,
+  year_max_proj = year_proj_max,
+  target_capacity = target_sus_dev_germany) %>%
   mutate(price_si = price_si)
 
 # World ---
 
 proj_nat_trends_world <- getFutureCapacities(
   df = world,
-  year_min_proj = year_proj$min,
-  year_max_proj = year_proj$max,
-  target_capacity = targets$nat_trends_world) %>%
+  year_min_proj = year_proj_min,
+  year_max_proj = year_proj_max,
+  target_capacity = target_nat_trends_world) %>%
   mutate(price_si = price_si)
 
 proj_sus_dev_world <- getFutureCapacities(
   df = world,
-  year_min_proj = year_proj$min,
-  year_max_proj = year_proj$max,
-  target_capacity = targets$sus_dev_world) %>%
+  year_min_proj = year_proj_min,
+  year_max_proj = year_proj_max,
+  target_capacity = target_sus_dev_world) %>%
   mutate(price_si = price_si)
 
 # Combine ---

@@ -26,32 +26,30 @@ dir <- list(
     projection_scenarios = here::here('output', 'projection_scenarios.Rds')
 )
 
+# Set global "year" variables
+
 # Set year for aligning all inflation adjustment 
 year_inflation <- 2020
 
 # Historical range for model estimation (limited by data)
-year_model <- list(
-    china_min   = 2007,
-    china_max   = 2020,
-    us_min      = 2006,
-    us_max      = 2020,
-    germany_min = 2006,
-    germany_max = 2019,
-    world_min   = 2006,
-    world_max   = 2020
-)
+year_model_china_min   <- 2007
+year_model_china_max   <- 2020
+year_model_us_min      <- 2006
+year_model_us_max      <- 2020
+year_model_germany_min <- 2006
+year_model_germany_max <- 2019
+year_model_world_min   <- 2006
+year_model_world_max   <- 2020
 
-# Historical savings - same for all countries
-year_savings <- list(
-    min = 2008,
-    max = 2019
-)
+# Historical savings - needs to be same for all countries, so using:
+#   max of the country min values +1 for the year_savings_min
+#   min of the country max values for the year_savings_max
+year_savings_min <- 2008
+year_savings_max <- 2019
 
 # Projection range - same for all countries
-year_proj <- list(
-    min = 2019,
-    max = 2030
-)
+year_proj_min <- 2019
+year_proj_max <- 2030
 
 # Projections Targets:
 #
@@ -72,13 +70,11 @@ year_proj <- list(
 # the 2019 shares of capacity (IRENA).
 #
 # Targets:
-targets <- list(
-  nat_trends_us      = 295*1e6,
-  nat_trends_china   = 750*1e6,
-  nat_trends_germany = 103*1e6,
-  nat_trends_world   = 2115*1e6,
-  sus_dev_us         = 628*1e6,
-  sus_dev_china      = 1106*1e6,
-  sus_dev_germany    = 147*1e6,
-  sus_dev_world      = 3125*1e6
-)
+target_nat_trends_us      <- 295*1e6
+target_nat_trends_china   <- 750*1e6
+target_nat_trends_germany <- 103*1e6
+target_nat_trends_world   <- 2115*1e6
+target_sus_dev_us         <- 628*1e6
+target_sus_dev_china      <- 1106*1e6
+target_sus_dev_germany    <- 147*1e6
+target_sus_dev_world      <- 3125*1e6

@@ -9,13 +9,13 @@ lr <- readRDS(dir$lr_models)
 
 # Set beginning values
 us_beg <- lr$data_us %>%
-    filter(year == year_model$us_min)
+    filter(year == year_model_us_min)
 china_beg <- lr$data_china %>%
-    filter(year == year_model$china_min)
+    filter(year == year_model_china_min)
 germany_beg <- lr$data_germany %>%
-    filter(year == year_model$germany_min)
+    filter(year == year_model_germany_min)
 world_beg <- data$world %>%
-    filter(year == year_model$world_min)
+    filter(year == year_model_world_min)
 
 # GLOBAL LEARNING ---------------------------------------------------
 
@@ -27,29 +27,29 @@ world_beg <- data$world %>%
 
 cost_global_us <- predict_cost(
     model    = lr$model_us,
-    data     = data$world %>% filter(year <= year_model$us_max),
+    data     = data$world %>% filter(year <= year_model_us_max),
     cost_beg = us_beg$costPerKw,
     cap_beg  = us_beg$cumCapacityKw,
     si_beg   = us_beg$price_si,
-    year_beg = year_model$us_min,
+    year_beg = year_model_us_min,
     ci       = 0.95)
 
 cost_global_china <- predict_cost(
     model    = lr$model_china,
-    data     = data$world %>% filter(year <= year_model$china_max),
+    data     = data$world %>% filter(year <= year_model_china_max),
     cost_beg = china_beg$costPerKw,
     cap_beg  = china_beg$cumCapacityKw,
     si_beg   = china_beg$price_si,
-    year_beg = year_model$china_min,
+    year_beg = year_model_china_min,
     ci       = 0.95)
 
 cost_global_germany <- predict_cost(
     model    = lr$model_germany,
-    data     = data$world %>% filter(year <= year_model$germany_max),
+    data     = data$world %>% filter(year <= year_model_germany_max),
     cost_beg = germany_beg$costPerKw,
     cap_beg  = germany_beg$cumCapacityKw,
     si_beg   = germany_beg$price_si,
-    year_beg = year_model$germany_min,
+    year_beg = year_model_germany_min,
     ci       = 0.95)
 
 # NATIONAL LEARNING ---------------------------------------------------
@@ -62,28 +62,28 @@ cost_global_germany <- predict_cost(
 
 # Define country capacity data
 cap_data_us <- data$us %>% 
-    filter(year >= year_model$us_min, year <= year_model$us_max)
+    filter(year >= year_model_us_min, year <= year_model_us_max)
 cap_data_china <- data$china %>%
     filter(component == "Module") %>% 
-    filter(year <= year_model$china_max) %>% 
+    filter(year <= year_model_china_max) %>%
     select(year, cumCapacityKw)
 cap_data_germany <- data$germany %>%
     select(year, cumCapacityKw) %>% 
-    filter(year <= year_model$germany_max)
+    filter(year <= year_model_germany_max)
 
 # Create national learning capacity data for each country
 data_national_us <- makeNationalCapData(
     data_country = cap_data_us,
     data_world   = data$world,
-    year_beg   = year_model$us_min)
+    year_beg   = year_model_us_min)
 data_national_china <- makeNationalCapData(
     data_country = cap_data_china,
     data_world   = data$world,
-    year_beg   = year_model$china_min)
+    year_beg   = year_model_china_min)
 data_national_germany <- makeNationalCapData(
     data_country = cap_data_germany,
     data_world   = data$world,
-    year_beg   = year_model$germany_min)
+    year_beg   = year_model_germany_min)
 
 # Compute cost scenarios by country
 cost_national_us <- predict_cost(
@@ -92,7 +92,7 @@ cost_national_us <- predict_cost(
     cost_beg = us_beg$costPerKw,
     cap_beg  = us_beg$cumCapacityKw,
     si_beg   = us_beg$price_si,
-    year_beg = year_model$us_min,
+    year_beg = year_model_us_min,
     ci       = 0.95)
 
 cost_national_china <- predict_cost(
@@ -101,7 +101,7 @@ cost_national_china <- predict_cost(
     cost_beg = china_beg$costPerKw,
     cap_beg  = china_beg$cumCapacityKw,
     si_beg   = china_beg$price_si,
-    year_beg = year_model$china_min,
+    year_beg = year_model_china_min,
     ci       = 0.95)
 
 cost_national_germany <- predict_cost(
@@ -110,7 +110,7 @@ cost_national_germany <- predict_cost(
     cost_beg = germany_beg$costPerKw,
     cap_beg  = germany_beg$cumCapacityKw,
     si_beg   = germany_beg$price_si,
-    year_beg = year_model$germany_min,
+    year_beg = year_model_germany_min,
     ci       = 0.95)
 
 # Combine Cost Scenarios ----
@@ -158,37 +158,40 @@ cap_additions <- rbind(
     mutate(ann_cap_addition = cum_cap_addition - lag(cum_cap_addition, 1)) %>% 
     select(year, country, ann_cap_addition) %>% 
     filter(!is.na(ann_cap_addition)) %>%  
-    filter(year >= year_savings$min, year <= year_savings$max)
+    filter(year >= year_savings_min, year <= year_savings_max)
+
+# True historical cost per kW
+cost_historical_true <- rbind(
+    lr$data_us %>% mutate(country = "U.S."),
+    lr$data_china %>% mutate(country = "China"),
+    lr$data_germany %>% mutate(country = "Germany"))
 
 savings_mean <- computeSavings(
     cost_national = cost %>% 
         filter(learning == "national") %>% 
         select(year, country, national = cost_per_kw),
-    cost_global = cost %>% 
-        filter(learning == "global") %>% 
-        select(year, country, global = cost_per_kw), 
+    cost_global = cost_historical_true %>% 
+        select(year, country, global = costPerKw), 
     cap_additions) %>% 
-    filter(year >= year_savings$min, year <= year_savings$max)
+    filter(year >= year_savings_min, year <= year_savings_max)
 
 savings_lb <- computeSavings(
     cost_national = cost %>% 
         filter(learning == "national") %>% 
         select(year, country, national = cost_per_kw_lb),
-    cost_global = cost %>% 
-        filter(learning == "global") %>% 
-        select(year, country, global = cost_per_kw_ub), 
+    cost_global = cost_historical_true %>% 
+        select(year, country, global = costPerKw), 
     cap_additions) %>% 
-    filter(year >= year_savings$min, year <= year_savings$max)
+    filter(year >= year_savings_min, year <= year_savings_max)
 
 savings_ub <- computeSavings(
     cost_national = cost %>% 
         filter(learning == "national") %>% 
         select(year, country, national = cost_per_kw_ub),
-    cost_global = cost %>% 
-        filter(learning == "global") %>% 
-        select(year, country, global = cost_per_kw_lb), 
+    cost_global = cost_historical_true %>% 
+        select(year, country, global = costPerKw), 
     cap_additions) %>% 
-    filter(year >= year_savings$min, year <= year_savings$max)
+    filter(year >= year_savings_min, year <= year_savings_max)
 
 # Merge savings 
 savings <- rbind(
@@ -211,6 +214,7 @@ savings <- rbind(
 # Save outputs ----
 
 saveRDS(list(
+    cost_historical_true = cost_historical_true,
     cost = cost,
     savings = savings),
     dir$historical_scenarios

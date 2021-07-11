@@ -41,8 +41,8 @@ data <- readRDS(dir$data_formatted)
 # Prep data
 data_us <- data$us %>%
     filter(
-        year >= year_model$us_min, 
-        year <= year_model$us_max
+        year >= year_model_us_min,
+        year <= year_model_us_max
     ) %>%
     select(year, costPerKw) %>%
     left_join(
@@ -60,8 +60,8 @@ summary(model_us)
 # Prep data
 data_china <- data$china %>%
     filter(
-        year >= year_model$china_min,
-        year <= year_model$china_max,
+        year >= year_model_china_min,
+        year <= year_model_china_max,
         component == 'Module'
     ) %>%
     select(year, costPerKw) %>%
@@ -79,8 +79,8 @@ summary(model_china)
 # Prep data
 data_germany <- data$germany %>%
     filter(
-        year >= year_model$germany_min,
-        year <= year_model$germany_max
+        year >= year_model_germany_min,
+        year <= year_model_germany_max
     ) %>% 
     select(year, costPerKw) %>%
     left_join(

@@ -12,11 +12,11 @@ cost <- readRDS(dir$historical_scenarios)
 
 # Set beginning values
 us_beg <- lr$data_us %>%
-    filter(year == year_proj$min)
+    filter(year == year_proj_min)
 china_beg <- lr$data_china %>%
-    filter(year == year_proj$min)
+    filter(year == year_proj_min)
 germany_beg <- lr$data_germany %>%
-    filter(year == year_proj$min)
+    filter(year == year_proj_min)
 
 # Naming convention for objects is:
 #    scenario ("nat_trends" or "sus_dev") +
@@ -39,7 +39,7 @@ proj_nat_trends_global_us <- predict_cost(
   cost_beg = us_beg$costPerKw,
   cap_beg  = us_beg$cumCapacityKw,
   si_beg   = us_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 proj_nat_trends_global_china <- predict_cost(
@@ -48,7 +48,7 @@ proj_nat_trends_global_china <- predict_cost(
   cost_beg = china_beg$costPerKw,
   cap_beg  = china_beg$cumCapacityKw,
   si_beg   = china_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 proj_nat_trends_global_germany <- predict_cost(
@@ -57,7 +57,7 @@ proj_nat_trends_global_germany <- predict_cost(
   cost_beg = germany_beg$costPerKw,
   cap_beg  = germany_beg$cumCapacityKw,
   si_beg   = germany_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 # Sustainable development projections ---
@@ -68,7 +68,7 @@ proj_sus_dev_global_us <- predict_cost(
   cost_beg = us_beg$costPerKw,
   cap_beg  = us_beg$cumCapacityKw,
   si_beg   = us_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 proj_sus_dev_global_china <- predict_cost(
@@ -77,7 +77,7 @@ proj_sus_dev_global_china <- predict_cost(
   cost_beg = china_beg$costPerKw,
   cap_beg  = china_beg$cumCapacityKw,
   si_beg   = china_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 proj_sus_dev_global_germany <- predict_cost(
@@ -86,7 +86,7 @@ proj_sus_dev_global_germany <- predict_cost(
   cost_beg = germany_beg$costPerKw,
   cap_beg  = germany_beg$cumCapacityKw,
   si_beg   = germany_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 # NATIONAL LEARNING ---------------------------------------------------
@@ -101,27 +101,27 @@ proj_sus_dev_global_germany <- predict_cost(
 data_nat_trends_national_us <- makeNationalCapData(
     data_country = data$proj_nat_trends %>% filter(country == "U.S."),
     data_world   = data$proj_nat_trends %>% filter(country == "World"),
-    year_beg   = year_proj$min)
+    year_beg   = year_proj_min)
 data_sus_dev_national_us <- makeNationalCapData(
     data_country = data$proj_sus_dev %>% filter(country == "U.S."),
     data_world   = data$proj_sus_dev %>% filter(country == "World"),
-    year_beg   = year_proj$min)
+    year_beg   = year_proj_min)
 data_nat_trends_national_china <- makeNationalCapData(
     data_country = data$proj_nat_trends %>% filter(country == "China"),
     data_world   = data$proj_nat_trends %>% filter(country == "World"),
-    year_beg   = year_proj$min)
+    year_beg   = year_proj_min)
 data_sus_dev_national_china <- makeNationalCapData(
     data_country = data$proj_sus_dev %>% filter(country == "China"),
     data_world   = data$proj_sus_dev %>% filter(country == "World"),
-    year_beg   = year_proj$min)
+    year_beg   = year_proj_min)
 data_nat_trends_national_germany <- makeNationalCapData(
     data_country = data$proj_nat_trends %>% filter(country == "Germany"),
     data_world   = data$proj_nat_trends %>% filter(country == "World"),
-    year_beg   = year_proj$min)
+    year_beg   = year_proj_min)
 data_sus_dev_national_germany <- makeNationalCapData(
     data_country = data$proj_sus_dev %>% filter(country == "Germany"),
     data_world   = data$proj_sus_dev %>% filter(country == "World"),
-    year_beg   = year_proj$min)
+    year_beg   = year_proj_min)
 
 # National trends projections ---
 
@@ -131,7 +131,7 @@ proj_nat_trends_national_us <- predict_cost(
   cost_beg = us_beg$costPerKw,
   cap_beg  = us_beg$cumCapacityKw,
   si_beg   = us_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 proj_nat_trends_national_china <- predict_cost(
@@ -140,7 +140,7 @@ proj_nat_trends_national_china <- predict_cost(
   cost_beg = china_beg$costPerKw,
   cap_beg  = china_beg$cumCapacityKw,
   si_beg   = china_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 proj_nat_trends_national_germany <- predict_cost(
@@ -149,7 +149,7 @@ proj_nat_trends_national_germany <- predict_cost(
   cost_beg = germany_beg$costPerKw,
   cap_beg  = germany_beg$cumCapacityKw,
   si_beg   = germany_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 # Sustainable development projections ---
@@ -160,7 +160,7 @@ proj_sus_dev_national_us <- predict_cost(
   cost_beg = us_beg$costPerKw,
   cap_beg  = us_beg$cumCapacityKw,
   si_beg   = us_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 proj_sus_dev_national_china <- predict_cost(
@@ -169,7 +169,7 @@ proj_sus_dev_national_china <- predict_cost(
   cost_beg = china_beg$costPerKw,
   cap_beg  = china_beg$cumCapacityKw,
   si_beg   = china_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 proj_sus_dev_national_germany <- predict_cost(
@@ -178,7 +178,7 @@ proj_sus_dev_national_germany <- predict_cost(
   cost_beg = germany_beg$costPerKw,
   cap_beg  = germany_beg$cumCapacityKw,
   si_beg   = germany_beg$price_si,
-  year_beg = year_proj$min,
+  year_beg = year_proj_min,
   ci       = 0.95)
 
 # Saving Results -------------------------------------------------------

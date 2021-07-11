@@ -33,7 +33,7 @@ cat(
 
 proj <- readRDS(dir$projection_scenarios)
 proj_summary <- proj %>% 
-    filter(year == year_max_proj) %>% 
+    filter(year == year_proj_max) %>% 
     select(-cost_per_kw_lb, -cost_per_kw_ub) %>% 
     spread(key = learning, value = cost_per_kw) %>% 
     arrange(scenario) %>% 
