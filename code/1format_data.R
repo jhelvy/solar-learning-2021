@@ -44,6 +44,7 @@ usSeiaEarlyFilePath <- file.path(dir$data, "seia", "seiaEarlyYears.csv")
 usSeiaFilePath <- file.path(dir$data, "seia", "seiaCapacity.json")
 irenaCapFilePath <- file.path(dir$data, "irena", "irenaCumCapacityMw.csv")
 germanyFilePath <- file.path(dir$data, "germany", "fraunhofer_fig2.csv")
+germany2020FilePath <- file.path(dir$data, "germany", "Fig2-2020.csv")
 chinaFilePath <- file.path(dir$data, "china", "wang_ndrc_data.csv")
 siliconFilePath <- file.path(dir$data, "nemet_silicon.csv")
 exchangeRatesPath <- file.path(dir$data, "exchange-rates.xlsx")
@@ -341,10 +342,15 @@ irenaCumCapacityMw <- read_csv(irenaCapFilePath)
 germany_cap <- irenaCumCapacityMw %>%
   select(year, capacityCumulativeMw = germany)
 
-# Germany cost data are in real dollars (not inflation adjusted)
+# Germany cost data are in real Euros (not inflation adjusted)
+germany2020 <- read_csv(germany2020FilePath) %>% 
+  rename(year = x, costPerKw = Curve1) %>% 
+  mutate(year = round(year))
 germany <- read_csv(germanyFilePath) %>% 
   select(year = x, costPerKw = Curve1) %>%
   mutate(year = round(year)) %>% 
+  # Add 2020 year
+  rbind(germany2020) %>% 
   # Currency conversion first, then adjust for inflation
   left_join(exchangeRatesEUR, by = "year") %>%
   mutate(

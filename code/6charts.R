@@ -241,7 +241,7 @@ savings_ann_historical_plot <- cost$savings %>%
             size = 0.5, colour = "grey90")
     ) +
      labs(
-        title = "Annual module cost savings from global vs. national learning (2008 - 2019)",
+        title = "Annual module cost savings from global vs. national learning (2008 - 2020)",
         x = NULL,
         y = paste0("Annual savings (Billion ", year_inflation, " $USD)"),
         fill = "Country") + 
@@ -278,7 +278,7 @@ cost_proj <- proj %>%
     aes(x = year, y = cost_per_kw, color = learning),
     alpha = 0.6, size = 1) +
   scale_x_date(
-    limits = lubridate::ymd(c("2017-07-01", "2030-07-01")),
+    limits = lubridate::ymd(c("2019-07-01", "2030-07-01")),
     date_labels = "'%y",
     date_breaks = "2 years") +
   scale_y_continuous(labels = scales::dollar) +
@@ -306,7 +306,7 @@ cost_proj <- proj %>%
       colors_learning["Global"], 
       ";'>Global</span> vs. <span style = 'color: ", 
       colors_learning["National"], 
-      ";'>National</span> learning (2019 - 2030)"),
+      ";'>National</span> learning (2020 - 2030)"),
     caption = "Uncertainty bands represent 95% confidence interval from estimated learning model")
 
 ggsave(

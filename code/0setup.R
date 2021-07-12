@@ -37,7 +37,7 @@ year_model_china_max   <- 2020
 year_model_us_min      <- 2006
 year_model_us_max      <- 2020
 year_model_germany_min <- 2006
-year_model_germany_max <- 2019
+year_model_germany_max <- 2020
 year_model_world_min   <- 2006
 year_model_world_max   <- 2020
 
@@ -45,10 +45,10 @@ year_model_world_max   <- 2020
 #   max of the country min values +1 for the year_savings_min
 #   min of the country max values for the year_savings_max
 year_savings_min <- 2008
-year_savings_max <- 2019
+year_savings_max <- 2020
 
 # Projection range - same for all countries
-year_proj_min <- 2019
+year_proj_min <- 2020
 year_proj_max <- 2030
 
 # Projections Targets:
