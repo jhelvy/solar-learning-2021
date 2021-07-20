@@ -71,14 +71,12 @@ nrelSeia %>%
 # Compare NREL, LBNL, and SPV Cost data ---------------------------------------------
 
 cost_compare <- data$nrelCost %>%
-  mutate(source = "NREL") %>%
-  rbind(
-    data$lbnlCost %>%
-      filter(component == "Module") %>% 
-      mutate(source = "LBNL") %>% 
-      select(-component, -componentType)) %>% 
   filter(installType == "Utility") %>% 
   select(-installType) %>% 
+  mutate(source = "NREL") %>%
+  rbind(
+    data$lbnlNew %>%
+      mutate(source = "LBNL")) %>% 
   rbind(
     data$usSpvCost %>% 
       mutate(source = "SPV"))

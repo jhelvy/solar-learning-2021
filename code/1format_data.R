@@ -31,8 +31,8 @@ components <- tribble(
 
 # Set paths to data files----------------------------------------------------
 
-usSpvFilePath <- file.path(
-  dir$data, "spv", "Table 4.2 - Module Pricing Trends 1995-2020.xlsx")
+usSpv2010FilePath <- file.path(dir$data, "spv", "us2000-2010.csv")
+usSpv2020FilePath <- file.path(dir$data, "spv", "us2010-2020.csv")
 usNrel2018FilePath <- file.path(
   dir$data, "nrel",
 "Data File (U.S. Solar Photovoltaic System Cost Benchmark Q1 2018 Report).xlsx")
@@ -40,12 +40,15 @@ usNrel2020FilePath <- file.path(
   dir$data, "nrel", "Data File (U.S. Solar Photovoltaic  BESS System Cost Benchmark Q1 2020 Report).xlsx")
 usLbnlFilePath <- file.path(
   dir$data, "lbnl", "tts_2019_summary_data_tables_0.xlsx")
+usLbnlUpdateFilePath <- file.path(
+  dir$data, "lbnl", "summary_tables_and_figures.xlsx")
 usSeiaEarlyFilePath <- file.path(dir$data, "seia", "seiaEarlyYears.csv")
 usSeiaFilePath <- file.path(dir$data, "seia", "seiaCapacity.json")
-irenaCapFilePath <- file.path(dir$data, "irena", "irenaCumCapacityMw.csv")
 germanyFilePath <- file.path(dir$data, "germany", "fraunhofer_fig2.csv")
 germany2020FilePath <- file.path(dir$data, "germany", "Fig2-2020.csv")
 chinaFilePath <- file.path(dir$data, "china", "wang_ndrc_data.csv")
+irenaCapFilePath <- file.path(dir$data, "irena", "irenaCumCapacityMw.csv")
+worldSpvFilePath <- file.path(dir$data, "spv", "Table 4.2.xlsx")
 siliconFilePath <- file.path(dir$data, "nemet_silicon.csv")
 exchangeRatesPath <- file.path(dir$data, "exchange-rates.xlsx")
 productionFilePath <- file.path(dir$data, "production", "production.csv")
@@ -81,6 +84,10 @@ exchangeRatesEUR <- read_excel(
 # Read in from previously-saved values
 inflation <- readRDS(inflationPath)
 
+
+
+
+
 # Format PV production data ----------------------------------------------------
 
 # Read in & format 2010 to 2019 data (Production in GW) from Engauge Digitizer
@@ -103,25 +110,14 @@ pvProduction <- read_csv(productionFilePath) %>%
   ungroup() %>% 
   gather(key = "country", value = "production_gw", china:row) 
 
-# -----------------------------------------------------------------------
+
+
+
+
+
+
 # U.S. ----
-# -----------------------------------------------------------------------
 
-# Format SPV cost data (US) ---------------------------------------------
-
-# "Constant 2020 $" = adjusted for inflation
-# "Current $" = no adjustment for inflation
-
-usSpvCost <- read_excel(usSpvFilePath) %>% 
-  clean_names() %>% 
-  select(x1, x7) %>% 
-  slice(-1) %>% 
-  mutate(
-    year = as.numeric(x1), 
-    # Already in 2020 dollars, so no need for inflation adjustment
-    costPerKw = 1000*as.numeric(x7)) %>% 
-  select(year, costPerKw)
-    
 # Format SEIA capacity data (US) ---------------------------------------------
 
 # Capacity data from 2000 - 2013 are from this image in the raw data:
@@ -168,6 +164,31 @@ seiaCapacity <- seiaCapacity %>%
   mutate(cumCapacityKw = ifelse(cumCapacityKw == 0, 1, cumCapacityKw)) %>%
   select(year, installType, cumCapacityKw) %>%
   arrange(year)
+
+# Format SPV cost data (US) ---------------------------------------------
+
+usSpv10 <- read_csv(usSpv2010FilePath) %>% 
+  clean_names() %>% 
+  mutate(
+    year = round(x),
+    # Already in 2020 dollars, so no need for inflation adjustment
+    costPerKw = 1000*as.numeric(curve1)) %>% 
+  select(year, costPerKw) %>% 
+  filter(year < 2010)
+usSpv20 <- read_csv(usSpv2020FilePath) %>% 
+  clean_names() %>% 
+  mutate(
+    year = round(x),
+    # Already in 2020 dollars, so no need for inflation adjustment
+    costPerKw = 1000*as.numeric(curve1)) %>% 
+  select(year, costPerKw)
+usSpvCost <- rbind(usSpv10, usSpv20)
+
+# Merge SEIA capacity with SPV cost data ----
+usSeiaSpv <- seiaCapacity %>%
+  filter(installType == "Utility") %>% 
+  left_join(usSpvCost, by = "year") %>% 
+  select(year, costPerKw, cumCapacityKw)
 
 # Format LBNL cost data (US) -----------------------------------------------
 
@@ -225,6 +246,21 @@ lbnlCost_hard <- lbnlCost %>%
   select(year, component, componentType, installType, costPerKw)
 lbnlCost <- rbind(lbnlCost_hard, lbnlCost_soft) %>%
   filter(!is.na(costPerKw))
+
+lbnlUpdate <- read_excel(
+  usLbnlUpdateFilePath, sheet = "Component Cost Trends", skip = 2) %>%
+  clean_names() %>% 
+  mutate(
+    year = x1, 
+    costPerKw = 1000*large_non_res_7,
+    costPerKw = priceR::adjust_for_inflation(
+      price = costPerKw,
+      from_date = 2019,
+      country = "US",
+      to_date = year_inflation,
+      inflation_dataframe = inflation$inflation_df,
+      countries_dataframe = inflation$countries_df)) %>%
+  select(year, costPerKw)
 
 # Merge SEIA capacity with LBNL cost data ----
 usSeiaLbnl <- seiaCapacity %>%
@@ -308,31 +344,12 @@ usNrel <- nrelCost %>%
   left_join(nrelCapacity) %>% 
   ungroup()
 
-# Create final U.S. data -----
-# Capacity: SEIA 
-# Cost: SPV
-us1 <- seiaCapacity %>%
-  group_by(year) %>%
-  summarise(cumCapacityKw = sum(cumCapacityKw)) %>% 
-  left_join(usSpvCost, by = "year")
 
-us2 <- seiaCapacity %>%
-  group_by(year) %>%
-  summarise(cumCapacityKw = sum(cumCapacityKw)) %>%
-  left_join(
-    lbnlCost %>%
-      filter(component == "Module", installType == "Utility") %>%
-      select(-component, -componentType, -installType),
-    by = "year"
-  )
-us2$costPerKw[which(us2$year == 2019)] <- usSpvCost$costPerKw[which(usSpvCost$year == 2019)]
-us2$costPerKw[which(us2$year == 2020)] <- usSpvCost$costPerKw[which(usSpvCost$year == 2020)]
 
-us <- us1
 
-# -----------------------------------------------------------------------
+
+
 # Germany ----
-# -----------------------------------------------------------------------
 
 # Fraunhofer -- costs
 # IRENA -- capacity
@@ -368,9 +385,13 @@ germany <- read_csv(germanyFilePath) %>%
     installType = "All") %>%
   select(year, costPerKw, cumCapacityKw)
 
-# -----------------------------------------------------------------------
+
+  
+  
+  
+  
+  
 # China ----
-# -----------------------------------------------------------------------
 
 # Format Wang NDRC data 
 
@@ -408,9 +429,27 @@ china <- read_csv(chinaFilePath) %>%
   select(
     year, component, componentType, installType, costPerKw, cumCapacityKw)
 
-# -----------------------------------------------------------------------
-# World
-# -----------------------------------------------------------------------
+
+
+
+
+
+# World ----
+
+# Source cost: SPV
+
+# "Constant 2020 $" = adjusted for inflation
+# "Current $" = no adjustment for inflation
+
+worldSpvCost <- read_excel(worldSpvFilePath) %>% 
+  clean_names() %>% 
+  select(x1, x7) %>% 
+  slice(-1) %>% 
+  mutate(
+    year = as.numeric(x1), 
+    # Already in 2020 dollars, so no need for inflation adjustment
+    costPerKw = 1000*as.numeric(x7)) %>% 
+  select(year, costPerKw)
 
 # Source capacity: IRENA
 
@@ -424,11 +463,14 @@ silicon <- read_csv(siliconFilePath) %>%
   select(year = yr, price_si = price)
 world <- left_join(world, silicon) %>%
   select(year, price_si, cumCapacityKw) %>%
-  fill(price_si, .direction = "down")
+  fill(price_si, .direction = "down") %>% 
+  left_join(worldSpvCost, by = "year")
 
-# -----------------------------------------------------------------------
-# Projections
-# -----------------------------------------------------------------------
+
+
+
+# Projections ----
+
 #
 # Projections to 2030, based on linear growth to achieve fixed capacity target
 
@@ -526,7 +568,14 @@ proj_sus_dev <- rbind(
   proj_sus_dev_world %>% mutate(country = "World")
 )
 
-# Save all formatted data as a list object ---
+# Save all formatted data as a list object ----
+
+us <- seiaCapacity %>%
+  filter(installType == "Utility") %>% 
+  left_join(lbnlUpdate, by = "year") %>% 
+  select(year, installType, costPerKw, cumCapacityKw)
+us$costPerKw[which(us$year == 2020)] <- 
+  world$costPerKw[which(world$year == 2020)]
 
 saveRDS(list(
     pvProduction       = pvProduction,
@@ -538,7 +587,8 @@ saveRDS(list(
     lbnlCost           = lbnlCost,
     usNrel             = usNrel,
     usSeiaLbnl         = usSeiaLbnl,
-    us                 = us,
+    us   = us,
+    usSeiaSpv          = usSeiaSpv,
     china              = china,
     germany            = germany,
     world              = world, 
