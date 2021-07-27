@@ -31,8 +31,6 @@ components <- tribble(
 
 # Set paths to data files----------------------------------------------------
 
-usSpv2010FilePath <- file.path(dir$data, "spv", "us2000-2010.csv")
-usSpv2020FilePath <- file.path(dir$data, "spv", "us2010-2020.csv")
 usNrel2018FilePath <- file.path(
   dir$data, "nrel",
 "Data File (U.S. Solar Photovoltaic System Cost Benchmark Q1 2018 Report).xlsx")
@@ -165,31 +163,6 @@ seiaCapacity <- seiaCapacity %>%
   select(year, installType, cumCapacityKw) %>%
   arrange(year)
 
-# Format SPV cost data (US) ---------------------------------------------
-
-usSpv10 <- read_csv(usSpv2010FilePath) %>% 
-  clean_names() %>% 
-  mutate(
-    year = round(x),
-    # Already in 2020 dollars, so no need for inflation adjustment
-    costPerKw = 1000*as.numeric(curve1)) %>% 
-  select(year, costPerKw) %>% 
-  filter(year < 2010)
-usSpv20 <- read_csv(usSpv2020FilePath) %>% 
-  clean_names() %>% 
-  mutate(
-    year = round(x),
-    # Already in 2020 dollars, so no need for inflation adjustment
-    costPerKw = 1000*as.numeric(curve1)) %>% 
-  select(year, costPerKw)
-usSpvCost <- rbind(usSpv10, usSpv20)
-
-# Merge SEIA capacity with SPV cost data ----
-usSeiaSpv <- seiaCapacity %>%
-  filter(installType == "Utility") %>% 
-  left_join(usSpvCost, by = "year") %>% 
-  select(year, costPerKw, cumCapacityKw)
-
 # Format LBNL cost data (US) -----------------------------------------------
 
 # LBNL cost data are in 2018 dollars
@@ -261,14 +234,6 @@ lbnlUpdate <- read_excel(
       inflation_dataframe = inflation$inflation_df,
       countries_dataframe = inflation$countries_df)) %>%
   select(year, costPerKw)
-
-# Merge SEIA capacity with LBNL cost data ----
-usSeiaLbnl <- seiaCapacity %>%
-  left_join(
-    lbnlCost %>% 
-      filter(component == "Module") %>% 
-      select(year, installType, costPerKw)) %>%
-  select(year, installType, costPerKw, cumCapacityKw)
 
 # Format NREL cost data (US) -------------------------------------------------
 
@@ -344,6 +309,23 @@ usNrel <- nrelCost %>%
   left_join(nrelCapacity) %>% 
   ungroup()
 
+# Make final US data set: 
+# Capacity: SEIA 
+# Cost: LBNL (2000 - 2018), NREL (2019 - 2020)
+us <- seiaCapacity %>%
+  left_join(
+    rbind(
+      lbnlCost %>% 
+        filter(component == "Module") %>% 
+        select(year, installType, costPerKw),
+      nrelCost %>% 
+        filter(year >= 2019)
+    ), by = c("year", "installType")) %>%
+  arrange(year, installType) %>% 
+  filter(installType == "Utility") %>% 
+  select(year, costPerKw, cumCapacityKw)
+
+  
 
 
 
@@ -570,25 +552,15 @@ proj_sus_dev <- rbind(
 
 # Save all formatted data as a list object ----
 
-us <- seiaCapacity %>%
-  filter(installType == "Utility") %>% 
-  left_join(lbnlUpdate, by = "year") %>% 
-  select(year, installType, costPerKw, cumCapacityKw)
-us$costPerKw[which(us$year == 2020)] <- 
-  world$costPerKw[which(world$year == 2020)]
-
 saveRDS(list(
     pvProduction       = pvProduction,
     irenaCumCapacityMw = irenaCumCapacityMw,
-    usSpvCost          = usSpvCost,
     nrelCapacity       = nrelCapacity,
     nrelCost           = nrelCost,
     seiaCapacity       = seiaCapacity,
     lbnlCost           = lbnlCost,
     usNrel             = usNrel,
-    usSeiaLbnl         = usSeiaLbnl,
-    us   = us,
-    usSeiaSpv          = usSeiaSpv,
+    us                 = us,
     china              = china,
     germany            = germany,
     world              = world, 
