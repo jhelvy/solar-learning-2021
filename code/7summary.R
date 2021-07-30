@@ -26,7 +26,7 @@ savings <- cost$savings %>%
         scales::dollar(round(cum_savings_bil_ub)), ")\n"))
 cat(
     "Historical savings from global over national learning\n",
-    "(2006 - 2019, Billions 2019 $USD):\n", savings$savings, "\n"
+    "(2008 - 2020, Billions 2020 $USD):\n", savings$savings, "\n"
 )
 
 # Future cost projections -----
