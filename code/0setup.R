@@ -53,7 +53,7 @@ year_proj_max <- 2030
 
 # Projections Targets:
 #
-#    Project out to 2030, based on achieving fixed capacity target
+# Project out to 2030, based on achieving fixed capacity target
 #
 # National trends scenario is based on capacity at end of 2020 plus
 # continuation of recent trends. Note that this lines up well with Germany's

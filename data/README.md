@@ -12,7 +12,7 @@
 
 ### U.S. data
 
-U.S. data came from three sources: [NREL](https://www.nrel.gov/), [LBNL](https://www.lbl.gov/), and [SEIA](https://www.seia.org/). In our analyses, we use the SEIA data for capacity and LBNL for cost data as they span a longer time period than the NREL data.
+U.S. data came from three sources: [NREL](https://www.nrel.gov/), [LBNL](https://www.lbl.gov/), and [SEIA](https://www.seia.org/). In our analyses, we use the SEIA data for capacity and a combination of the LBNL (2000 - 2018) and NREL (2019 - 2020) for cost data. This is because the NREL data only start at 2010, but the LBNL data stop at 2018.
 
 - LBNL data are in the `lbnl/tts_2019_summary_data_tables_0.xlsx` file. This is sourced from the [Lawrence Berkeley National Lab annual Tracking the Sun report](https://emp.lbl.gov/tracking-the-sun). Use [this link](https://emp.lbl.gov/sites/default/files/tts_2019_summary_data_tables_0.xlsx) to download the data file. The report is also included as a PDF in `lbnl/tracking_the_sun_2019_report.pdf`
 - NREL data are found in the two Excel files `nrel/Data File (U.S. Solar Photovoltaic System Cost Benchmark Q1 2018 Report).xlsx` and `nrel/Data File (U.S. Solar Photovoltaic  BESS System Cost Benchmark Q1 2020 Report).xlsx`. These are sourced from the
@@ -30,6 +30,8 @@ Global PV production data by country are from Arnulf Jäger-Waldau's 2020 paper 
 Since the raw data were not available, we used the [Engauge Digitizer](https://markummitchell.github.io/engauge-digitizer/) tool to digitize the data in Figure 1 from the paper. The paper, figure, and digitized data are available in the `production` folder.
 
 Global installed capacity data are in the `irena/irenaCumCapacityMw.csv` file and were copied from two PDFs from IRENA: `irena/IRENA_RE_Statistics_2016.pdf` and `irena/IRENA_RE_Capacity_Statistics_2021.pdf`, available for download [here](https://www.irena.org/Statistics/Download-Data). Direct links: [2016](https://www.irena.org/publications/2016/Jul/Renewable-Energy-Statistics-2016), [2021](https://www.irena.org/publications/2021/March/Renewable-Capacity-Statistics-2021)
+
+Global cost data are from SPV consulting in `spv/Table 4.2.xlsx`.
 
 ### Silicon data
 

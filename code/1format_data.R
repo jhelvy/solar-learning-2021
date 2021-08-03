@@ -38,8 +38,6 @@ usNrel2020FilePath <- file.path(
   dir$data, "nrel", "Data File (U.S. Solar Photovoltaic  BESS System Cost Benchmark Q1 2020 Report).xlsx")
 usLbnlFilePath <- file.path(
   dir$data, "lbnl", "tts_2019_summary_data_tables_0.xlsx")
-usLbnlUpdateFilePath <- file.path(
-  dir$data, "lbnl", "summary_tables_and_figures.xlsx")
 usSeiaEarlyFilePath <- file.path(dir$data, "seia", "seiaEarlyYears.csv")
 usSeiaFilePath <- file.path(dir$data, "seia", "seiaCapacity.json")
 germanyFilePath <- file.path(dir$data, "germany", "fraunhofer_fig2.csv")
@@ -219,21 +217,6 @@ lbnlCost_hard <- lbnlCost %>%
   select(year, component, componentType, installType, costPerKw)
 lbnlCost <- rbind(lbnlCost_hard, lbnlCost_soft) %>%
   filter(!is.na(costPerKw))
-
-lbnlUpdate <- read_excel(
-  usLbnlUpdateFilePath, sheet = "Component Cost Trends", skip = 2) %>%
-  clean_names() %>% 
-  mutate(
-    year = x1, 
-    costPerKw = 1000*large_non_res_7,
-    costPerKw = priceR::adjust_for_inflation(
-      price = costPerKw,
-      from_date = 2019,
-      country = "US",
-      to_date = year_inflation,
-      inflation_dataframe = inflation$inflation_df,
-      countries_dataframe = inflation$countries_df)) %>%
-  select(year, costPerKw)
 
 # Format NREL cost data (US) -------------------------------------------------
 
