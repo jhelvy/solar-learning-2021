@@ -10,6 +10,8 @@ library(here)
 library(cowplot)
 library(priceR)
 library(ggtext)
+library(gtsummary)
+library(flextable)
 options(dplyr.width = Inf)
 
 # Load custom functions

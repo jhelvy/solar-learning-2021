@@ -60,4 +60,3 @@ cat(
     "% premium under national vs. global learning:\n",
     proj_summary$p_summary[proj_summary$scenario == "sus_dev"], "\n\n"
 )
-    

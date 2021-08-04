@@ -1,0 +1,45 @@
+---
+output:
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  fig.path = "figs/",
+  fig.width = 7.252,
+  fig.height = 4,
+  comment = "#>",
+  fig.retina = 3
+)
+
+# Load libraries, functions, and dir paths
+source(here::here('code', '0setup.R'))
+
+# Read in estimated models 
+lr <- readRDS(dir$lr_models)
+
+# Function for formatting a summary table
+my_table <- function(x) {
+  result <- tbl_regression(x, intercept = TRUE) %>% 
+    add_significance_stars(
+    hide_se = TRUE,
+    pattern = "{estimate}{stars} ({std.error})"
+    ) %>%
+    modify_header(estimate ~ "**Est. (Std. Err.)**")
+  return(result)
+}
+```
+
+```{r, echo=FALSE}
+t_us <-  my_table(lr$model_us)
+t_china <-  my_table(lr$model_china)
+t_germany <-  my_table(lr$model_germany)
+
+# merge tables 
+tbl_merge(
+  tbls = list(t_us, t_china, t_germany),
+  tab_spanner = c("**United States**", "**China**", "**Germany**")) %>% 
+  as_flex_table()
+```

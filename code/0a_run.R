@@ -23,3 +23,8 @@ source(here::here('code', '6summary.R'))
 
 # Run sensitivity checks
 source(here::here('code', '7sensitivity.R'))
+
+# Render tables
+rmarkdown::render(
+    here::here('code', '8tables.Rmd'), 
+    output_file = here::here('output', 'tables.docx'))
