@@ -131,8 +131,9 @@ cost_historical_plot <- cost$cost %>%
     # Add "historical" labels
     geom_text(
         data = data.frame(
-            x = lubridate::ymd(rep("2009-03-01", 3)), 
-            y = c(500, 500, 500), 
+            x = lubridate::ymd(rep("2009-01-01", 3)), 
+            y = c(500, 500, 500),
+            country = c("China", "Germany", "U.S."),
             label = rep("Historical", 3)), 
         aes(x = x, y = y, label = label), 
         color = "grey60", size = 5, family = font_main
@@ -140,7 +141,7 @@ cost_historical_plot <- cost$cost %>%
     geom_segment(
         data = data.frame(
             x = lubridate::ymd(rep("2011-01-01", 3)), 
-            xend = lubridate::ymd(rep("2011-12-01", 3)), 
+            xend = lubridate::ymd(c("2011-12-01", "2011-06-01", "2011-12-01")), 
             y = c(500, 500, 500), 
             yend = c(700, 650, 800), 
             country = c("China", "Germany", "U.S.")),
