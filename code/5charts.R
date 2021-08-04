@@ -141,7 +141,7 @@ cost_historical_plot <- cost$cost %>%
     geom_segment(
         data = data.frame(
             x = lubridate::ymd(rep("2011-01-01", 3)), 
-            xend = lubridate::ymd(c("2011-12-01", "2011-06-01", "2011-12-01")), 
+            xend = lubridate::ymd(c("2011-12-01", "2011-06-01", "2012-01-01")), 
             y = c(500, 500, 500), 
             yend = c(700, 650, 800), 
             country = c("China", "Germany", "U.S.")),
