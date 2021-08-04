@@ -4,6 +4,12 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
+# Load estimated LR models
+lr <- readRDS(dir$lr_models)
+
+# Load historical cost scenario data
+cost <- readRDS(dir$historical_scenarios)
+
 # Compare capacity data from NREL, SEIA, and IRENA ----------------------------
 
 # Merge NREL and SEIA capacity data
@@ -119,4 +125,12 @@ ggsave(here::here(dir$figs, 'png', "sens_compare_cost.png"),
 
 # Compare predicted 2030 costs based on different assumptions ----------------
 
+# Set original beginning values
+us_beg_orig <- lr$data_us %>%
+    filter(year == year_proj_min)
+china_beg_orig <- lr$data_china %>%
+    filter(year == year_proj_min)
+germany_beg_orig <- lr$data_germany %>%
+    filter(year == year_proj_min)
 
+# Compute 
