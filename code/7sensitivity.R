@@ -126,11 +126,17 @@ ggsave(here::here(dir$figs, 'png', "sens_compare_cost.png"),
 # Compare predicted 2030 costs based on different assumptions ----------------
 
 # Set original beginning values
-us_beg_orig <- lr$data_us %>%
-    filter(year == year_proj_min)
-china_beg_orig <- lr$data_china %>%
-    filter(year == year_proj_min)
-germany_beg_orig <- lr$data_germany %>%
-    filter(year == year_proj_min)
+cost_orig_us <- lr$data_us %>%
+  filter(year == year_proj_min) %>% 
+  pull(costPerKw)
+cost_orig_china <- lr$data_china %>%
+  filter(year == year_proj_min) %>% 
+  pull(costPerKw)
+cost_orig_germany <- lr$data_germany %>%
+  filter(year == year_proj_min) %>% 
+  pull(costPerKw)
 
-# Compute 
+# Compute projections using +/- 20% of the 2020 starting prices 
+costs_us <- cost_orig_us * c(0.8, 1, 1.2)
+costs_china <- cost_orig_china * c(0.8, 1, 1.2)
+costs_germany <- cost_orig_germany * c(0.8, 1, 1.2)
