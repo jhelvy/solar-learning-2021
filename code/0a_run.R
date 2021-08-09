@@ -21,10 +21,7 @@ source(here::here('code', '5charts.R'))
 # Print summary of all results
 source(here::here('code', '6summary.R'))
 
-# Run sensitivity checks
-source(here::here('code', '7sensitivity.R'))
-
-# Render tables
+# Render summary tables
 rmarkdown::render(
-    here::here('code', '8tables.Rmd'), 
+    here::here('code', '7tables.Rmd'), 
     output_file = here::here('output', 'tables.docx'))

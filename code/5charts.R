@@ -262,7 +262,7 @@ ggsave(
 
 # 2030 Projections -----
 
-cost_proj <- proj %>% 
+cost_proj <- proj$base %>% 
   mutate(
     learning = str_to_title(learning),
     learning = fct_relevel(learning, c("National", "Global")),
@@ -295,6 +295,68 @@ cost_proj <- proj %>%
     plot.title = element_markdown(),
     legend.position = "none",
     strip.background = element_rect(fill = "grey80"),
+    panel.grid.major = element_line(size = 0.5, colour = "grey90")
+  ) +
+  labs(
+    y = paste0("Cost per kW (", year_inflation, " $USD)"),
+    x = "Year",
+    title = paste0(
+      "Projected module costs using <span style = 'color: ",
+      colors_learning["Global"], 
+      ";'>Global</span> vs. <span style = 'color: ", 
+      colors_learning["National"], 
+      ";'>National</span> learning (2020 - 2030)"),
+    subtitle = "Uncertainty bands represent 95% confidence interval from estimated learning models")
+
+ggsave(
+  file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
+  cost_proj, height = 6.5, width = 11, device = cairo_pdf)
+ggsave(
+  file.path(dir$figs, 'png', 'cost_proj.png'),
+  cost_proj, height = 6.5, width = 11)
+
+# Compare predicted 2030 costs based on different starting costs --------
+
+# Get the main cost_per_kw in each scenario
+sens_cost_proj <- rbind(
+  mutate(proj$base, bound = "main"), 
+  mutate(proj$lb, bound = "lb"), 
+  mutate(proj$ub, bound = "ub")
+) %>% 
+  select(-c("cost_per_kw_lb", "cost_per_kw_ub")) %>% 
+  spread(key = bound, value = cost_per_kw) %>% 
+  mutate(
+    learning = str_to_title(learning),
+    learning = fct_relevel(learning, c("National", "Global")),
+    scenario = fct_recode(scenario, 
+      "National Trends" = "nat_trends", 
+      "Sustainable Development" = "sus_dev"),
+    year = lubridate::ymd(paste0(year, "-01-01"))) %>%
+  ggplot() +
+  facet_grid(scenario ~ country) +
+  geom_ribbon(
+    aes(x = year, ymin = lb, ymax = ub,
+        fill = learning), alpha = 0.25) +
+  geom_line(
+    aes(x = year, y = main, color = learning),
+    alpha = 0.6, size = 1) +
+  scale_x_date(
+    limits = lubridate::ymd(c("2019-07-01", "2030-07-01")),
+    date_labels = "'%y",
+    date_breaks = "2 years") +
+  scale_y_continuous(labels = scales::dollar) +
+  # expand_limits(y = 0) +
+  scale_color_manual("Scenario", values = colors_learning) +
+  scale_fill_manual("Scenario", values = colors_learning) +
+  theme_minimal_grid(
+    font_size = 16,
+    font_family = font_main) +
+  panel_border() +
+  theme(
+    plot.title.position = "plot",
+    plot.title = element_markdown(),
+    legend.position = "none",
+    strip.background = element_rect(fill = "grey80"),
     panel.grid.major = element_line(size = 0.5, colour = "grey90"),
     plot.caption.position = "plot",
     plot.caption = element_text(hjust = 1, size = 11, face = "italic")
@@ -308,12 +370,124 @@ cost_proj <- proj %>%
       ";'>Global</span> vs. <span style = 'color: ", 
       colors_learning["National"], 
       ";'>National</span> learning (2020 - 2030)"),
-    caption = "Uncertainty bands represent 95% confidence interval from estimated learning model")
+    subtitle = "Bands reflect a 25% range around the 2020 starting price")
 
 ggsave(
-  file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
-  cost_proj, height = 6.5, width = 11, device = cairo_pdf)
+  file.path(dir$figs, 'pdf', 'sens_cost_proj.pdf'),
+  sens_cost_proj, height = 6.5, width = 11, device = cairo_pdf)
 ggsave(
-  file.path(dir$figs, 'png', 'cost_proj.png'),
-  cost_proj, height = 6.5, width = 11)
+  file.path(dir$figs, 'png', 'sens_cost_proj.png'),
+  sens_cost_proj, height = 6.5, width = 11)
 
+# Compare capacity data from NREL, SEIA, and IRENA ----------------------------
+
+# Merge NREL and SEIA capacity data
+nrelSeia <- data$nrelCapacity %>%
+  filter(!is.na(cumCapacityKw)) %>%
+  mutate(source = "NREL") %>%
+  rbind(
+    data$seiaCapacity %>%
+      mutate(source = "SEIA")
+  ) %>%
+  mutate(
+    cumCapacityGw = cumCapacityKw / 10^6,
+    source = fct_relevel(source, c("NREL", "SEIA")))
+
+# Plot NREL vs. SEIA capacity comparison 
+sens_compare_capacity_type <- nrelSeia %>% 
+  ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
+  geom_line(alpha = 0.5) +
+  geom_point(pch = 21, fill = "white") +
+  scale_color_manual(
+    values = c("red", "dodgerblue"),
+    breaks = c("NREL", "SEIA")) +
+  facet_wrap(vars(installType)) +
+  theme_bw() +
+  labs(
+    x = NULL,
+    y = "Installed Capacity (GW)",
+    color = "Data source",
+    title = "Comparison of Installed Capacity by Type and Data Source")
+
+ggsave(here::here(dir$figs, 'pdf', "sens_compare_capacity_type.pdf"),
+       sens_compare_capacity_type, width = 9, height = 3, device = cairo_pdf)
+ggsave(here::here(dir$figs, 'png', "sens_compare_capacity_type.png"),
+       sens_compare_capacity_type, width = 9, height = 3, dpi = 300)
+
+# During the overlapping period, NREL and SEIA data match quite closely
+# Only deviation is that NREL Commercial installations are slightly lower
+# than those in SEIA
+
+# Merge in IRENA data to compare total capacity across all 3 sources
+sens_compare_capacity_cumulative <- nrelSeia %>% 
+  group_by(year, source) %>%
+  summarise(cumCapacityGw = sum(cumCapacityKw) / 10^6) %>%
+  rbind(
+    data$irenaCumCapacityMw %>%
+      mutate(
+        source = "IRENA", 
+        cumCapacityGw = usa / 10^3) %>% 
+      select(year, source, cumCapacityGw)
+  ) %>%
+  ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
+  geom_line(alpha = 0.5) +
+  geom_point(pch = 21, fill = "white") +
+  scale_color_manual(
+    values = c("red", "dodgerblue", "black"),
+    breaks = c("NREL", "SEIA", "IRENA")) +
+  theme_bw() +
+  labs(
+    x = NULL,
+    y = "Installed Capacity (GW)",
+    color = "Data source",
+    title = "Comparison of Cumulative Installed Capacity by Data Source")
+
+ggsave(here::here(dir$figs, 'pdf', "sens_compare_capacity_cumulative.pdf"),
+       sens_compare_capacity_cumulative, 
+       width = 5, height = 3, device = cairo_pdf)
+ggsave(here::here(dir$figs, 'png', "sens_compare_capacity_cumulative.png"),
+       sens_compare_capacity_cumulative, 
+       width = 5, height = 3, dpi = 300)
+
+# IRENA data track differently from NREL and SEIA. 
+# They're slightly higher in the period before 2014 and lower afterwards
+
+# Based on these comparisons, we use SEIA data for installed capacity as
+# it tracks with NREL and covers a longer time period
+
+# Compare NREL, LBNL, and SPV Cost data --------------------------------------
+
+cost_compare <- data$nrelCost %>%
+  filter(installType == "Utility") %>% 
+  select(-installType) %>% 
+  mutate(source = "NREL") %>%
+  rbind(
+    data$lbnlCost %>%
+      filter(installType == "Utility", component == "Module") %>% 
+      select(-installType) %>% 
+      mutate(source = "LBNL") %>% 
+      select(year, costPerKw, source)
+  ) 
+
+sens_compare_cost <- cost_compare %>%
+  ggplot(aes(x = year, y = costPerKw, color = source, group = source)) +
+  geom_line(alpha = 0.5) +
+  geom_point(pch = 21, fill = "white") +
+  scale_color_manual(
+    values = c("red", "dodgerblue", "black"),
+    breaks = c("NREL", "LBNL", "SPV")) +
+  theme_bw() +
+  labs(x = NULL,
+       y = "Cost per kW ($USD)",
+       color = "Data source",
+       title = "Comparison of Cost per kW by Data Source")
+
+ggsave(here::here(dir$figs, 'pdf', "sens_compare_cost.pdf"),
+       sens_compare_cost, width = 5, height = 3, device = cairo_pdf)
+ggsave(here::here(dir$figs, 'png', "sens_compare_cost.png"),
+       sens_compare_cost, width = 5, height = 3, dpi = 300)
+
+# NREL and LBNL cost data are relatively similar for modules, with 
+# the biggest disagreement in the earlier years. We decided to use LBNL cost
+# data for the earlier period (2000 - 2018) and NREL for 2019 & 2020 as 
+# the two appear to converge in the later years.

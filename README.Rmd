@@ -31,8 +31,7 @@ file or folder | description
 `4projection_scenarios.R` | Uses the estimates learning curves models to compute differences in projected future costs under different scenarios. Results are saved as the list object at `output/projection_scenarios.Rds`.
 `5charts.R` | Code to reproduce all charts used in our analyses.
 `6summary.R` | Code to print out a summary of all main results.
-`7sensitivity.R` | Several sensitivity analyses. Compares differences in the raw cost and capacity data used for the U.S. as well as sensitivities to different 2020 starting prices on the projected prices.
-`8tables.Rmd` | Generates all tables in the `output/tables.docx` file.
+`7tables.Rmd` | Generates all tables in the `output/tables.docx` file.
 
 ## figs
 
