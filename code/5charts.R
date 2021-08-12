@@ -79,7 +79,7 @@ cost_historical_plot <- cost$cost %>%
     facet_wrap(vars(country), nrow = 1) +
     # First add historical cost line as dashed line
     geom_line(
-        data = cost_historical_true %>% 
+        data = cost$cost_historical_true %>% 
             mutate(year = lubridate::ymd(paste0(year, "-01-01"))),
         aes(x = year, y = costPerKw), linetype = 2, alpha = 0.4, size = 1) +
     # Now add modeled cost lines with uncertainty bands
@@ -105,14 +105,13 @@ cost_historical_plot <- cost$cost %>%
     panel_border() +
     labs(
       title = paste0(
-        "Estimated module costs using <span style = 'color: ",
+        "Estimated module prices using <span style = 'color: ",
         colors_learning["Global"], 
         ";'>Global</span> vs. <span style = 'color: ", 
         colors_learning["National"], 
         ";'>National</span> learning"),
-        y = paste0("Cost per kW (", year_inflation, " $USD)"),
-        x = "Year", 
-        caption = "Uncertainty bands represent 95% confidence interval from estimated learning model"
+        y = paste0("Price per kW (", year_inflation, " $USD)"),
+        x = "Year"
     ) + 
     theme(
         plot.title.position = "plot",
@@ -174,7 +173,7 @@ savings_cum_historical_plot <- cost$savings %>%
     theme_minimal_hgrid(font_family = font_main) +
     scale_color_manual(values = c("white", "black", "white")) +
     labs(
-        title = "Cumulative module cost savings from global vs. national learning",
+        title = "Cumulative module savings from global vs. national learning",
         x = "Year",
         y = paste0("Cumulative savings (Billion ", year_inflation, " $USD)"),
         fill = "Country") +
@@ -242,7 +241,7 @@ savings_ann_historical_plot <- cost$savings %>%
             size = 0.5, colour = "grey90")
     ) +
      labs(
-        title = "Annual module cost savings from global vs. national learning (2008 - 2020)",
+        title = "Annual module savings from global vs. national learning (2008 - 2020)",
         x = NULL,
         y = paste0("Annual savings (Billion ", year_inflation, " $USD)"),
         fill = "Country") + 
@@ -298,15 +297,14 @@ cost_proj <- proj$base %>%
     panel.grid.major = element_line(size = 0.5, colour = "grey90")
   ) +
   labs(
-    y = paste0("Cost per kW (", year_inflation, " $USD)"),
+    y = paste0("Price per kW (", year_inflation, " $USD)"),
     x = "Year",
     title = paste0(
-      "Projected module costs using <span style = 'color: ",
+      "Projected module prices using <span style = 'color: ",
       colors_learning["Global"], 
       ";'>Global</span> vs. <span style = 'color: ", 
       colors_learning["National"], 
-      ";'>National</span> learning (2020 - 2030)"),
-    subtitle = "Uncertainty bands represent 95% confidence interval from estimated learning models")
+      ";'>National</span> learning (2020 - 2030)"))
 
 ggsave(
   file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
@@ -362,10 +360,10 @@ sens_cost_proj <- rbind(
     plot.caption = element_text(hjust = 1, size = 11, face = "italic")
   ) +
   labs(
-    y = paste0("Cost per kW (", year_inflation, " $USD)"),
+    y = paste0("Price per kW (", year_inflation, " $USD)"),
     x = "Year",
     title = paste0(
-      "Projected module costs using <span style = 'color: ",
+      "Projected module prices using <span style = 'color: ",
       colors_learning["Global"], 
       ";'>Global</span> vs. <span style = 'color: ", 
       colors_learning["National"], 
@@ -407,7 +405,7 @@ sens_compare_capacity_type <- nrelSeia %>%
     x = NULL,
     y = "Installed Capacity (GW)",
     color = "Data source",
-    title = "Comparison of Installed Capacity by Type and Data Source")
+    title = "Comparison of installed capacity by type and data source")
 
 ggsave(here::here(dir$figs, 'pdf', "sens_compare_capacity_type.pdf"),
        sens_compare_capacity_type, width = 9, height = 3, device = cairo_pdf)
@@ -440,7 +438,7 @@ sens_compare_capacity_cumulative <- nrelSeia %>%
     x = NULL,
     y = "Installed Capacity (GW)",
     color = "Data source",
-    title = "Comparison of Cumulative Installed Capacity by Data Source")
+    title = "Comparison of cumulative installed data")
 
 ggsave(here::here(dir$figs, 'pdf', "sens_compare_capacity_cumulative.pdf"),
        sens_compare_capacity_cumulative, 
@@ -478,9 +476,9 @@ sens_compare_cost <- cost_compare %>%
     breaks = c("NREL", "LBNL", "SPV")) +
   theme_bw() +
   labs(x = NULL,
-       y = "Cost per kW ($USD)",
+       y = "Price per kW ($USD)",
        color = "Data source",
-       title = "Comparison of Cost per kW by Data Source")
+       title = "Comparison of price per kW by data source")
 
 ggsave(here::here(dir$figs, 'pdf', "sens_compare_cost.pdf"),
        sens_compare_cost, width = 5, height = 3, device = cairo_pdf)
