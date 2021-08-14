@@ -24,7 +24,7 @@ cat(
     scales::percent(
         (cum_cap_china + cum_cap_us + cum_cap_germany) / cum_cap_world
     ),
-    "of all global installed PV capacity between 2007 - 2020\n"
+    "of all global installed PV capacity between 2007 - 2020\n\n"
 )
 
 # Learning rates -----
@@ -52,11 +52,14 @@ cost_percentage <- cost$cost %>%
     mutate(
         diff = national - global,
         p = scales::percent(diff / global),
-        costs = paste0(country, ": ", p, "\n"))
+        global = scales::dollar(round(global)),
+        national = scales::dollar(round(national)),
+        costs = paste0(
+            country, ": ", p, " (", national, " versus ", global, ")\n"))
     
 cat(
-    "Prices in 2020 would be this much higher under national learning ",    
-    "compared to actual 2020 costs:\n", cost_percentage$costs, "\n"
+    "Prices in 2020 would be this much higher under national learning",    
+    "compared to actual 2020 costs:\n\n", cost_percentage$costs, "\n"
 )
 
 # Savings in each country
