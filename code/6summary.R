@@ -77,7 +77,7 @@ cat(
 # Future cost projections -----
 
 proj <- readRDS(dir$projection_scenarios)
-proj_summary <- proj %>% 
+proj_summary <- proj$base %>% 
     filter(year == year_proj_max) %>% 
     select(-cost_per_kw_lb, -cost_per_kw_ub) %>% 
     spread(key = learning, value = cost_per_kw) %>% 
