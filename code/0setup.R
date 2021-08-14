@@ -1,3 +1,8 @@
+# install.packages(c(
+#     "tidyverse", "scales", "ggrepel", "broom", "readxl", "janitor", "rjson",
+#     "here", "cowplot", "priceR", "ggtext", "gtsummary", "flextable"
+# ))
+
 # Load libraries
 library(tidyverse)
 library(scales)

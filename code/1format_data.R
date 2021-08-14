@@ -131,7 +131,7 @@ seiaEarlyYears <- read_csv(usSeiaEarlyFilePath) %>%
 seiaRaw <- map(fromJSON(file = usSeiaFilePath), data.frame)
 seiaCapacity <- do.call(rbind, seiaRaw)
 seiaCapacity$installType <- rep(c(
-  "Residential", "Commercial", "Utility", "CSP"),
+  "Residential", "Commercial", "Community Solar", "Utility", "CSP"),
   length(seiaRaw))
 seiaCapacity <- as_tibble(seiaCapacity) %>%
   rename(year = label, cumCapacityMw = value) %>%
@@ -139,7 +139,7 @@ seiaCapacity <- as_tibble(seiaCapacity) %>%
     year = parse_number(as.character(year)),
     cumCapacityMw = parse_number(as.character(cumCapacityMw))
   ) %>%
-  filter(installType != "CSP")
+  filter(!installType %in% c("CSP", "Community Solar"))
 
 # Compare the hand-copied data to that from the json file
 seiaEarlyYears %>%
@@ -153,7 +153,7 @@ seiaEarlyYears %>%
 seiaCapacity <- seiaCapacity %>%
   rbind(
     seiaEarlyYears %>%
-      filter(year < 2006) %>%
+      filter(year < 2007) %>%
       select(year, cumCapacityMw, installType)) %>%
   mutate(cumCapacityKw = cumCapacityMw * 1000) %>%
   # Can't have 0 when taking log
@@ -551,3 +551,4 @@ saveRDS(list(
     proj_sus_dev       = proj_sus_dev),
     dir$data_formatted
 )
+
