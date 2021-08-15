@@ -393,6 +393,7 @@ nrelSeia <- data$nrelCapacity %>%
 
 # Plot NREL vs. SEIA capacity comparison 
 sens_compare_capacity_type <- nrelSeia %>% 
+  filter(year <= max_year) %>%
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line(alpha = 0.5) +
   geom_point(pch = 21, fill = "white") +
@@ -427,6 +428,7 @@ sens_compare_capacity_cumulative <- nrelSeia %>%
         cumCapacityGw = usa / 10^3) %>% 
       select(year, source, cumCapacityGw)
   ) %>%
+  filter(year <= max_year) %>% 
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line(alpha = 0.5) +
   geom_point(pch = 21, fill = "white") +

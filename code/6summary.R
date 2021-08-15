@@ -5,25 +5,12 @@ data <- readRDS(dir$data_formatted)
 
 # Global installed capacity over period -----
 
-cum_cap_china <- data$china %>% 
-    filter(component == "Module") %>% 
-    filter(year == year_model_china_max) %>% 
-    pull(cumCapacityKw)
-cum_cap_germany <- data$germany %>% 
-    filter(year == year_model_germany_max) %>% 
-    pull(cumCapacityKw)
-cum_cap_us <- data$us %>% 
-    filter(year == year_model_us_max) %>% 
-    pull(cumCapacityKw)
-cum_cap_world <- data$world %>% 
-    filter(year == year_model_world_max) %>% 
-    pull(cumCapacityKw)
-
 cat(
     "China, Germany, and the U.S. combined comprised",
-    scales::percent(
-        (cum_cap_china + cum_cap_us + cum_cap_germany) / cum_cap_world
-    ),
+    data$irenaCumCapacityMw %>% 
+        filter(year == year_model_world_max) %>% 
+        mutate(result = scales::percent((usa + china + germany) / world)) %>% 
+        pull(result),
     "of all global installed PV capacity between 2007 - 2020\n\n"
 )
 
