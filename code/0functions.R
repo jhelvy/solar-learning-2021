@@ -2,22 +2,21 @@ getFutureCapacities <- function(
   df, year_min_proj, year_max_proj, target_capacity
 ) {
   num_years <- year_max_proj - year_min_proj
-  # Get starting year capacities
-  begCap <- df %>%
-    filter(year == year_min_proj) %>%
-    mutate(annualCap = (target_capacity - cumCapacityKw) / num_years) %>%
-    select(begCap = cumCapacityKw, annualCap)
-  # Linearly add capacity to reach target
-  result <- begCap %>% 
-    repDf(num_years) %>%
-    mutate(year = year_min_proj + seq(num_years)) %>%
-    mutate(cumCapacityKw = cumsum(annualCap) + begCap) %>%
-    select(year, cumCapacityKw)
-  # Insert starting year values at the top
-  result <- rbind(data.frame(
-    year = year_min_proj, 
-    cumCapacityKw = begCap$begCap),
-    result)
+  # Get starting year capacity
+  cap_begin <- df %>%
+    filter(year == year_min_proj) %>% 
+    pull(cumCapacityKw)
+  # Percent annual growth in cumulative capacity
+  rate <- ((target_capacity / cap_begin)^(1 / (num_years))) - 1
+  cumCapacityKw <- rep(cap_begin, num_years + 1)
+  for (i in 2:(num_years + 1)) {
+      cumCapacityKw[i] <- cumCapacityKw[i-1]*(1 + rate)
+  }
+  # Add capacity to reach target
+  result <- data.frame(
+      year = year_min_proj - 1 + seq(num_years + 1),
+      cumCapacityKw = cumCapacityKw
+  )
   return(result)
 }
 
