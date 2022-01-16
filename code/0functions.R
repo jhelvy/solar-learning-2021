@@ -134,7 +134,7 @@ makeNationalCapData <- function(
             lambda = lambda, 
             cumCapacityKw_other = cumCapacityKw_other*(1 - lambda), 
             cum_cap_addition = cumCapacityKw + cumCapacityKw_other,
-            cumCapacityKw = cap_beg_world + cumCapacityKw + cumCapacityKw_other
+            cumCapacityKw = cap_beg_world + cum_cap_addition
         ) %>% 
         select(year, cumCapacityKw, cum_cap_addition, price_si)
     return(result)

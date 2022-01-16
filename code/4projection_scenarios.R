@@ -101,30 +101,37 @@ proj_sus_dev_global_germany <- predict_cost(
 #       (assuming in effect that learning is shared across installation type)
 
 # Create national learning data for each country
+delay <- 10
 data_nat_trends_national_us <- makeNationalCapData(
     data_country = data$proj_nat_trends %>% filter(country == "U.S."),
     data_world   = data_world_nat_trends,
-    year_beg     = year_proj_min)
+    year_beg     = year_proj_min, 
+    delay_years  = delay)
 data_sus_dev_national_us <- makeNationalCapData(
     data_country = data$proj_sus_dev %>% filter(country == "U.S."),
     data_world   = data_world_sus_dev,
-    year_beg     = year_proj_min)
+    year_beg     = year_proj_min, 
+    delay_years  = delay)
 data_nat_trends_national_china <- makeNationalCapData(
     data_country = data$proj_nat_trends %>% filter(country == "China"),
     data_world   = data_world_nat_trends,
-    year_beg     = year_proj_min)
+    year_beg     = year_proj_min, 
+    delay_years  = delay)
 data_sus_dev_national_china <- makeNationalCapData(
     data_country = data$proj_sus_dev %>% filter(country == "China"),
     data_world   = data_world_sus_dev,
-    year_beg     = year_proj_min)
+    year_beg     = year_proj_min,
+    delay_years  = delay)
 data_nat_trends_national_germany <- makeNationalCapData(
     data_country = data$proj_nat_trends %>% filter(country == "Germany"),
     data_world   = data_world_nat_trends,
-    year_beg     = year_proj_min)
+    year_beg     = year_proj_min,
+    delay_years  = delay)
 data_sus_dev_national_germany <- makeNationalCapData(
     data_country = data$proj_sus_dev %>% filter(country == "Germany"),
     data_world   = data_world_sus_dev,
-    year_beg     = year_proj_min)
+    year_beg     = year_proj_min,
+    delay_years  = delay)
 
 # National trends projections ---
 
