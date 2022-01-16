@@ -444,80 +444,165 @@ price_si <- world[which(world$year == year_proj_min),]$price_si
 
 # Compute annual, linear capacity increase to meet target
 
+num_years <- year_proj_max - year_proj_min
+
 # US ---
 
+# Get historical capacity
 proj_df_us <- seiaCapacity %>%
     group_by(year) %>% 
     summarise(cumCapacityKw = sum(cumCapacityKw))
 
+# Get starting year capacity
+cap_begin_us <- proj_df_us %>%
+    filter(year == year_proj_min) %>%
+    pull(cumCapacityKw)
+
+# Get growth rates
+rate_nat_trends_us <- getFutureCapRate(
+  target_capacity = target_nat_trends_us,
+  cap_begin = cap_begin_us,
+  num_years = num_years)
+
+rate_sus_dev_us <- getFutureCapRate(
+  target_capacity = target_sus_dev_us,
+  cap_begin = cap_begin_us,
+  num_years = num_years)
+
+# Get projected capacities
 proj_nat_trends_us <- getFutureCapacities(
-  df = proj_df_us,
+  rate = rate_nat_trends_us,
+  cap_begin = cap_begin_us,
+  num_years = num_years,
   year_min_proj = year_proj_min,
-  year_max_proj = year_proj_max,
-  target_capacity = target_nat_trends_us) %>%
-  mutate(price_si = price_si)
+  price_si = price_si)
 
 proj_sus_dev_us <- getFutureCapacities(
-  df = proj_df_us,
+  rate = rate_sus_dev_us,
+  cap_begin = cap_begin_us,
+  num_years = num_years,
   year_min_proj = year_proj_min,
-  year_max_proj = year_proj_max,
-  target_capacity = target_sus_dev_us) %>%
-  mutate(price_si = price_si)
+  price_si = price_si)
 
 # China ---
 
+# Get historical capacity
 proj_df_china <- china %>%
     filter(component == "Module")
 
+# Get starting year capacity
+cap_begin_china <- proj_df_china %>%
+    filter(year == year_proj_min) %>%
+    pull(cumCapacityKw)
+
+# Get growth rates
+rate_nat_trends_china <- getFutureCapRate(
+  target_capacity = target_nat_trends_china,
+  cap_begin = cap_begin_china,
+  num_years = num_years)
+
+rate_sus_dev_china <- getFutureCapRate(
+  target_capacity = target_sus_dev_china,
+  cap_begin = cap_begin_china,
+  num_years = num_years)
+
+# Get projected capacities
 proj_nat_trends_china <- getFutureCapacities(
-  df = proj_df_china,
+  rate = rate_nat_trends_china,
+  cap_begin = cap_begin_china,
+  num_years = num_years,
   year_min_proj = year_proj_min,
-  year_max_proj = year_proj_max,
-  target_capacity = target_nat_trends_china) %>%
-  mutate(price_si = price_si)
+  price_si = price_si)
 
 proj_sus_dev_china <- getFutureCapacities(
-  df = proj_df_china,
+  rate = rate_sus_dev_china,
+  cap_begin = cap_begin_china,
+  num_years = num_years,
   year_min_proj = year_proj_min,
-  year_max_proj = year_proj_max,
-  target_capacity = target_sus_dev_china) %>%
-  mutate(price_si = price_si)
+  price_si = price_si)
 
 # Germany ---
 
+# Get historical capacity
 proj_df_germany <- germany
 
+# Get starting year capacity
+cap_begin_germany <- proj_df_germany %>%
+    filter(year == year_proj_min) %>%
+    pull(cumCapacityKw)
+
+# Get growth rates
+rate_nat_trends_germany <- getFutureCapRate(
+  target_capacity = target_nat_trends_germany,
+  cap_begin = cap_begin_germany,
+  num_years = num_years)
+
+rate_sus_dev_germany <- getFutureCapRate(
+  target_capacity = target_sus_dev_germany,
+  cap_begin = cap_begin_germany,
+  num_years = num_years)
+
+# Get projected capacities
 proj_nat_trends_germany <- getFutureCapacities(
-  df = proj_df_germany,
+  rate = rate_nat_trends_germany,
+  cap_begin = cap_begin_germany,
+  num_years = num_years,
   year_min_proj = year_proj_min,
-  year_max_proj = year_proj_max,
-  target_capacity = target_nat_trends_germany) %>%
-  mutate(price_si = price_si)
+  price_si = price_si)
 
 proj_sus_dev_germany <- getFutureCapacities(
-  df = proj_df_germany,
+  rate = rate_sus_dev_germany,
+  cap_begin = cap_begin_germany,
+  num_years = num_years,
   year_min_proj = year_proj_min,
-  year_max_proj = year_proj_max,
-  target_capacity = target_sus_dev_germany) %>%
-  mutate(price_si = price_si)
+  price_si = price_si)
 
 # World ---
 
+# Get historical capacity
+proj_df_world <- world
+
+# Get starting year capacity
+cap_begin_world <- proj_df_world %>%
+    filter(year == year_proj_min) %>%
+    pull(cumCapacityKw)
+
+# Get growth rates
+rate_nat_trends_world <- getFutureCapRate(
+  target_capacity = target_nat_trends_world,
+  cap_begin = cap_begin_world,
+  num_years = num_years)
+
+rate_sus_dev_world <- getFutureCapRate(
+  target_capacity = target_sus_dev_world,
+  cap_begin = cap_begin_world,
+  num_years = num_years)
+
+# Get projected capacities
 proj_nat_trends_world <- getFutureCapacities(
-  df = world,
+  rate = rate_nat_trends_world,
+  cap_begin = cap_begin_world,
+  num_years = num_years,
   year_min_proj = year_proj_min,
-  year_max_proj = year_proj_max,
-  target_capacity = target_nat_trends_world) %>%
-  mutate(price_si = price_si)
+  price_si = price_si)
 
 proj_sus_dev_world <- getFutureCapacities(
-  df = world,
+  rate = rate_sus_dev_world,
+  cap_begin = cap_begin_world,
+  num_years = num_years,
   year_min_proj = year_proj_min,
-  year_max_proj = year_proj_max,
-  target_capacity = target_sus_dev_world) %>%
-  mutate(price_si = price_si)
+  price_si = price_si)
 
 # Combine ---
+
+rates <- data.frame(
+  country = rep(c("U.S.", "Germany", "China", "World"), 2),
+  scenario = c(rep("National Trends", 4), rep("Sustainable Development", 4)),
+  rate = c(
+    rate_nat_trends_us, rate_nat_trends_germany, rate_nat_trends_china,
+    rate_nat_trends_world, rate_sus_dev_us, rate_sus_dev_germany,
+    rate_sus_dev_china, rate_sus_dev_world)
+)
 
 proj_nat_trends <- rbind(
   proj_nat_trends_us %>% mutate(country = "U.S."),
@@ -547,6 +632,7 @@ saveRDS(list(
     china              = china,
     germany            = germany,
     world              = world, 
+    rates              = rates,
     proj_nat_trends    = proj_nat_trends,
     proj_sus_dev       = proj_sus_dev),
     dir$data_formatted
