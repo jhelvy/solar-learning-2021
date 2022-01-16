@@ -72,18 +72,22 @@ cap_data_germany <- data$germany %>%
     filter(year <= year_model_germany_max)
 
 # Create national learning capacity data for each country
+delay <- 10
 data_national_us <- makeNationalCapData(
     data_country = cap_data_us,
     data_world   = data$world,
-    year_beg   = year_model_us_min)
+    year_beg     = year_model_us_min, 
+    delay_years  = delay)
 data_national_china <- makeNationalCapData(
     data_country = cap_data_china,
     data_world   = data$world,
-    year_beg   = year_model_china_min)
+    year_beg   = year_model_china_min, 
+    delay_years  = delay)
 data_national_germany <- makeNationalCapData(
     data_country = cap_data_germany,
     data_world   = data$world,
-    year_beg   = year_model_germany_min)
+    year_beg   = year_model_germany_min, 
+    delay_years  = delay)
 
 # Compute cost scenarios by country
 cost_national_us <- predict_cost(
@@ -144,7 +148,10 @@ cost %>%
             lr$data_us %>% mutate(country = "U.S."),
             lr$data_china %>% mutate(country = "China"),
             lr$data_germany %>% mutate(country = "Germany")), 
-        aes(x = year, y = costPerKw), linetype = 2)
+        aes(x = year, y = costPerKw), linetype = 2) + 
+    theme_bw()
+
+# ggsave("cost_historical_delay_0.png", width = 15, height = 5)
 
 # Calculate savings between national and global learning scenarios
 

@@ -102,7 +102,9 @@ predict_cost <- function(
     return(result)
 }
 
-makeNationalCapData <- function(data_country, data_world, year_beg = NULL) {
+makeNationalCapData <- function(
+    data_country, data_world, year_beg = NULL, delay_years = 10
+) {
     if (is.null(year_beg)) {
         year_beg = min(data$year)
     }
@@ -111,17 +113,30 @@ makeNationalCapData <- function(data_country, data_world, year_beg = NULL) {
         filter(year >= year_beg) %>% 
         select(year, cumCapacityKw)
     cap_beg_country <- data_country[1,]$cumCapacityKw
+    data_country <- data_country %>% 
+        mutate(cumCapacityKw = cumCapacityKw - cap_beg_country)
     data_world <- data_world %>%
-        filter(year >= year_beg)
-    cap_beg_world <- data_world[1,]$cumCapacityKw
-    # Compute national cumulative capacity additions
+        filter(year >= year_beg) %>% 
+        rename(cumCapacityKw_world = cumCapacityKw)
+    cap_beg_world <- data_world[1,]$cumCapacityKw_world
+    data_world <- data_world %>% 
+        mutate(cumCapacityKw_world = cumCapacityKw_world - cap_beg_world)
+    # Compute national cumulative capacity additions starting with global 
+    # capacity and gradually shifting down to only national capacity after 
+    # delay_years years
+    # First set up the lambda to phase out global cap
+    lambda <- seq(0, 1, length.out = delay_years + 1)
+    lambda <- c(lambda, rep(1, nrow(data_country) - length(lambda)))
     result <- data_country %>%
-      mutate(
-        cum_cap_addition = cumCapacityKw - cap_beg_country,
-        cumCapacityKw = cap_beg_world + cum_cap_addition) %>%
-      # Add on silicon price data 
-      left_join(data_world %>% 
-          select(year, price_si), by = "year")
+        left_join(data_world, by = "year") %>% 
+        mutate(
+            cumCapacityKw_other = cumCapacityKw_world - cumCapacityKw, 
+            lambda = lambda, 
+            cumCapacityKw_other = cumCapacityKw_other*(1 - lambda), 
+            cum_cap_addition = cumCapacityKw + cumCapacityKw_other,
+            cumCapacityKw = cap_beg_world + cumCapacityKw + cumCapacityKw_other
+        ) %>% 
+        select(year, cumCapacityKw, cum_cap_addition, price_si)
     return(result)
 }
 
