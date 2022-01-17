@@ -100,6 +100,8 @@ proj_sus_dev_global_germany <- predict_cost(
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
+
+
 # Create national learning data for each country
 delay <- 10
 data_nat_trends_national_us <- makeNationalCapData(
@@ -112,6 +114,45 @@ data_sus_dev_national_us <- makeNationalCapData(
     data_world   = data_world_sus_dev,
     year_beg     = year_proj_min, 
     delay_years  = delay)
+
+# Code for previewing the implications of different delays
+# df_nat_0 <- data_nat_trends_national_us
+# df_sus_0 <- data_sus_dev_national_us
+# df_nat_5 <- data_nat_trends_national_us
+# df_sus_5 <- data_sus_dev_national_us
+# df_nat_10 <- data_nat_trends_national_us
+# df_sus_10 <- data_sus_dev_national_us
+# df_nat_0$scenario <- "National Trends"
+# df_nat_0$country <- "U.S."
+# df_sus_0$scenario <- "Sustainable Development"
+# df_sus_0$country <- "U.S."
+# df_nat_0$cum_cap_addition <- NULL
+# df_nat_0$price_si <- NULL
+# df_sus_0$cum_cap_addition <- NULL
+# df_sus_0$price_si <- NULL
+# df_nat_5$scenario <- "National Trends"
+# df_nat_5$country <- "Hybrid"
+# df_sus_5$scenario <- "Sustainable Development"
+# df_sus_5$country <- "Hybrid"
+# df_nat_5$cum_cap_addition <- NULL
+# df_nat_5$price_si <- NULL
+# df_sus_5$cum_cap_addition <- NULL
+# df_sus_5$price_si <- NULL
+# df <- rbind(df_nat_0, df_nat_5, df_sus_0, df_sus_5)
+#     
+# df %>% 
+#     ggplot() + 
+#     geom_line(
+#         aes(
+#             x = as.factor(year), 
+#             y = cumCapacityKw, group = country, color = country)) + 
+#     facet_wrap(vars(scenario)) + 
+#     theme_minimal() + 
+#     labs(x = "year")
+#     
+# ggsave('us_cum_cap_5_years.pdf', height = 3.5, width = 10, device = cairo_pdf)
+
+
 data_nat_trends_national_china <- makeNationalCapData(
     data_country = data$proj_nat_trends %>% filter(country == "China"),
     data_world   = data_world_nat_trends,

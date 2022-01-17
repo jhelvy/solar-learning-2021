@@ -132,11 +132,22 @@ makeNationalCapData <- function(
         mutate(
             cumCapacityKw_other = cumCapacityKw_world - cumCapacityKw, 
             lambda = lambda, 
-            cumCapacityKw_other = cumCapacityKw_other*(1 - lambda), 
+            cumCapacityKw_other = cumCapacityKw_other*(1 - lambda),
             cum_cap_addition = cumCapacityKw + cumCapacityKw_other,
-            cumCapacityKw = cap_beg_world + cum_cap_addition
-        ) %>% 
+            cumCapacityKw = cap_beg_world + cum_cap_addition) %>% 
         select(year, cumCapacityKw, cum_cap_addition, price_si)
+
+# Preview results     
+# result %>% 
+#     select(year, starts_with("cumCapacityKw_"), -cumCapacityKw_other) %>% 
+#     pivot_longer(
+#         names_to = "cumCapacityKw", cols = starts_with("cumCapacityKw_")) %>% 
+#     separate(cumCapacityKw, into = c("drop", "type"), sep = "_") %>% 
+#     filter(year < 2018) %>% 
+#     ggplot() + 
+#     geom_line(aes(x = year, y = value, group = type, color = type)) +
+#     theme_minimal()
+
     return(result)
 }
 
