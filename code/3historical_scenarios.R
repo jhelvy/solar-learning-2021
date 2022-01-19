@@ -78,6 +78,28 @@ data_national_us <- makeNationalCapData(
     data_world   = data$world,
     year_beg     = year_model_us_min, 
     delay_years  = delay)
+
+# # Preview comparison with global capacity
+# data_national_us %>% 
+#     select(year, cumCapacityKw) %>% 
+#     mutate(scenario = "hybrid") %>% 
+#     rbind(
+#         cap_data_us %>% 
+#             select(year, cumCapacityKw) %>% 
+#             mutate(scenario = "national")
+#     ) %>% 
+#     rbind(
+#         data$world %>% 
+#             select(year, cumCapacityKw) %>% 
+#             mutate(scenario = "world")
+#     ) %>% 
+#     ggplot() + 
+#     geom_line(aes(
+#         x = year, y = cumCapacityKw, group = scenario, color = scenario)) + 
+#     theme_bw()
+# 
+# ggsave("us_cum_cap_10years.png", width = 8, height = 5)
+
 data_national_china <- makeNationalCapData(
     data_country = cap_data_china,
     data_world   = data$world,
@@ -134,24 +156,24 @@ cost <- rbind(
            learning = "national", country = "Germany")
 )
 
-# Preview results
-cost %>% 
-    ggplot() + 
-    facet_wrap(vars(country)) +
-    geom_line(
-        aes(x = year, y = cost_per_kw, color = learning)) + 
-    geom_ribbon(
-        aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub, 
-            fill = learning), alpha = 0.22) +
-    geom_line(
-        data = rbind(
-            lr$data_us %>% mutate(country = "U.S."),
-            lr$data_china %>% mutate(country = "China"),
-            lr$data_germany %>% mutate(country = "Germany")), 
-        aes(x = year, y = costPerKw), linetype = 2) + 
-    theme_bw()
-
-# ggsave("cost_historical_delay_0.png", width = 15, height = 5)
+# # Preview results
+# cost %>% 
+#     ggplot() + 
+#     facet_wrap(vars(country)) +
+#     geom_line(
+#         aes(x = year, y = cost_per_kw, color = learning)) + 
+#     geom_ribbon(
+#         aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub, 
+#             fill = learning), alpha = 0.22) +
+#     geom_line(
+#         data = rbind(
+#             lr$data_us %>% mutate(country = "U.S."),
+#             lr$data_china %>% mutate(country = "China"),
+#             lr$data_germany %>% mutate(country = "Germany")), 
+#         aes(x = year, y = costPerKw), linetype = 2) + 
+#     theme_bw()
+# 
+# ggsave("cost_historical_delay_10.png", width = 15, height = 5)
 
 # Calculate savings between national and global learning scenarios
 
@@ -160,11 +182,7 @@ cap_additions <- rbind(
     mutate(data_national_us, country = "U.S."),
     mutate(data_national_china, country = "China"),
     mutate(data_national_germany, country = "Germany")) %>% 
-    select(year, country, cum_cap_addition) %>%
-    group_by(country) %>% 
-    mutate(ann_cap_addition = cum_cap_addition - lag(cum_cap_addition, 1)) %>% 
-    select(year, country, ann_cap_addition) %>% 
-    filter(!is.na(ann_cap_addition)) %>%  
+    select(year, country, annCapKw_new)
     filter(year >= year_savings_min, year <= year_savings_max)
 
 # True historical cost per kW

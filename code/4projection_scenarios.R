@@ -100,8 +100,6 @@ proj_sus_dev_global_germany <- predict_cost(
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
-
-
 # Create national learning data for each country
 delay <- 10
 data_nat_trends_national_us <- makeNationalCapData(

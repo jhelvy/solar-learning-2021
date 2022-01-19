@@ -60,10 +60,14 @@ pvProduction <- data$pvProduction %>%
        fill  = 'Origin', 
        caption = "Data from Jäger-Waldau, A. (2020) https://doi.org/10.3390/en13040930")
 
-ggsave(here::here(dir$figs, 'pdf', "pvProduction.pdf"),
-       pvProduction, width = 8, height = 6, device = cairo_pdf)
-ggsave(here::here(dir$figs, 'png', "pvProduction.png"),
-       pvProduction, width = 8, height = 6, dpi = 300)
+ggsave(
+    here::here(dir$figs, 'pdf', "pvProduction.pdf"),
+    pvProduction, width = 8, height = 6, device = cairo_pdf
+)
+ggsave(
+    here::here(dir$figs, 'png', "pvProduction.png"),
+    pvProduction, width = 8, height = 6, dpi = 300
+)
 
 # Cost per kw for global vs. national learning ------
 
@@ -81,7 +85,8 @@ cost_historical_plot <- cost$cost %>%
     geom_line(
         data = cost$cost_historical_true %>% 
             mutate(year = lubridate::ymd(paste0(year, "-01-01"))),
-        aes(x = year, y = costPerKw), linetype = 2, alpha = 0.4, size = 1) +
+        aes(x = year, y = costPerKw), 
+        linetype = 2, alpha = 0.4, size = 1) +
     # Now add modeled cost lines with uncertainty bands
     geom_ribbon(
         aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub, 
@@ -153,7 +158,8 @@ ggsave(
     cost_historical_plot, height = 4.25, width = 11, device = cairo_pdf)
 ggsave(
     file.path(dir$figs, 'png', 'cost_historical.png'),
-    cost_historical_plot, height = 4.25, width = 11)
+    cost_historical_plot, height = 4.25, width = 11
+)
 
 # Cumulative savings historical ----
 
@@ -192,14 +198,18 @@ savings_cum_historical_plot <- cost$savings %>%
     ) +
     annotate(
         "segment", x = 2017.5, xend = 2018.2, y = 171, yend = 155,
-        colour = "black")
+        colour = "black"
+    )
 
 ggsave(
     file.path(dir$figs, 'pdf', 'savings_cum_historical_plot.pdf'),
-    savings_cum_historical_plot, height = 4, width = 6.5, device = cairo_pdf)
+    savings_cum_historical_plot, height = 4, width = 6.5, 
+    device = cairo_pdf
+)
 ggsave(
     file.path(dir$figs, 'png', 'savings_cum_historical_plot.png'),
-    savings_cum_historical_plot, height = 4, width = 6.5)
+    savings_cum_historical_plot, height = 4, width = 6.5
+)
 
 # Annual savings historical ----
 
@@ -209,8 +219,8 @@ cum_savings_labels <- cost$savings %>%
         mean = round(cum_savings_bil), 
         lb = round(cum_savings_bil_lb),
         ub = round(cum_savings_bil_ub),
-        x = 2007, 
-        y = 26,
+        x = 2015, 
+        y = 12.5,
         label = paste0(
             "Cumulative savings:\nB $ ", mean, " (", lb, " - ", ub, ")"))
 savings_ann_historical_plot <- cost$savings %>% 
@@ -224,8 +234,8 @@ savings_ann_historical_plot <- cost$savings %>%
     scale_x_continuous(breaks = seq(year_savings_min, year_savings_max, 2)) +
     scale_y_continuous(
         labels = scales::dollar, 
-        breaks = seq(0, 30, 10),
-        limits = c(-3, 30),
+        breaks = seq(-10, 15, 5),
+        limits = c(-10, 15),
         expand = expansion(mult = c(0, 0.05))) +
     scale_fill_manual(values = colors_country) +
     theme_minimal_hgrid(
@@ -254,10 +264,13 @@ savings_ann_historical_plot <- cost$savings %>%
 
 ggsave(
     file.path(dir$figs, 'pdf', 'savings_ann_historical_plot.pdf'),
-    savings_ann_historical_plot, height = 4, width = 12, device = cairo_pdf)
+    savings_ann_historical_plot, height = 4, width = 12, 
+    device = cairo_pdf
+)
 ggsave(
     file.path(dir$figs, 'png', 'savings_ann_historical_plot.png'),
-    savings_ann_historical_plot, height = 4, width = 12)
+    savings_ann_historical_plot, height = 4, width = 12
+)
 
 # 2030 Projections -----
 

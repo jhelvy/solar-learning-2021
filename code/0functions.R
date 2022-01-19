@@ -111,16 +111,21 @@ makeNationalCapData <- function(
     # Setup data
     data_country <- data_country %>%
         filter(year >= year_beg) %>% 
-        select(year, cumCapacityKw)
-    cap_beg_country <- data_country[1,]$cumCapacityKw
+        select(year, cumCapKw_country = cumCapacityKw)
+    cap_beg_country <- data_country[1,]$cumCapKw_country
     data_country <- data_country %>% 
-        mutate(cumCapacityKw = cumCapacityKw - cap_beg_country)
+        mutate(
+            annCapKw_country = cumCapKw_country - lag(cumCapKw_country, 1),
+            annCapKw_country = ifelse(
+                is.na(annCapKw_country), 0, annCapKw_country))
     data_world <- data_world %>%
         filter(year >= year_beg) %>% 
-        rename(cumCapacityKw_world = cumCapacityKw)
-    cap_beg_world <- data_world[1,]$cumCapacityKw_world
+        select(year, cumCapKw_world = cumCapacityKw, price_si)
+    cap_beg_world <- data_world[1,]$cumCapKw_world
     data_world <- data_world %>% 
-        mutate(cumCapacityKw_world = cumCapacityKw_world - cap_beg_world)
+        mutate(
+            annCapKw_world = cumCapKw_world - lag(cumCapKw_world, 1),
+            annCapKw_world = ifelse(is.na(annCapKw_world), 0, annCapKw_world))
     # Compute national cumulative capacity additions starting with global 
     # capacity and gradually shifting down to only national capacity after 
     # delay_years years
@@ -130,12 +135,12 @@ makeNationalCapData <- function(
     result <- data_country %>%
         left_join(data_world, by = "year") %>% 
         mutate(
-            cumCapacityKw_other = cumCapacityKw_world - cumCapacityKw, 
-            lambda = lambda, 
-            cumCapacityKw_other = cumCapacityKw_other*(1 - lambda),
-            cum_cap_addition = cumCapacityKw + cumCapacityKw_other,
-            cumCapacityKw = cap_beg_world + cum_cap_addition) %>% 
-        select(year, cumCapacityKw, cum_cap_addition, price_si)
+            lambda = lambda,
+            annCapKw_other = (1 - lambda)*(annCapKw_world - annCapKw_country),
+            annCapKw_new = annCapKw_other + annCapKw_country,
+            cumCapKw_new = cumsum(annCapKw_new),
+            cumCapacityKw = cap_beg_world + cumCapKw_new) %>%
+        select(year, cumCapacityKw, annCapKw_new, price_si)
 
 # Preview results     
 # result %>% 
@@ -156,13 +161,9 @@ computeSavings <- function(cost_national, cost_global, cap_additions) {
         left_join(cost_global, by = c("year", "country")) %>% 
         left_join(cap_additions, by = c("year", "country")) %>% 
         mutate(
-            ann_savings_bil = ann_cap_addition*(national - global) / 10^9) %>% 
+            ann_savings_bil = annCapKw_new*(national - global) / 10^9) %>%
         select(year, country, ann_savings_bil)
     return(result)
-}
-
-repDf <- function(df, n) {
-  return(df[rep(seq_len(nrow(df)), n), ])
 }
 
 getStartingCapcity <- function(df, year_min_proj) {
