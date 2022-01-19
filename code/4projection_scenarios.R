@@ -112,8 +112,8 @@ data_sus_dev_national_us <- makeNationalCapData(
     data_world   = data_world_sus_dev,
     year_beg     = year_proj_min, 
     delay_years  = delay)
-
-# Code for previewing the implications of different delays
+# 
+# # Code for previewing the implications of different delays
 # df_nat_0 <- data_nat_trends_national_us
 # df_sus_0 <- data_sus_dev_national_us
 # df_nat_5 <- data_nat_trends_national_us
@@ -136,19 +136,30 @@ data_sus_dev_national_us <- makeNationalCapData(
 # df_nat_5$price_si <- NULL
 # df_sus_5$cum_cap_addition <- NULL
 # df_sus_5$price_si <- NULL
-# df <- rbind(df_nat_0, df_nat_5, df_sus_0, df_sus_5)
-#     
-# df %>% 
-#     ggplot() + 
+# df_nat_10$scenario <- "National Trends"
+# df_nat_10$country <- "Hybrid"
+# df_sus_10$scenario <- "Sustainable Development"
+# df_sus_10$country <- "Hybrid"
+# df_nat_10$cum_cap_addition <- NULL
+# df_nat_10$price_si <- NULL
+# df_sus_10$cum_cap_addition <- NULL
+# df_sus_10$price_si <- NULL
+# 
+# rbind(
+#     df_nat_0, 
+#     df_sus_0,
+#     df_nat_10,
+#     df_sus_10) %>% 
+#     ggplot() +
 #     geom_line(
 #         aes(
-#             x = as.factor(year), 
-#             y = cumCapacityKw, group = country, color = country)) + 
-#     facet_wrap(vars(scenario)) + 
-#     theme_minimal() + 
+#             x = as.factor(year),
+#             y = cumCapacityKw, group = country, color = country)) +
+#     facet_wrap(vars(scenario)) +
+#     theme_minimal() +
 #     labs(x = "year")
-#     
-# ggsave('us_cum_cap_5_years.pdf', height = 3.5, width = 10, device = cairo_pdf)
+# 
+# ggsave('us_cum_cap_10_years.pdf', height = 3.5, width = 10, device = cairo_pdf)
 
 
 data_nat_trends_national_china <- makeNationalCapData(

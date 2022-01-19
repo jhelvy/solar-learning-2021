@@ -190,32 +190,28 @@ cost_historical_true <- rbind(
     lr$data_us %>% mutate(country = "U.S."),
     lr$data_china %>% mutate(country = "China"),
     lr$data_germany %>% mutate(country = "Germany"))
+cost_global <- cost_historical_true %>%
+    select(year, country, global = costPerKw)
 
 savings_mean <- computeSavings(
     cost_national = cost %>% 
         filter(learning == "national") %>% 
         select(year, country, national = cost_per_kw),
-    cost_global = cost_historical_true %>% 
-        select(year, country, global = costPerKw), 
-    cap_additions) %>% 
+    cost_global, cap_additions) %>%
     filter(year >= year_savings_min, year <= year_savings_max)
 
 savings_lb <- computeSavings(
     cost_national = cost %>% 
         filter(learning == "national") %>% 
         select(year, country, national = cost_per_kw_lb),
-    cost_global = cost_historical_true %>% 
-        select(year, country, global = costPerKw), 
-    cap_additions) %>% 
+    cost_global, cap_additions) %>%
     filter(year >= year_savings_min, year <= year_savings_max)
 
 savings_ub <- computeSavings(
     cost_national = cost %>% 
         filter(learning == "national") %>% 
         select(year, country, national = cost_per_kw_ub),
-    cost_global = cost_historical_true %>% 
-        select(year, country, global = costPerKw), 
-    cap_additions) %>% 
+    cost_global, cap_additions) %>%
     filter(year >= year_savings_min, year <= year_savings_max)
 
 # Merge savings 
