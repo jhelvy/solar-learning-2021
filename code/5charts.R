@@ -219,7 +219,7 @@ cum_savings_labels <- cost$savings %>%
         mean = round(cum_savings_bil), 
         lb = round(cum_savings_bil_lb),
         ub = round(cum_savings_bil_ub),
-        x = 2015, 
+        x = 2008, 
         y = 12.5,
         label = paste0(
             "Cumulative savings:\nB $ ", mean, " (", lb, " - ", ub, ")"))
@@ -234,8 +234,8 @@ savings_ann_historical_plot <- cost$savings %>%
     scale_x_continuous(breaks = seq(year_savings_min, year_savings_max, 2)) +
     scale_y_continuous(
         labels = scales::dollar, 
-        breaks = seq(-10, 15, 5),
-        limits = c(-10, 15),
+        breaks = seq(-5, 15, 5),
+        limits = c(-5, 15),
         expand = expansion(mult = c(0, 0.05))) +
     scale_fill_manual(values = colors_country) +
     theme_minimal_hgrid(

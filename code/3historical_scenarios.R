@@ -17,6 +17,12 @@ germany_beg <- lr$data_germany %>%
 world_beg <- data$world %>%
     filter(year == year_model_world_min)
 
+# True historical cost per kW
+cost_historical_true <- rbind(
+    lr$data_us %>% mutate(country = "U.S."),
+    lr$data_china %>% mutate(country = "China"),
+    lr$data_germany %>% mutate(country = "Germany"))
+
 # GLOBAL LEARNING ---------------------------------------------------
 
 # Learning rates based on world cumulative capacity and local installed costs
@@ -72,7 +78,6 @@ cap_data_germany <- data$germany %>%
     filter(year <= year_model_germany_max)
 
 # Create national learning capacity data for each country
-delay <- 10
 data_national_us <- makeNationalCapData(
     data_country = cap_data_us,
     data_world   = data$world,
@@ -177,54 +182,58 @@ cost <- rbind(
 
 # Calculate savings between national and global learning scenarios
 
-# Combine additional capacity data for each country into one data frame
+# Compute the additional capacity in each country in each year
 cap_additions <- rbind(
-    mutate(data_national_us, country = "U.S."),
-    mutate(data_national_china, country = "China"),
-    mutate(data_national_germany, country = "Germany")) %>% 
-    select(year, country, annCapKw_new)
+    cap_data_us %>% 
+        select(year, cumCapacityKw)  %>% 
+        mutate(country = "U.S."),
+    cap_data_china %>% 
+        mutate(country = "China"),
+    cap_data_germany %>% 
+        mutate(country = "Germany")) %>% 
+    group_by(country) %>% 
+    mutate(annCapKw_new = cumCapacityKw - lag(cumCapacityKw, 1)) %>% 
+    select(year, country, annCapKw_new) %>% 
     filter(year >= year_savings_min, year <= year_savings_max)
 
-# True historical cost per kW
-cost_historical_true <- rbind(
-    lr$data_us %>% mutate(country = "U.S."),
-    lr$data_china %>% mutate(country = "China"),
-    lr$data_germany %>% mutate(country = "Germany"))
-cost_global <- cost_historical_true %>%
-    select(year, country, global = costPerKw)
-
-savings_mean <- computeSavings(
-    cost_national = cost %>% 
-        filter(learning == "national") %>% 
-        select(year, country, national = cost_per_kw),
-    cost_global, cap_additions) %>%
+# Compute price differences with uncertainty
+cost_stats <- cost %>% 
+    select(-cost_per_kw_lb, -cost_per_kw_ub) %>% 
+    pivot_wider(names_from = learning, values_from = cost_per_kw) %>% 
+    rename(global_mean = global, national_mean = national) %>% 
+    left_join(
+        cost %>% 
+            mutate(
+                sd1 = (cost_per_kw_ub - cost_per_kw) / 2, 
+                sd2 = (cost_per_kw - cost_per_kw_lb) / 2, 
+                sd  = (sd1 + sd2) / 2) %>% 
+            select(year, country, sd, learning) %>% 
+            pivot_wider(names_from = learning, values_from = sd) %>% 
+            rename(global_sd = global, national_sd = national),
+        by = c("year", "country")) %>% 
     filter(year >= year_savings_min, year <= year_savings_max)
 
-savings_lb <- computeSavings(
-    cost_national = cost %>% 
-        filter(learning == "national") %>% 
-        select(year, country, national = cost_per_kw_lb),
-    cost_global, cap_additions) %>%
-    filter(year >= year_savings_min, year <= year_savings_max)
+price_diff <- list()
+for (i in 1:nrow(cost_stats)) {
+    stats <- cost_stats[i,]
+    national <- rnorm(10^4, stats$national_mean, stats$national_sd)
+    global <- rnorm(10^4, stats$global_mean, stats$global_sd)
+    price_diff[[i]] <- ci(national - global)
+}
+price_diff <- as.data.frame(do.call(rbind, price_diff))
+cost_stats <- cbind(cost_stats, price_diff)
 
-savings_ub <- computeSavings(
-    cost_national = cost %>% 
-        filter(learning == "national") %>% 
-        select(year, country, national = cost_per_kw_ub),
-    cost_global, cap_additions) %>%
-    filter(year >= year_savings_min, year <= year_savings_max)
-
-# Merge savings 
-savings <- rbind(
-    mutate(savings_mean, est = "mean"),
-    mutate(savings_lb, est = "lb"),
-    mutate(savings_ub, est = "ub")) %>%
-    filter(!is.na(ann_savings_bil)) %>% 
-    spread(key = est, value = ann_savings_bil) %>% 
-    rename(
-        ann_savings_bil = mean, 
-        ann_savings_bil_lb = lb, 
-        ann_savings_bil_ub = ub) %>% 
+# Compute savings
+savings <- cost_stats %>% 
+    left_join(cap_additions, by = c("year", "country")) %>% 
+    mutate(
+        ann_savings_bil = (annCapKw_new * mean) / 10^9,
+        ann_savings_bil_lb = (annCapKw_new * low) / 10^9,
+        ann_savings_bil_ub = (annCapKw_new * high) / 10^9
+    ) %>% 
+    select(
+        year, country, ann_savings_bil, ann_savings_bil_lb, 
+        ann_savings_bil_ub) %>% 
     group_by(country) %>% 
     mutate(
         cum_savings_bil = cumsum(ann_savings_bil), 

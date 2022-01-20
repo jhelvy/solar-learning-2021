@@ -101,7 +101,6 @@ proj_sus_dev_global_germany <- predict_cost(
 #       (assuming in effect that learning is shared across installation type)
 
 # Create national learning data for each country
-delay <- 10
 data_nat_trends_national_us <- makeNationalCapData(
     data_country = data$proj_nat_trends %>% filter(country == "U.S."),
     data_world   = data_world_nat_trends,
