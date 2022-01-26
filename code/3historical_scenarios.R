@@ -45,34 +45,37 @@ data_global_us <- makeGlobalCapData(
     data_nation = cap_data_us,
     data_world  = data$world,
     year_beg    = year_model_us_min,
-    lambda      = 0.1)
+    lambda      = 0.31)
 data_global_china <- makeGlobalCapData(
     data_nation = cap_data_china,
     data_world  = data$world,
     year_beg    = year_model_china_min,
-    lambda      = 0.1)
+    lambda      = 0.37)
 data_global_germany <- makeGlobalCapData(
     data_nation = cap_data_germany,
     data_world  = data$world,
     year_beg    = year_model_germany_min,
-    lambda      = 0.1)
+    lambda      = 0)
 
 # Create NATIONAL learning capacity data for each country
 data_national_us <- makeNationalCapData(
     data_nation = cap_data_us,
     data_world  = data$world,
     year_beg    = year_model_us_min,
-    delay_years = delay)
+    delay_years = delay, 
+    lambda_start = 0.31)
 data_national_china <- makeNationalCapData(
     data_nation = cap_data_china,
     data_world  = data$world,
     year_beg    = year_model_china_min,
-    delay_years = delay)
+    delay_years = delay, 
+    lambda_start = 0.37)
 data_national_germany <- makeNationalCapData(
     data_nation = cap_data_germany,
     data_world  = data$world,
     year_beg    = year_model_germany_min,
-    delay_years = delay)
+    delay_years = delay, 
+    lambda_start = 0)
 
 # # Preview capacity results
 # rbind(
