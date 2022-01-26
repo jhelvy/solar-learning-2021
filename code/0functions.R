@@ -102,57 +102,70 @@ predict_cost <- function(
     return(result)
 }
 
-makeNationalCapData <- function(
-    data_country, data_world, year_beg = NULL, delay_years = 10
+
+makeGlobalCapData <- function(
+    data_nation, data_world, year_beg = NULL, lambda = 0.1
 ) {
-    if (is.null(year_beg)) {
-        year_beg = min(data$year)
-    }
+    if (is.null(year_beg)) { year_beg = min(data$year) }
     # Setup data
-    data_country <- data_country %>%
-        filter(year >= year_beg) %>% 
-        select(year, cumCapKw_country = cumCapacityKw)
-    cap_beg_country <- data_country[1,]$cumCapKw_country
-    data_country <- data_country %>% 
-        mutate(
-            annCapKw_country = cumCapKw_country - lag(cumCapKw_country, 1),
-            annCapKw_country = ifelse(
-                is.na(annCapKw_country), 0, annCapKw_country))
-    data_world <- data_world %>%
-        filter(year >= year_beg) %>% 
-        select(year, cumCapKw_world = cumCapacityKw, price_si)
+    data_nation <- prepNationData(data_nation, year_beg)
+    data_world <- prepWorldData(data_world, year_beg)
     cap_beg_world <- data_world[1,]$cumCapKw_world
-    data_world <- data_world %>% 
-        mutate(
-            annCapKw_world = cumCapKw_world - lag(cumCapKw_world, 1),
-            annCapKw_world = ifelse(is.na(annCapKw_world), 0, annCapKw_world))
+    # Compute global cumulative capacity additions for each year
+    result <- computeCapData(data_nation, data_world, cap_beg_world, lambda)
+    return(result)
+}
+
+makeNationalCapData <- function(
+    data_nation, data_world, year_beg = NULL, delay_years = 10, 
+    lambda_start = 0.1, lambda_end = 0.9
+) {
+    if (is.null(year_beg)) { year_beg = min(data$year) }
+    # Setup data
+    data_nation <- prepNationData(data_nation, year_beg)
+    data_world <- prepWorldData(data_world, year_beg)
+    cap_beg_world <- data_world[1,]$cumCapKw_world
     # Compute national cumulative capacity additions starting with global 
     # capacity and gradually shifting down to only national capacity after 
     # delay_years years
     # First set up the lambda to phase out global cap
-    lambda <- seq(0, 1, length.out = delay_years + 1)
-    lambda <- c(lambda, rep(1, nrow(data_country) - length(lambda)))
-    result <- data_country %>%
-        left_join(data_world, by = "year") %>% 
+    lambda <- seq(lambda_start, lambda_end, length.out = delay_years + 1)
+    lambda <- c(lambda, rep(lambda_end, nrow(data_nation) - length(lambda)))
+    result <- computeCapData(data_nation, data_world, cap_beg_world, lambda)
+    return(result)
+}
+
+prepNationData <- function(df, year_beg) {
+    result <- df %>%
+        filter(year >= year_beg) %>%
+        select(year, cumCapKw_nation = cumCapacityKw) %>%
+        mutate(
+            annCapKw_nation = cumCapKw_nation - lag(cumCapKw_nation, 1),
+            annCapKw_nation = ifelse(
+                is.na(annCapKw_nation), 0, annCapKw_nation))
+    return(result)
+}
+
+prepWorldData <- function(df, year_beg) {
+    result <- df %>%
+        filter(year >= year_beg) %>%
+        select(year, cumCapKw_world = cumCapacityKw, price_si) %>%
+        mutate(
+            annCapKw_world = cumCapKw_world - lag(cumCapKw_world, 1),
+            annCapKw_world = ifelse(is.na(annCapKw_world), 0, annCapKw_world))
+    return(result)
+}
+
+computeCapData <- function(data_nation, data_world, cap_beg_world, lambda) {
+    result <- data_nation %>%
+        left_join(data_world, by = "year") %>%
         mutate(
             lambda = lambda,
-            annCapKw_other = (1 - lambda)*(annCapKw_world - annCapKw_country),
-            annCapKw_new = annCapKw_other + annCapKw_country,
+            annCapKw_other = (1 - lambda)*(annCapKw_world - annCapKw_nation),
+            annCapKw_new = annCapKw_other + annCapKw_nation,
             cumCapKw_new = cumsum(annCapKw_new),
             cumCapacityKw = cap_beg_world + cumCapKw_new) %>%
         select(year, cumCapacityKw, annCapKw_new, price_si)
-
-# Preview results     
-# result %>% 
-#     select(year, starts_with("cumCapacityKw_"), -cumCapacityKw_other) %>% 
-#     pivot_longer(
-#         names_to = "cumCapacityKw", cols = starts_with("cumCapacityKw_")) %>% 
-#     separate(cumCapacityKw, into = c("drop", "type"), sep = "_") %>% 
-#     filter(year < 2018) %>% 
-#     ggplot() + 
-#     geom_line(aes(x = year, y = value, group = type, color = type)) +
-#     theme_minimal()
-
     return(result)
 }
 
