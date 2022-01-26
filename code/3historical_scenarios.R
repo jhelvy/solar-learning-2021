@@ -211,7 +211,8 @@ cost <- rbind(
 #             lr$data_china %>% mutate(country = "China"),
 #             lr$data_germany %>% mutate(country = "Germany")),
 #         aes(x = year, y = costPerKw), linetype = 2) +
-#     theme_bw()
+#     theme_bw() + 
+#     scale_y_log10()
 # 
 # ggsave("cost_historical.png", width = 15, height = 5)
 
