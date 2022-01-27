@@ -54,34 +54,34 @@ data_global_nat_trends_us <- makeGlobalCapData(
   data_nation = cap_data_nat_trends_us,
   data_world  = data_world_nat_trends,
   year_beg    = year_model_us_min,
-  lambda      = 0.1)
+  lambda      = lambda_us)
 data_global_sus_dev_us <- makeGlobalCapData(
   data_nation = cap_data_sus_dev_us,
   data_world  = data_world_sus_dev,
   year_beg    = year_model_us_min,
-  lambda      = 0.1)
+  lambda      = lambda_us)
 
 data_global_nat_trends_china <- makeGlobalCapData(
   data_nation = cap_data_nat_trends_china,
   data_world  = data_world_nat_trends,
   year_beg    = year_model_china_min,
-  lambda      = 0.1)
+  lambda      = lambda_china)
 data_global_sus_dev_china <- makeGlobalCapData(
   data_nation = cap_data_sus_dev_china,
   data_world  = data_world_sus_dev,
   year_beg    = year_model_china_min,
-  lambda      = 0.1)
+  lambda      = lambda_china)
 
 data_global_nat_trends_germany <- makeGlobalCapData(
   data_nation = cap_data_nat_trends_germany,
   data_world  = data_world_nat_trends,
   year_beg    = year_model_germany_min,
-  lambda      = 0.1)
+  lambda      = lambda_germany)
 data_global_sus_dev_germany <- makeGlobalCapData(
   data_nation = cap_data_sus_dev_germany,
   data_world  = data_world_sus_dev,
   year_beg    = year_model_germany_min,
-  lambda      = 0.1)
+  lambda      = lambda_germany)
 
 # Create NATIONAL learning capacity data for each country & scenario
 data_national_nat_trends_us <- makeNationalCapData(
@@ -89,39 +89,39 @@ data_national_nat_trends_us <- makeNationalCapData(
   data_world  = data_world_nat_trends,
   year_beg    = year_model_us_min,
   delay_years = delay,
-  lambda_start = 0.1)
+  lambda_start = lambda_us)
 data_national_sus_dev_us <- makeNationalCapData(
   data_nation = cap_data_sus_dev_us,
   data_world  = data_world_sus_dev,
   year_beg    = year_model_us_min,
   delay_years = delay,
-  lambda_start = 0.1)
+  lambda_start = lambda_us)
 
 data_national_nat_trends_china <- makeNationalCapData(
   data_nation = cap_data_nat_trends_china,
   data_world  = data_world_nat_trends,
   year_beg    = year_model_china_min,
   delay_years = delay,
-  lambda_start = 0.1)
+  lambda_start = lambda_china)
 data_national_sus_dev_china <- makeNationalCapData(
   data_nation = cap_data_sus_dev_china,
   data_world  = data_world_sus_dev,
   year_beg    = year_model_china_min,
   delay_years = delay,
-  lambda_start = 0.1)
+  lambda_start = lambda_china)
 
 data_national_nat_trends_germany <- makeNationalCapData(
   data_nation = cap_data_nat_trends_germany,
   data_world  = data_world_nat_trends,
   year_beg    = year_model_germany_min,
   delay_years = delay,
-  lambda_start = 0.1)
+  lambda_start = lambda_germany)
 data_national_sus_dev_germany <- makeNationalCapData(
   data_nation = cap_data_sus_dev_germany,
   data_world  = data_world_sus_dev,
   year_beg    = year_model_germany_min,
   delay_years = delay,
-  lambda_start = 0.1)
+  lambda_start = lambda_germany)
 
 # Compute GLOBAL cost scenarios by country & scenario
 proj_nat_trends_global_us <- predict_cost(
@@ -515,6 +515,6 @@ cost_orig_germany <- germany_beg$costPerKw * range
 # Save results --------
 saveRDS(list(
   base = projections),
-  lb = projections_lb,
-  ub = projections_ub),
+  # lb = projections_lb,
+  # ub = projections_ub),
   dir$projection_scenarios)
