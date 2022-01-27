@@ -45,17 +45,17 @@ data_global_us <- makeGlobalCapData(
     data_nation = cap_data_us,
     data_world  = data$world,
     year_beg    = year_model_us_min,
-    lambda      = 0.31)
+    lambda      = lambda_us)
 data_global_china <- makeGlobalCapData(
     data_nation = cap_data_china,
     data_world  = data$world,
     year_beg    = year_model_china_min,
-    lambda      = 0.37)
+    lambda      = lambda_china)
 data_global_germany <- makeGlobalCapData(
     data_nation = cap_data_germany,
     data_world  = data$world,
     year_beg    = year_model_germany_min,
-    lambda      = 0)
+    lambda      = lambda_germany)
 
 # Create NATIONAL learning capacity data for each country
 data_national_us <- makeNationalCapData(
@@ -63,19 +63,19 @@ data_national_us <- makeNationalCapData(
     data_world  = data$world,
     year_beg    = year_model_us_min,
     delay_years = delay, 
-    lambda_start = 0.31)
+    lambda_start = lambda_us)
 data_national_china <- makeNationalCapData(
     data_nation = cap_data_china,
     data_world  = data$world,
     year_beg    = year_model_china_min,
     delay_years = delay, 
-    lambda_start = 0.37)
+    lambda_start = lambda_china)
 data_national_germany <- makeNationalCapData(
     data_nation = cap_data_germany,
     data_world  = data$world,
     year_beg    = year_model_germany_min,
     delay_years = delay, 
-    lambda_start = 0)
+    lambda_start = lambda_germany)
 
 # # Preview capacity results
 # rbind(
@@ -211,8 +211,8 @@ cost <- rbind(
 #             lr$data_china %>% mutate(country = "China"),
 #             lr$data_germany %>% mutate(country = "Germany")),
 #         aes(x = year, y = costPerKw), linetype = 2) +
-#     theme_bw() + 
-#     scale_y_log10()
+#     theme_bw() 
+#     # scale_y_log10()
 # 
 # ggsave("cost_historical.png", width = 15, height = 5)
 

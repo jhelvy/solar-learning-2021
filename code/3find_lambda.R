@@ -48,43 +48,6 @@ data_germany <- data$germany %>%
 
 # For each country, compute the cost curve using different values of lambda
 
-find_lambda <- function(
-    data_nation, data_world, year_beg, lr_model, beg
-) {
-    lambda <- seq(0, 1, 0.01)
-    error_us <- list()
-    for (i in 1:length(lambda)) {
-        data_global <- makeGlobalCapData(
-            data_nation = data_nation,
-            data_world  = data_world,
-            year_beg    = year_beg,
-            lambda      = lambda[i])
-        cost_global <- predict_cost(
-            model    = lr_model,
-            data     = data_global,
-            cost_beg = beg$costPerKw,
-            cap_beg  = beg$cumCapacityKw,
-            si_beg   = beg$price_si,
-            year_beg = year_beg,
-            ci       = 0.95)
-        error_us[[i]] <- cost_global %>% 
-            select(year, cost_per_kw) %>% 
-            left_join(
-                data_nation %>% 
-                    select(year, cost_per_kw_true = costPerKw), 
-                by = "year"
-            ) %>% 
-            mutate(err_sq = log(abs(cost_per_kw - cost_per_kw_true))^2) %>% 
-            filter(err_sq != Inf)
-    }
-    result <- data.frame(
-        sse = unlist(lapply(error_us, function(x) sum(x$err_sq))), 
-        lambda = lambda) %>% 
-        arrange(sse)
-    return(result)
-}
-
-
 lambda_us <- find_lambda(
     data_nation = data_us, 
     data_world = data$world, 
@@ -109,10 +72,12 @@ lambda_germany <- find_lambda(
     beg = germany_beg
 )
 
+# Visualize how sse changes with lambda for each country
 df <- rbind(
     mutate(lambda_us, country = "U.S."), 
     mutate(lambda_china, country = "China"),
     mutate(lambda_germany, country = "Germany"))
+
 ggplot(df) + 
     geom_point(
         aes(
@@ -131,6 +96,19 @@ ggplot(df) +
     facet_wrap(vars(country)) + 
     theme_bw()
 
-ggsave("lambda.png", width = 15, height = 5)
+# ggsave("lambda.png", width = 15, height = 5)
 
-    
+# Optimal lambda values: 
+lambda_us <- lambda_us %>% 
+    slice(1) %>% 
+    pull(lambda)
+lambda_china <- lambda_china %>% 
+    slice(1) %>% 
+    pull(lambda)
+lambda_germany <- lambda_germany %>% 
+    slice(1) %>% 
+    pull(lambda)
+
+lambda_us
+lambda_china
+lambda_germany

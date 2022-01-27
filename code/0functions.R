@@ -65,6 +65,42 @@ ci <- function(data, alpha = 0.025) {
   return(ests)
 }
 
+find_lambda <- function(
+  data_nation, data_world, year_beg, lr_model, beg
+) {
+  lambda <- seq(0, 1, 0.01)
+  error_us <- list()
+  for (i in 1:length(lambda)) {
+    data_global <- makeGlobalCapData(
+      data_nation = data_nation,
+      data_world  = data_world,
+      year_beg    = year_beg,
+      lambda      = lambda[i])
+    cost_global <- predict_cost(
+      model    = lr_model,
+      data     = data_global,
+      cost_beg = beg$costPerKw,
+      cap_beg  = beg$cumCapacityKw,
+      si_beg   = beg$price_si,
+      year_beg = year_beg,
+      ci       = 0.95)
+    error_us[[i]] <- cost_global %>% 
+      select(year, cost_per_kw) %>% 
+      left_join(
+        data_nation %>% 
+          select(year, cost_per_kw_true = costPerKw), 
+        by = "year"
+      ) %>% 
+      mutate(err_sq = log(abs(cost_per_kw - cost_per_kw_true))^2) %>% 
+      filter(err_sq != Inf)
+  }
+  result <- data.frame(
+    sse = unlist(lapply(error_us, function(x) sum(x$err_sq))), 
+    lambda = lambda) %>% 
+    arrange(sse)
+  return(result)
+}
+
 predict_cost <- function(
   model, 
   data,
