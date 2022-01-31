@@ -4,6 +4,19 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
+# Define range of lambda values 
+lambda <- seq(0, 1, 0.01)
+
+# Define country capacity data
+
+cap_data_china <- data$china %>%
+    filter(component == "Module") %>%
+    filter(year <= year_model_china_max) %>%
+    select(year, cumCapacityKw)
+cap_data_germany <- data$germany %>%
+    select(year, cumCapacityKw) %>%
+    filter(year <= year_model_germany_max)
+
 # Notes -----------------------------------------------------------------------
 
 # Basic learning curve model: Y_x = A*x^b
@@ -38,59 +51,98 @@ data <- readRDS(dir$data_formatted)
 # World capacity data: IRENA
 # US cost data: LBNL
 
-# Prep data
-data_us <- data$us %>%
-    filter(
-        year >= year_model_us_min,
-        year <= year_model_us_max
-    ) %>%
-    select(year, costPerKw) %>%
-    left_join(
-        data$world %>%
-            select(year, price_si, cumCapacityKw),
-        by = "year") %>% 
-    filter(!is.na(price_si), !is.na(cumCapacityKw))
+models_us <- list()
+for (i in 1:length(lambda)) {
+    models_us[[i]] <- 
+        # Prep data
+        makeGlobalCapData(
+        data_nation = data$us,
+        data_world  = data$world,
+        year_beg    = year_model_us_min,
+        lambda      = lambda[i]) %>% 
+        select(year, cumCapacityKw, price_si) %>% 
+        left_join(select(data$us, year, costPerKw), by = "year") %>% 
+        filter(year <= year_model_us_max) %>% 
+        run_model() # Run model
+}
 
-# Run model
-model_us <- run_model(data_us)
+fit_vals <- unlist(lapply(models_us, function(x) summary(x)$r.squared))
+fit_vals <- unlist(lapply(models_us, function(x) summary(x)$adj.r.squared))
+index_best <- which(fit_vals == max(fit_vals))
+
+# Best model: 
+model_us <- models_us[[index_best]]
 summary(model_us)
+
+# Learning rate
+1 - 2^coef(model_us)["log(cumCapacityKw)"]
+
+# Lambda:
+lambda[index_best]
 
 # China ----------------------------------------------------------------------
 
-# Prep data
-data_china <- data$china %>%
-    filter(
-        year >= year_model_china_min,
-        year <= year_model_china_max,
-        component == 'Module'
-    ) %>%
-    select(year, costPerKw) %>%
-    left_join(
-        data$world %>%
-            select(year, price_si, cumCapacityKw),
-        by = "year")
+china_data <- filter(data$china, component == 'Module')
+models_china <- list()
+for (i in 1:length(lambda)) {
+    models_china[[i]] <- 
+        # Prep data
+        makeGlobalCapData(
+        data_nation = china_data,
+        data_world  = data$world,
+        year_beg    = year_model_china_min,
+        lambda      = lambda[i]) %>% 
+        select(year, cumCapacityKw, price_si) %>% 
+        left_join(select(china_data, year, costPerKw), by = "year") %>% 
+        filter(year <= year_model_china_max) %>% 
+        run_model() # Run model
+}
 
-# Run model
-model_china <- run_model(data_china)
+fit_vals <- unlist(lapply(models_china, function(x) summary(x)$r.squared))
+fit_vals <- unlist(lapply(models_china, function(x) summary(x)$adj.r.squared))
+index_best <- which(fit_vals == max(fit_vals))
+
+# Best model: 
+model_china <- models_china[[index_best]]
 summary(model_china)
+
+# Learning rate
+1 - 2^coef(model_china)["log(cumCapacityKw)"]
+
+# Lambda:
+lambda[index_best]
+
 
 # Germany ---------------------------------------------------------------------
 
-# Prep data
-data_germany <- data$germany %>%
-    filter(
-        year >= year_model_germany_min,
-        year <= year_model_germany_max
-    ) %>% 
-    select(year, costPerKw) %>%
-    left_join(
-        data$world %>%
-            select(year, price_si, cumCapacityKw),
-        by = "year")
+models_germany <- list()
+for (i in 1:length(lambda)) {
+    models_germany[[i]] <- 
+        # Prep data
+        makeGlobalCapData(
+        data_nation = data$germany,
+        data_world  = data$world,
+        year_beg    = year_model_germany_min,
+        lambda      = lambda[i]) %>% 
+        select(year, cumCapacityKw, price_si) %>% 
+        left_join(select(data$germany, year, costPerKw), by = "year") %>% 
+        filter(year <= year_model_germany_max) %>% 
+        run_model() # Run model
+}
 
-# Run model
-model_germany <- run_model(data_germany)
+fit_vals <- unlist(lapply(models_germany, function(x) summary(x)$r.squared))
+fit_vals <- unlist(lapply(models_germany, function(x) summary(x)$adj.r.squared))
+index_best <- which(fit_vals == max(fit_vals))
+
+# Best model: 
+model_germany <- models_germany[[index_best]]
 summary(model_germany)
+
+# Learning rate
+1 - 2^coef(model_germany)["log(cumCapacityKw)"]
+
+# Lambda:
+lambda[index_best]
 
 # Output ----------------------------------------------------------------------
 
