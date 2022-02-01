@@ -40,7 +40,7 @@ getAnnCapData <- function(df, year_beg) {
 
 # Setup US data
 data_us <- formatCapData(
-    data_nation = data$us, 
+    data_nation = data$china %>% filter(component == "Module"), 
     data_world = data$world, 
     year_beg = year_model_us_min, 
     year_max = year_model_us_max
@@ -51,17 +51,22 @@ data_us <- formatCapData(
 
 # Setup data for stan
 x1 <- data_us$cumCapKw_world
-x2 <- log(data_us$price_si)
-y <- log(data_us$costPerKw)
-data <- list(
-	N = length(x1),
+x2 <- data_us$cumCapKw_other
+x3 <- log(data_us$price_si)
+y  <- log(data_us$costPerKw)
+data_list <- list(
+	N  = length(x1),
 	x1 = x1,
 	x2 = x2,
-	y = y
+	x3 = x3,
+	y  = y
 )
 
 # Fit the data
-fit <- stan(file = here::here('stan', 'model3.stan'), data = data)
+fit <- stan(
+    file = here::here('stan', 'model4.stan'), 
+    data = data_list, 
+    control = list(max_treedepth = 20, adapt_delta = 0.99))
 print(fit)
 
 # Extract the best fit parameters and visualize on the data
@@ -70,7 +75,8 @@ params <- extract(fit)
 alpha <- mean(params$alpha)
 beta1 <- mean(params$beta1)
 beta2 <- mean(params$beta2)
-y_fit <- alpha + beta1 * log(x1) + beta2 * x2
+lambda <- mean(params$lambda)
+y_fit <- alpha + beta1 * log(x1 - (lambda * x2)) + beta2 * x3
 lines(log(x1), y_fit, col = "red")
 
 # Posterior intervals
@@ -79,12 +85,13 @@ params <- extract(fit)
 alpha <- mean(params$alpha)
 beta1 <- mean(params$beta1)
 beta2 <- mean(params$beta2)
-y_fit <- alpha + beta1 * log(x1) + beta2 * x2
+lambda <- mean(params$lambda)
+y_fit <- alpha + beta1 * log(x1 - (lambda * x2)) + beta2 * x3
 lines(log(x1), y_fit, col = "blue")
 yCI <- matrix(0, ncol = 2, nrow = length(x1))
 for (i in 1:length(x1)) {
    yCI[i,] <- quantile(
-       params$alpha + params$beta1*log(x1[i]) + params$beta2*x2[i], 
+       params$alpha + params$beta1 * log(x1[i] - (params$lambda * x2[i])) + params$beta2 * x3[i],
        probs = c(0.05, 0.95)
     )
 }
