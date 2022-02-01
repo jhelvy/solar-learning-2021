@@ -79,7 +79,7 @@ lambda <- mean(params$lambda)
 y_fit <- alpha + beta1 * log(x1 - (lambda * x2)) + beta2 * x3
 lines(log(x1), y_fit, col = "red")
 
-# Posterior intervals
+# Add Posterior intervals
 plot(log(x1), y)
 params <- extract(fit)
 alpha <- mean(params$alpha)
