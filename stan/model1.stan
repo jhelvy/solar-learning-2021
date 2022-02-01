@@ -5,8 +5,8 @@ data {
 }
 
 parameters {
-    real alpha;//intercept
-    real beta; //slope
+    real<lower=0> alpha; //intercept
+    real<upper=0> beta;  //slope
     real<lower=0> sigma; //scatter
 }
 

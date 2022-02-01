@@ -32,7 +32,6 @@ data <- list(
 fit <- stan(file = here::here('stan', 'model1.stan'), data = data)
 print(fit)
 
-
 # Extract the best fit parameters and visualize on the data
 plot(x, y)
 params <- extract(fit)
