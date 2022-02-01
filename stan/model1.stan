@@ -13,10 +13,12 @@ parameters {
 model {
     //priors
     alpha ~ normal(0, 10);
-    beta ~ normal(0,10);
-    sigma ~ normal(0,1);
+    beta ~ normal(0, 10);
+    sigma ~ normal(0, 5);
     
-    y ~ normal(alpha + beta * x, sigma); //likelihood
+    //likelihood
+    for (i in 1:N)
+        y[i] ~ normal(alpha + beta * x[i], sigma);
 }
 
 generated quantities {
