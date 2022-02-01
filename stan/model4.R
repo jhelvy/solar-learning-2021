@@ -38,22 +38,30 @@ getAnnCapData <- function(df, year_beg) {
     return(result)
 }
 
-# Setup US data
-data_us <- formatCapData(
-    data_nation = data$china %>% filter(component == "Module"), 
-    data_world = data$world, 
-    year_beg = year_model_us_min, 
-    year_max = year_model_us_max
+# Setup data
+df <- data$us
+year_min <- year_model_us_min
+year_max <- year_model_us_max
+
+df <- data$china %>% filter(component == "Module")
+year_min <- year_model_china_min
+year_max <- year_model_china_max
+
+data_model <- formatCapData(
+    data_nation = df,
+    data_world  = data$world, 
+    year_beg    = year_min, 
+    year_max    = year_max
 ) %>% 
     # Add price data
-    left_join(select(data$us, year, costPerKw), by = "year") %>% 
+    left_join(select(df, year, costPerKw), by = "year") %>% 
     left_join(select(data$world, year, price_si), by = "year")
 
 # Setup data for stan
-x1 <- data_us$cumCapKw_world
-x2 <- data_us$cumCapKw_other
-x3 <- log(data_us$price_si)
-y  <- log(data_us$costPerKw)
+x1 <- data_model$cumCapKw_world
+x2 <- data_model$cumCapKw_other
+x3 <- log(data_model$price_si)
+y  <- log(data_model$costPerKw)
 data_list <- list(
 	N  = length(x1),
 	x1 = x1,
@@ -78,6 +86,10 @@ beta2 <- mean(params$beta2)
 lambda <- mean(params$lambda)
 y_fit <- alpha + beta1 * log(x1 - (lambda * x2)) + beta2 * x3
 lines(log(x1), y_fit, col = "red")
+
+# Learning rate
+1 - (2^beta1)
+lambda
 
 # Add Posterior intervals
 plot(log(x1), y)
