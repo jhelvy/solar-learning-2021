@@ -19,7 +19,7 @@ model {
     alpha  ~ normal(0, 10);
     beta1  ~ normal(0, 10);
     beta2  ~ normal(0, 10);
-    lambda ~ beta(1, 1);
+    lambda ~ uniform(0, 1);
     sigma  ~ normal(0, 5);
 
     //likelihood

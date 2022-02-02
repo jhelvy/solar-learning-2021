@@ -6,6 +6,10 @@ options(mc.cores = parallel::detectCores())
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
+# Load diagnostics functions
+util <- new.env()
+source(file.path('stan', 'stan_utility.R'), local = util)
+
 # Functions for formatting data
 formatCapData <- function(data_nation, data_world, year_beg, year_max) {
     cap_data_nation <- getAnnCapData(data_nation, year_beg)
@@ -39,13 +43,15 @@ getAnnCapData <- function(df, year_beg) {
 }
 
 # Setup data
+# USA
 df <- data$us
 year_min <- year_model_us_min
 year_max <- year_model_us_max
 
-df <- data$china %>% filter(component == "Module")
-year_min <- year_model_china_min
-year_max <- year_model_china_max
+# # China
+# df <- data$china %>% filter(component == "Module")
+# year_min <- year_model_china_min
+# year_max <- year_model_china_max
 
 data_model <- formatCapData(
     data_nation = df,
@@ -74,16 +80,31 @@ data_list <- list(
 fit <- stan(
     file = here::here('stan', 'model4.stan'), 
     data = data_list, 
-    control = list(max_treedepth = 20, adapt_delta = 0.99))
-print(fit)
+    control = list(max_treedepth = 15, adapt_delta = 0.99))
 
-# Extract the best fit parameters and visualize on the data
-plot(log(x1), y)
+# Check diagnostics one by one
+util$check_n_eff(fit)
+util$check_rhat(fit)
+util$check_div(fit)
+util$check_treedepth(fit)
+util$check_energy(fit)
+
+# Or all at once
+util$check_all_diagnostics(fit)
+
+# Extract the best fit parameters
 params <- extract(fit)
+quantile(params$alpha, c(0.05, 0.5, 0.95))
+quantile(params$beta1, c(0.05, 0.5, 0.95))
+quantile(params$beta2, c(0.05, 0.5, 0.95))
+quantile(params$lambda, c(0.05, 0.5, 0.95))
+
+# Visualize
 alpha <- mean(params$alpha)
 beta1 <- mean(params$beta1)
 beta2 <- mean(params$beta2)
 lambda <- mean(params$lambda)
+plot(log(x1), y)
 y_fit <- alpha + beta1 * log(x1 - (lambda * x2)) + beta2 * x3
 lines(log(x1), y_fit, col = "red")
 
@@ -94,10 +115,6 @@ lambda
 # Add Posterior intervals
 plot(log(x1), y)
 params <- extract(fit)
-alpha <- mean(params$alpha)
-beta1 <- mean(params$beta1)
-beta2 <- mean(params$beta2)
-lambda <- mean(params$lambda)
 y_fit <- alpha + beta1 * log(x1 - (lambda * x2)) + beta2 * x3
 lines(log(x1), y_fit, col = "blue")
 yCI <- matrix(0, ncol = 2, nrow = length(x1))
@@ -110,3 +127,4 @@ for (i in 1:length(x1)) {
 # 95% quantiles 
 lines(log(x1), yCI[,1], col = 'red')
 lines(log(x1), yCI[,2], col = 'red')
+
