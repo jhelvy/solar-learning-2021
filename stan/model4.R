@@ -128,3 +128,30 @@ for (i in 1:length(x1)) {
 lines(log(x1), yCI[,1], col = 'red')
 lines(log(x1), yCI[,2], col = 'red')
 
+# ggplot visualization
+y_sim <- matrix(0, ncol = 3, nrow = length(x1))
+for (i in 1:length(x1)) {
+    sim <- params$alpha + params$beta1 * log(x1[i] - (params$lambda * x2[i])) + params$beta2 * x3[i]
+   y_sim[i,] <- c(mean(sim), quantile(sim, probs = c(0.05, 0.95)))
+}
+y_sim <- as.data.frame(exp(y_sim))
+names(y_sim) <- c("mean", "lower", "upper")
+y_sim <- cbind(y_sim, cumCapKw_world = data_model$cumCapKw_world)
+data_model %>% 
+    ggplot() + 
+    geom_line(
+        data = y_sim,
+        mapping = aes(x = cumCapKw_world, y = mean), 
+        color = "red"
+    ) +
+    geom_ribbon(
+        data = y_sim,
+        mapping = aes(x = cumCapKw_world, ymin = lower, ymax = upper), 
+        fill = "red", 
+        alpha = 0.2
+    ) +
+    geom_point(aes(x = cumCapKw_world, y = costPerKw)) + 
+    scale_x_log10() + 
+    scale_y_log10() + 
+    theme_bw()
+
