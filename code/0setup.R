@@ -17,7 +17,9 @@ library(priceR)
 library(ggtext)
 library(gtsummary)
 library(flextable)
+library(rstan)
 options(dplyr.width = Inf)
+options(mc.cores = parallel::detectCores())
 
 # Load custom functions
 source(here::here('code', '0functions.R'))
