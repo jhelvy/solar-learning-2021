@@ -33,21 +33,21 @@ data_germany <- make_stan_data(df_germany)
 
 # Fit the data for each country
 fit_us <- stan(
-    file = here::here('code', 'lrmodel.stan'),
+    file = here::here('code', 'lrmodel_lambda.stan'),
     data = data_us,
     iter = 4000,
     control = list(max_treedepth = 10, adapt_delta = 0.9)
 )
 
 fit_china <- stan(
-    file = here::here('code', 'lrmodel.stan'),
+    file = here::here('code', 'lrmodel_lambda.stan'),
     data = data_china,
     iter = 4000,
     control = list(max_treedepth = 10, adapt_delta = 0.9)
 )
 
 fit_germany <- stan(
-    file = here::here('code', 'lrmodel.stan'),
+    file = here::here('code', 'lrmodel_lambda.stan'),
     data = data_germany,
     iter = 4000,
     control = list(max_treedepth = 11, adapt_delta = 0.90)
@@ -81,7 +81,7 @@ round(ci(params$lambda, alpha = 0.05), 2)
 nobs <- data$N
 y_sim <- matrix(0, ncol = 3, nrow = nobs)
 for (i in 1:nobs) {
-    sim <- params$alpha + params$beta * log(data$qw[i]) + params$gamma * log(data$p[i])
+    sim <- params$alpha + params$beta * log(data$qw[i] - (params$lambda * data$qj[i])) + params$gamma * log(data$p[i])
    y_sim[i,] <- c(mean(sim), quantile(sim, probs = c(0.05, 0.95)))
 }
 y_sim <- as.data.frame(exp(y_sim))
@@ -107,7 +107,7 @@ y_sim %>%
         y = "log(Cost per kW, $USD)"
     )
 
- ggsave("fit_germany.png", width = 6, height = 4)
+ggsave("fit_germany.png", width = 6, height = 4)
 
 # Save fits 
 saveRDS(list(
