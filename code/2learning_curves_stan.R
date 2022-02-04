@@ -68,23 +68,17 @@ check_all_diagnostics(fit)
 
 # Extract the best fit parameters
 params <- extract(fit)
-quantile(params$alpha, c(0.05, 0.5, 0.95))
-quantile(params$beta, c(0.05, 0.5, 0.95))
-quantile(params$gamma, c(0.05, 0.5, 0.95))
-quantile(params$lambda, c(0.05, 0.5, 0.95))
-
-# Extract mean pars
-nobs <- data$N
 alpha <- mean(params$alpha)
 beta <- mean(params$beta)
 gamma <- mean(params$gamma)
 lambda <- mean(params$lambda)
 
 # Learning rate & lambda
-1 - (2^beta)
-lambda
+round(1 - (2^ci(params$beta, alpha = 0.05)), 2)
+round(ci(params$lambda, alpha = 0.05), 2)
 
 # Visualize
+nobs <- data$N
 y_sim <- matrix(0, ncol = 3, nrow = nobs)
 for (i in 1:nobs) {
     sim <- params$alpha + params$beta * log(data$qw[i] - (params$lambda * data$qj[i])) + params$gamma * log(data$p[i])
@@ -107,7 +101,13 @@ y_sim %>%
     geom_point(aes(x = cumCapKw_world, y = costPerKw)) + 
     scale_x_log10() + 
     scale_y_log10() + 
-    theme_bw()
+    theme_bw() + 
+    labs(
+        x = "log(Cumulative Global Installed Capacity, kW)",
+        y = "log(Cost per kW, $USD)"
+    )
+
+ggsave("fit_germany.png", width = 6, height = 4)
 
 # Save fits 
 saveRDS(list(
