@@ -35,7 +35,7 @@ data_germany <- make_stan_data(df_germany)
 fit_us <- stan(
     file = here::here('code', 'lrmodel.stan'), 
     data = data_us,
-    iter = 4000
+    iter = 4000,
     control = list(max_treedepth = 10, adapt_delta = 0.9)
 )
 
@@ -109,3 +109,13 @@ y_sim %>%
     scale_y_log10() + 
     theme_bw()
 
+# Save fits 
+saveRDS(list(
+    fit_us = fit_us,
+    data_us = data_us,
+    fit_china = fit_china,
+    data_china = data_china,
+    fit_germany = fit_germany,
+    data_germany = data_germany),
+    dir$lr_models_stan
+)
