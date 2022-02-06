@@ -101,15 +101,6 @@ run_model <- function(data) {
     return(model)
 }
 
-ci <- function(data, alpha = 0.025) {
-  B <- mean(data, na.rm = T)
-  L <- stats::quantile(data, alpha, na.rm = T)
-  U <- stats::quantile(data, 1 - alpha, na.rm = T)
-  ests <- c(B, L, U)
-  names(ests) <- c("mean", "low", "high")
-  return(ests)
-}
-
 find_lambda <- function(
   data_nation, data_world, year_beg, lr_model, beg
 ) {
@@ -147,42 +138,108 @@ find_lambda <- function(
 }
 
 predict_cost <- function(
-  model, 
-  data,
-  cost_beg,
-  cap_beg,
-  si_beg,
-  year_beg = NULL,
-  ci = 0.95) {
+    params, 
+    data, 
+    year_beg = NULL, 
+    ci = 0.95
+) {
+    nobs <- data$N
     if (is.null(year_beg)) {
         year_beg <-min(data$year)
+    } 
+    # Extract par vectors
+    alpha <- params$alpha
+    beta <- params$beta
+    gamma <- params$gamma
+    lambda <- params$lambda
+    # Compute c_sim 
+    c_sim <- matrix(0, ncol = 3, nrow = nobs)
+    alpha_ci <- (1 - ci) / 2
+    probs <- c(alpha_ci, 1 - alpha_ci)
+    for (i in 1:nobs) {
+        q <- data$qw[i] - (lambda * data$qj[i])
+        sim <- alpha + beta * log(q) + gamma * log(data$p[i])
+        c_sim[i,] <- c(mean(sim), quantile(sim, probs = probs))
     }
-    data <- filter(data, year >= year_beg)
-    # Create multivariate normal draws of the model parameters to 
-    # incorporate the full covariance matrix of the model
-    draws <- data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
-    colnames(draws) <- c('int', 'b', 'c')
-    result <- list()
-    # Compute cost_per_kw with uncertainty using parameter draws
-    for (i in seq(nrow(data))) {
-        row <- data[i,]
-        result[[i]] <- ci(
-            cost_beg * 
-            (row$cumCapacityKw / cap_beg)^draws$b * 
-            (row$price_si / si_beg)^draws$c)
-    }
-    # Combine results
-    result <- do.call(rbind, result) %>% 
-        as.data.frame() %>% 
-        mutate(year = data$year) %>% 
-        select(
-            year,
-            cost_per_kw = mean,
-            cost_per_kw_lb = low,
-            cost_per_kw_ub = high)
-    return(result)
+    c_sim <- as.data.frame(exp(c_sim))
+    names(c_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
+    c_sim <- cbind(c_sim, cost_per_kw_true = exp(data$logc)) %>% 
+        mutate(year = seq(year_beg, year_beg + nobs - 1))
+    return(c_sim)
 }
 
+predict_cost_national <- function(
+    params, 
+    data, 
+    year_beg = NULL, 
+    ci = 0.95, 
+    delay_years = 10, 
+    lambda_end = 0.9
+) {
+    nobs <- data$N
+    if (is.null(year_beg)) {
+        year_beg <-min(data$year)
+    } 
+    # Set lambda vector
+    lambda_start <- mean(params$lambda)
+    lambda <- seq(lambda_start, lambda_end, length.out = delay_years + 1)
+    lambda <- c(lambda, rep(lambda_end, nobs - length(lambda)))
+    # Extract par vectors
+    alpha <- params$alpha
+    beta <- params$beta
+    gamma <- params$gamma
+    # Compute c_sim 
+    c_sim <- matrix(0, ncol = 3, nrow = nobs)
+    alpha_ci <- (1 - ci) / 2
+    probs <- c(alpha_ci, 1 - alpha_ci)
+    for (i in 1:nobs) {
+        q <- data$qw[i] - (lambda[i] * data$qj[i])
+        sim <- alpha + beta * log(q) + gamma * log(data$p[i])
+        c_sim[i,] <- c(mean(sim), quantile(sim, probs = probs))
+    }
+    c_sim <- as.data.frame(exp(c_sim))
+    names(c_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
+    c_sim <- cbind(c_sim, cost_per_kw_true = exp(data$logc)) %>% 
+        mutate(year = seq(year_beg, year_beg + nobs - 1))
+    return(c_sim)
+}
+
+# predict_cost <- function(
+#   model, 
+#   data,
+#   cost_beg,
+#   cap_beg,
+#   si_beg,
+#   year_beg = NULL,
+#   ci = 0.95) {
+#     if (is.null(year_beg)) {
+#         year_beg <-min(data$year)
+#     }
+#     data <- filter(data, year >= year_beg)
+#     # Create multivariate normal draws of the model parameters to 
+#     # incorporate the full covariance matrix of the model
+#     draws <- data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
+#     colnames(draws) <- c('int', 'b', 'c')
+#     result <- list()
+#     # Compute cost_per_kw with uncertainty using parameter draws
+#     for (i in seq(nrow(data))) {
+#         row <- data[i,]
+#         result[[i]] <- ci(
+#             cost_beg * 
+#             (row$cumCapacityKw / cap_beg)^draws$b * 
+#             (row$price_si / si_beg)^draws$c)
+#     }
+#     # Combine results
+#     result <- do.call(rbind, result) %>% 
+#         as.data.frame() %>% 
+#         mutate(year = data$year) %>% 
+#         select(
+#             year,
+#             cost_per_kw = mean,
+#             cost_per_kw_lb = low,
+#             cost_per_kw_ub = high)
+#     return(result)
+# }
 
 makeGlobalCapData <- function(
     data_nation, data_world, year_beg = NULL, lambda = 0.1

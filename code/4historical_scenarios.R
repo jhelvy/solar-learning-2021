@@ -6,6 +6,18 @@ data <- readRDS(dir$data_formatted)
 
 # Load estimated LR models
 lr <- readRDS(dir$lr_models)
+lr_stan <- readRDS(dir$lr_models_stan)
+
+# Get baseline lambda values from model
+params_us <- extract(lr_stan$fit_us)
+params_china <- extract(lr_stan$fit_china)
+params_germany <- extract(lr_stan$fit_germany)
+lambda_us <- mean(params_us$lambda)
+lambda_china <- mean(params_china$lambda)
+lambda_germany <- mean(params_germany$lambda)
+data_us <- lr_stan$data_us
+data_china <- lr_stan$data_china
+data_germany <- lr_stan$data_germany
 
 # Set beginning values
 us_beg <- lr$data_us %>%
@@ -29,155 +41,51 @@ cost_historical_true <- rbind(
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
-# Define country capacity data
-cap_data_us <- data$us %>%
-    filter(year >= year_model_us_min, year <= year_model_us_max)
-cap_data_china <- data$china %>%
-    filter(component == "Module") %>%
-    filter(year <= year_model_china_max) %>%
-    select(year, cumCapacityKw)
-cap_data_germany <- data$germany %>%
-    select(year, cumCapacityKw) %>%
-    filter(year <= year_model_germany_max)
-
-# Create GLOBAL learning capacity data for each country
-data_global_us <- makeGlobalCapData(
-    data_nation = cap_data_us,
-    data_world  = data$world,
-    year_beg    = year_model_us_min,
-    lambda      = lambda_us)
-data_global_china <- makeGlobalCapData(
-    data_nation = cap_data_china,
-    data_world  = data$world,
-    year_beg    = year_model_china_min,
-    lambda      = lambda_china)
-data_global_germany <- makeGlobalCapData(
-    data_nation = cap_data_germany,
-    data_world  = data$world,
-    year_beg    = year_model_germany_min,
-    lambda      = lambda_germany)
-
-# Create NATIONAL learning capacity data for each country
-data_national_us <- makeNationalCapData(
-    data_nation = cap_data_us,
-    data_world  = data$world,
-    year_beg    = year_model_us_min,
-    delay_years = delay, 
-    lambda_start = lambda_us)
-data_national_china <- makeNationalCapData(
-    data_nation = cap_data_china,
-    data_world  = data$world,
-    year_beg    = year_model_china_min,
-    delay_years = delay, 
-    lambda_start = lambda_china)
-data_national_germany <- makeNationalCapData(
-    data_nation = cap_data_germany,
-    data_world  = data$world,
-    year_beg    = year_model_germany_min,
-    delay_years = delay, 
-    lambda_start = lambda_germany)
-
-# # Preview capacity results
-# rbind(
-#     data_global_us %>%
-#         mutate(scenario = "modeled_global", country = "U.S."),
-#     data_national_us %>%
-#         mutate(scenario = "modeled_national", country = "U.S."),
-#     data_global_china %>%
-#         mutate(scenario = "modeled_global", country = "China"),
-#     data_national_china %>%
-#         mutate(scenario = "modeled_national", country = "China"),
-#     data_global_germany %>%
-#         mutate(scenario = "modeled_global", country = "Germany"),
-#     data_national_germany %>%
-#         mutate(scenario = "modeled_national", country = "Germany")
-#     ) %>%
-#     select(year, cumCapacityKw, scenario, country) %>%
-#     rbind(
-#         cap_data_us %>%
-#             select(-costPerKw) %>%
-#             mutate(scenario = "historical_national", country = "U.S."),
-#         cap_data_china %>%
-#             mutate(scenario = "historical_national", country = "China"),
-#         cap_data_germany %>%
-#             mutate(scenario = "historical_national", country = "Germany")
-#     ) %>%
-#     select(year, cumCapacityKw, scenario, country) %>%
-#     ggplot() +
-#     geom_line(
-#         aes(
-#             x = year,
-#             y = cumCapacityKw,
-#             group = scenario,
-#             color = scenario)) +
-#     facet_wrap(vars(country)) +
-#     geom_line(
-#         data = data$world %>%
-#             mutate(scenario = "historical_world"),
-#         aes(
-#             x = year,
-#             y = cumCapacityKw,
-#             group = scenario,
-#             color = scenario)) +
-#     theme_bw()
-#
-# ggsave("cum_capcity_historical.png", width = 15, height = 5)
+ci_all <- 0.95
 
 # Compute GLOBAL cost scenarios by country
 cost_global_us <- predict_cost(
-    model    = lr$model_us,
-    data     = data_global_us,
-    cost_beg = us_beg$costPerKw,
-    cap_beg  = us_beg$cumCapacityKw,
-    si_beg   = us_beg$price_si,
+    params   = params_us,
+    data     = data_us,
     year_beg = year_model_us_min,
-    ci       = 0.95)
+    ci       = ci_all)
 
 cost_global_china <- predict_cost(
-    model    = lr$model_china,
-    data     = data_global_china,
-    cost_beg = china_beg$costPerKw,
-    cap_beg  = china_beg$cumCapacityKw,
-    si_beg   = china_beg$price_si,
+    params   = params_china,
+    data     = data_china,
     year_beg = year_model_china_min,
-    ci       = 0.95)
+    ci       = ci_all)
 
 cost_global_germany <- predict_cost(
-    model    = lr$model_germany,
-    data     = data_global_germany,
-    cost_beg = germany_beg$costPerKw,
-    cap_beg  = germany_beg$cumCapacityKw,
-    si_beg   = germany_beg$price_si,
+    params   = params_germany,
+    data     = data_germany,
     year_beg = year_model_germany_min,
-    ci       = 0.95)
+    ci       = ci_all)
 
 # Compute NATIONAL cost scenarios by country
-cost_national_us <- predict_cost(
-    model    = lr$model_us,
-    data     = data_national_us,
-    cost_beg = us_beg$costPerKw,
-    cap_beg  = us_beg$cumCapacityKw,
-    si_beg   = us_beg$price_si,
+cost_national_us <- predict_cost_national(
+    params   = params_us,
+    data     = data_us,
     year_beg = year_model_us_min,
-    ci       = 0.95)
+    ci       = ci_all, 
+    delay_years = 10, 
+    lambda_end = 0.9)
 
-cost_national_china <- predict_cost(
-    model    = lr$model_china,
-    data     = data_national_china,
-    cost_beg = china_beg$costPerKw,
-    cap_beg  = china_beg$cumCapacityKw,
-    si_beg   = china_beg$price_si,
+cost_national_china <- predict_cost_national(
+    params   = params_china,
+    data     = data_china,
     year_beg = year_model_china_min,
-    ci       = 0.95)
+    ci       = ci_all, 
+    delay_years = 10, 
+    lambda_end = 0.9)
 
-cost_national_germany <- predict_cost(
-    model    = lr$model_germany,
-    data     = data_national_germany,
-    cost_beg = germany_beg$costPerKw,
-    cap_beg  = germany_beg$cumCapacityKw,
-    si_beg   = germany_beg$price_si,
+cost_national_germany <- predict_cost_national(
+    params   = params_germany,
+    data     = data_germany,
     year_beg = year_model_germany_min,
-    ci       = 0.95)
+    ci       = ci_all, 
+    delay_years = 10, 
+    lambda_end = 0.9)
 
 # Combine Cost Scenarios ----
 
@@ -211,7 +119,7 @@ cost <- rbind(
 #             lr$data_china %>% mutate(country = "China"),
 #             lr$data_germany %>% mutate(country = "Germany")),
 #         aes(x = year, y = costPerKw), linetype = 2) +
-#     theme_bw() + 
+#     theme_bw() +
 #     scale_y_log10()
 # 
 # ggsave("cost_historical.png", width = 15, height = 5)
