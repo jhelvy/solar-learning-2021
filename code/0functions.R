@@ -1,3 +1,12 @@
+get_ci <- function(x, ci = 0.95) {
+  alpha <- (1 - ci)/2
+  df <- data.frame(
+    mean  = mean(x),
+    lower = stats::quantile(x, alpha),
+    upper = stats::quantile(x, 1 - alpha)
+  )
+  return(df)
+}
 
 make_stan_data <- function(df) {
     return(list(
@@ -94,85 +103,72 @@ getFutureCapacities <- function(
 #   b = lnCap_estimate = learning coefficient on capacity
 #   c = lnSi_estimate = coefficient on silicon price
 
-run_model <- function(data) {
-    model <- lm(
-        formula = log(costPerKw) ~ log(cumCapacityKw) + log(price_si),
-        data = data)
-    return(model)
-}
+# run_model <- function(data) {
+#     model <- lm(
+#         formula = log(costPerKw) ~ log(cumCapacityKw) + log(price_si),
+#         data = data)
+#     return(model)
+# }
+# 
+# find_lambda <- function(
+#   data_nation, data_world, year_beg, lr_model, beg
+# ) {
+#   lambda <- seq(0, 1, 0.01)
+#   error_us <- list()
+#   for (i in 1:length(lambda)) {
+#     data_global <- makeGlobalCapData(
+#       data_nation = data_nation,
+#       data_world  = data_world,
+#       year_beg    = year_beg,
+#       lambda      = lambda[i])
+#     cost_global <- predict_cost(
+#       model    = lr_model,
+#       data     = data_global,
+#       cost_beg = beg$costPerKw,
+#       cap_beg  = beg$cumCapacityKw,
+#       si_beg   = beg$price_si,
+#       year_beg = year_beg,
+#       ci       = 0.95)
+#     error_us[[i]] <- cost_global %>% 
+#       select(year, cost_per_kw) %>% 
+#       left_join(
+#         data_nation %>% 
+#           select(year, cost_per_kw_true = costPerKw), 
+#         by = "year"
+#       ) %>% 
+#       mutate(err_sq = log(abs(cost_per_kw - cost_per_kw_true))^2) %>% 
+#       filter(err_sq != Inf)
+#   }
+#   result <- data.frame(
+#     sse = unlist(lapply(error_us, function(x) sum(x$err_sq))), 
+#     lambda = lambda) %>% 
+#     arrange(sse)
+#   return(result)
+# }
 
-find_lambda <- function(
-  data_nation, data_world, year_beg, lr_model, beg
-) {
-  lambda <- seq(0, 1, 0.01)
-  error_us <- list()
-  for (i in 1:length(lambda)) {
-    data_global <- makeGlobalCapData(
-      data_nation = data_nation,
-      data_world  = data_world,
-      year_beg    = year_beg,
-      lambda      = lambda[i])
-    cost_global <- predict_cost(
-      model    = lr_model,
-      data     = data_global,
-      cost_beg = beg$costPerKw,
-      cap_beg  = beg$cumCapacityKw,
-      si_beg   = beg$price_si,
-      year_beg = year_beg,
-      ci       = 0.95)
-    error_us[[i]] <- cost_global %>% 
-      select(year, cost_per_kw) %>% 
-      left_join(
-        data_nation %>% 
-          select(year, cost_per_kw_true = costPerKw), 
-        by = "year"
-      ) %>% 
-      mutate(err_sq = log(abs(cost_per_kw - cost_per_kw_true))^2) %>% 
-      filter(err_sq != Inf)
-  }
-  result <- data.frame(
-    sse = unlist(lapply(error_us, function(x) sum(x$err_sq))), 
-    lambda = lambda) %>% 
-    arrange(sse)
-  return(result)
-}
-
-predict_cost <- function(
-    params, 
-    data, 
-    year_beg = NULL, 
-    ci = 0.95
-) {
+get_csim_draws <- function(params, data, year_beg = NULL) {
     nobs <- data$N
     if (is.null(year_beg)) {
         year_beg <-min(data$year)
-    } 
+    }
     # Extract par vectors
     alpha <- params$alpha
     beta <- params$beta
     gamma <- params$gamma
     lambda <- params$lambda
     # Compute c_sim 
-    c_sim <- matrix(0, ncol = 3, nrow = nobs)
-    alpha_ci <- (1 - ci) / 2
-    probs <- c(alpha_ci, 1 - alpha_ci)
+    c_sim <- list()
     for (i in 1:nobs) {
         q <- data$qw[i] - (lambda * data$qj[i])
-        sim <- alpha + beta * log(q) + gamma * log(data$p[i])
-        c_sim[i,] <- c(mean(sim), quantile(sim, probs = probs))
+        c_sim[[i]] <- alpha + beta * log(q) + gamma * log(data$p[i])
     }
-    c_sim <- as.data.frame(exp(c_sim))
-    names(c_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
-    c_sim <- cbind(c_sim, cost_per_kw_true = exp(data$logc)) %>% 
-        mutate(year = seq(year_beg, year_beg + nobs - 1))
     return(c_sim)
 }
 
-predict_cost_national <- function(
+get_csim_draws_national <- function(
     params, 
     data, 
     year_beg = NULL, 
-    ci = 0.95, 
     delay_years = 10, 
     lambda_end = 0.9
 ) {
@@ -189,13 +185,32 @@ predict_cost_national <- function(
     beta <- params$beta
     gamma <- params$gamma
     # Compute c_sim 
-    c_sim <- matrix(0, ncol = 3, nrow = nobs)
-    alpha_ci <- (1 - ci) / 2
-    probs <- c(alpha_ci, 1 - alpha_ci)
+    c_sim <- list()
     for (i in 1:nobs) {
         q <- data$qw[i] - (lambda[i] * data$qj[i])
-        sim <- alpha + beta * log(q) + gamma * log(data$p[i])
-        c_sim[i,] <- c(mean(sim), quantile(sim, probs = probs))
+        c_sim[[i]] <- alpha + beta * log(q) + gamma * log(data$p[i])
+    }
+    return(c_sim)
+}
+
+predict_cost <- function(
+    params, 
+    data, 
+    year_beg = NULL, 
+    ci = 0.95, 
+    delay_years = NULL, 
+    lambda_end = NULL
+) {
+    nobs <- data$N
+    if (is.null(delay_years)) {
+        c_sim_draws <- get_csim_draws(params, data, year_beg)
+    } else {
+        c_sim_draws <- get_csim_draws_national(
+            params, data, year_beg, delay_years, lambda_end)
+    }
+    c_sim <- matrix(0, ncol = 3, nrow = nobs)
+    for (i in 1:nobs) {
+        c_sim[i,] <- as.matrix(get_ci(c_sim_draws[[i]], ci))
     }
     c_sim <- as.data.frame(exp(c_sim))
     names(c_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
@@ -204,6 +219,30 @@ predict_cost_national <- function(
     return(c_sim)
 }
 
+compute_cost_diff <- function(
+    params, 
+    data, 
+    year_beg = NULL, 
+    ci = 0.95,
+    delay_years = NULL, 
+    lambda_end = NULL
+) {
+    nobs <- data$N
+    c_sim_draws_global <- get_csim_draws(params, data, year_beg)
+    c_sim_draws_national <- get_csim_draws_national(
+            params, data, year_beg, delay_years, lambda_end)
+    cost_diff <- matrix(0, ncol = 3, nrow = nobs)
+    alpha_ci <- (1 - ci) / 2
+    probs <- c(alpha_ci, 1 - alpha_ci)
+    for (i in 1:nobs) {
+        diff <- exp(c_sim_draws_national[[i]]) - exp(c_sim_draws_global[[i]])
+        cost_diff[i,] <- as.matrix(get_ci(diff, ci))
+    }
+    cost_diff <- as.data.frame(cost_diff)
+    names(cost_diff) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
+    return(cost_diff)
+}
+    
 # predict_cost <- function(
 #   model, 
 #   data,
@@ -495,3 +534,4 @@ partition_div <- function(fit) {
 
   return(list(div_params, nondiv_params))
 }
+

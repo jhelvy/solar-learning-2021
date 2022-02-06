@@ -63,7 +63,7 @@ cost_global_germany <- predict_cost(
     ci       = ci_all)
 
 # Compute NATIONAL cost scenarios by country
-cost_national_us <- predict_cost_national(
+cost_national_us <- predict_cost(
     params   = params_us,
     data     = data_us,
     year_beg = year_model_us_min,
@@ -71,7 +71,7 @@ cost_national_us <- predict_cost_national(
     delay_years = 10, 
     lambda_end = 0.9)
 
-cost_national_china <- predict_cost_national(
+cost_national_china <- predict_cost(
     params   = params_china,
     data     = data_china,
     year_beg = year_model_china_min,
@@ -79,7 +79,7 @@ cost_national_china <- predict_cost_national(
     delay_years = 10, 
     lambda_end = 0.9)
 
-cost_national_germany <- predict_cost_national(
+cost_national_germany <- predict_cost(
     params   = params_germany,
     data     = data_germany,
     year_beg = year_model_germany_min,
@@ -126,6 +126,32 @@ cost <- rbind(
 
 # Calculate savings between national and global learning scenarios
 
+# First, compute the cost difference CIs for each country
+
+cost_diff_us <- compute_cost_diff(
+    params   = params_us,
+    data     = data_us,
+    year_beg = year_model_us_min,
+    ci       = ci_all, 
+    delay_years = 10, 
+    lambda_end = 0.9)
+
+cost_diff_china <- compute_cost_diff(
+    params   = params_china,
+    data     = data_china,
+    year_beg = year_model_china_min,
+    ci       = ci_all, 
+    delay_years = 10, 
+    lambda_end = 0.9)
+
+cost_diff_germany <- compute_cost_diff(
+    params   = params_germany,
+    data     = data_germany,
+    year_beg = year_model_germany_min,
+    ci       = ci_all, 
+    delay_years = 10, 
+    lambda_end = 0.9)
+
 # Compute the additional capacity in each country in each year
 cap_additions <- rbind(
     cap_data_us %>% 
@@ -139,33 +165,6 @@ cap_additions <- rbind(
     mutate(annCapKw_new = cumCapacityKw - lag(cumCapacityKw, 1)) %>% 
     select(year, country, annCapKw_new) %>% 
     filter(year >= year_savings_min, year <= year_savings_max)
-
-# Compute price differences with uncertainty
-cost_stats <- cost %>% 
-    select(-cost_per_kw_lb, -cost_per_kw_ub) %>% 
-    pivot_wider(names_from = learning, values_from = cost_per_kw) %>% 
-    rename(global_mean = global, national_mean = national) %>% 
-    left_join(
-        cost %>% 
-            mutate(
-                sd1 = (cost_per_kw_ub - cost_per_kw) / 2, 
-                sd2 = (cost_per_kw - cost_per_kw_lb) / 2, 
-                sd  = (sd1 + sd2) / 2) %>% 
-            select(year, country, sd, learning) %>% 
-            pivot_wider(names_from = learning, values_from = sd) %>% 
-            rename(global_sd = global, national_sd = national),
-        by = c("year", "country")) %>% 
-    filter(year >= year_savings_min, year <= year_savings_max)
-
-price_diff <- list()
-for (i in 1:nrow(cost_stats)) {
-    stats <- cost_stats[i,]
-    national <- rnorm(10^4, stats$national_mean, stats$national_sd)
-    global <- rnorm(10^4, stats$global_mean, stats$global_sd)
-    price_diff[[i]] <- ci(national - global)
-}
-price_diff <- as.data.frame(do.call(rbind, price_diff))
-cost_stats <- cbind(cost_stats, price_diff)
 
 # Compute savings
 savings <- cost_stats %>% 
