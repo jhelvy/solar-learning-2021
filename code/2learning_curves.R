@@ -4,154 +4,118 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
-# Define range of lambda values 
-lambda <- seq(0, 1, 0.01)
+# Setup data
+df_us <- formatCapData(
+    data_nation = data$us,
+    data_world  = data$world, 
+    year_beg    = year_model_us_min, 
+    year_max    = year_model_us_max
+) 
 
-# Define country capacity data
+df_china <- formatCapData(
+    data_nation = data$china %>% filter(component == "Module"),
+    data_world  = data$world, 
+    year_beg    = year_model_china_min, 
+    year_max    = year_model_china_max
+) 
 
-cap_data_china <- data$china %>%
-    filter(component == "Module") %>%
-    filter(year <= year_model_china_max) %>%
-    select(year, cumCapacityKw)
-cap_data_germany <- data$germany %>%
-    select(year, cumCapacityKw) %>%
-    filter(year <= year_model_germany_max)
+df_germany <- formatCapData(
+    data_nation = data$germany,
+    data_world  = data$world, 
+    year_beg    = year_model_germany_min, 
+    year_max    = year_model_germany_max
+) 
 
-# Notes -----------------------------------------------------------------------
+# Setup data for stan
+data_us <- make_stan_data(df_us)
+data_china <- make_stan_data(df_china)
+data_germany <- make_stan_data(df_germany)
 
-# Basic learning curve model: Y_x = A*x^b
-# where
-#   Y = the cost of unit x (dependent variable)
-#   A = the theoretical cost of unit 1 (a.k.a. T1)
-#   x = the unit number (independent variable)
-#   b = a constant representing the slope (slope = 2^b)
+# Fit the data for each country
+fit_us <- stan(
+    file = here::here('code', 'lrmodel.stan'),
+    data = data_us,
+    iter = 4000,
+    control = list(max_treedepth = 10, adapt_delta = 0.9)
+)
 
-# Log transformation: ln(Y) = ln(A) + b*ln(x)
-#           Re-write: Y'    = int   + b*x'
+fit_china <- stan(
+    file = here::here('code', 'lrmodel.stan'),
+    data = data_china,
+    iter = 4000,
+    control = list(max_treedepth = 10, adapt_delta = 0.9)
+)
 
-# To convert log-space estimated coefficients back to original model:
-# A = exp(int)
-# b = b
-# Learning curve slope = 2^b
-# Learning Rate        = 1 - slope
+fit_germany <- stan(
+    file = here::here('code', 'lrmodel.stan'),
+    data = data_germany,
+    iter = 4000,
+    control = list(max_treedepth = 11, adapt_delta = 0.90)
+)
 
-# Approximation of the cumulative total cost of producing N units:
-# C = (A*N^(b + 1)) / (b + 1)
+# Set country to view results
+fit <- fit_us
+data <- data_us
 
-# Two factor learning curve model: Y = A * x^b * p^c
-# where
-#   Y = the cost of unit x at silicon price p (dependent variable)
-#   A = the theoretical cost of unit 1 (a.k.a. T1)
-#   x = the unit number (independent variable)
-#   p = silicon price
-#   b = lnCap_estimate = learning coefficient on capacity
-#   c = lnSi_estimate = coefficient on silicon price
+fit <- fit_china
+data <- data_china
 
-# U.S. ----------------------------------------------------------------------
-# World capacity data: IRENA
-# US cost data: LBNL
+fit <- fit_germany
+data <- data_germany
 
-models_us <- list()
-for (i in 1:length(lambda)) {
-    models_us[[i]] <- 
-        # Prep data
-        makeGlobalCapData(
-        data_nation = data$us,
-        data_world  = data$world,
-        year_beg    = year_model_us_min,
-        lambda      = lambda[i]) %>% 
-        select(year, cumCapacityKw, price_si) %>% 
-        left_join(select(data$us, year, costPerKw), by = "year") %>% 
-        filter(year <= year_model_us_max) %>% 
-        run_model() # Run model
+# Diagnostics
+check_all_diagnostics(fit)
+
+# Extract the best fit parameters
+params <- extract(fit)
+alpha <- mean(params$alpha)
+beta <- mean(params$beta)
+gamma <- mean(params$gamma)
+lambda <- mean(params$lambda)
+
+# Learning rate & lambda
+round(1 - (2^ci(params$beta, alpha = 0.05)), 2)
+round(ci(params$lambda, alpha = 0.05), 2)
+
+# Visualize
+nobs <- data$N
+y_sim <- matrix(0, ncol = 3, nrow = nobs)
+for (i in 1:nobs) {
+    sim <- params$alpha + params$beta * log(data$qw[i]) + params$gamma * log(data$p[i])
+   y_sim[i,] <- c(mean(sim), quantile(sim, probs = c(0.05, 0.95)))
 }
+y_sim <- as.data.frame(exp(y_sim))
+names(y_sim) <- c("mean", "lower", "upper")
+y_sim <- cbind(y_sim, cumCapKw_world = data$qw, costPerKw = exp(data$logc))
+y_sim %>% 
+    ggplot() + 
+    geom_line(
+        mapping = aes(x = cumCapKw_world, y = mean), 
+        color = "red"
+    ) +
+    geom_ribbon(
+        mapping = aes(x = cumCapKw_world, ymin = lower, ymax = upper), 
+        fill = "red", 
+        alpha = 0.2
+    ) +
+    geom_point(aes(x = cumCapKw_world, y = costPerKw)) + 
+    scale_x_log10() + 
+    scale_y_log10() + 
+    theme_bw() + 
+    labs(
+        x = "log(Cumulative Global Installed Capacity, kW)",
+        y = "log(Cost per kW, $USD)"
+    )
 
-fit_vals <- unlist(lapply(models_us, function(x) summary(x)$r.squared))
-fit_vals <- unlist(lapply(models_us, function(x) summary(x)$adj.r.squared))
-index_best <- which(fit_vals == max(fit_vals))
+ ggsave("fit_germany.png", width = 6, height = 4)
 
-# Best model: 
-model_us <- models_us[[index_best]]
-summary(model_us)
-
-# Learning rate
-1 - 2^coef(model_us)["log(cumCapacityKw)"]
-
-# Lambda:
-lambda[index_best]
-
-# China ----------------------------------------------------------------------
-
-china_data <- filter(data$china, component == 'Module')
-models_china <- list()
-for (i in 1:length(lambda)) {
-    models_china[[i]] <- 
-        # Prep data
-        makeGlobalCapData(
-        data_nation = china_data,
-        data_world  = data$world,
-        year_beg    = year_model_china_min,
-        lambda      = lambda[i]) %>% 
-        select(year, cumCapacityKw, price_si) %>% 
-        left_join(select(china_data, year, costPerKw), by = "year") %>% 
-        filter(year <= year_model_china_max) %>% 
-        run_model() # Run model
-}
-
-fit_vals <- unlist(lapply(models_china, function(x) summary(x)$r.squared))
-fit_vals <- unlist(lapply(models_china, function(x) summary(x)$adj.r.squared))
-index_best <- which(fit_vals == max(fit_vals))
-
-# Best model: 
-model_china <- models_china[[index_best]]
-summary(model_china)
-
-# Learning rate
-1 - 2^coef(model_china)["log(cumCapacityKw)"]
-
-# Lambda:
-lambda[index_best]
-
-
-# Germany ---------------------------------------------------------------------
-
-models_germany <- list()
-for (i in 1:length(lambda)) {
-    models_germany[[i]] <- 
-        # Prep data
-        makeGlobalCapData(
-        data_nation = data$germany,
-        data_world  = data$world,
-        year_beg    = year_model_germany_min,
-        lambda      = lambda[i]) %>% 
-        select(year, cumCapacityKw, price_si) %>% 
-        left_join(select(data$germany, year, costPerKw), by = "year") %>% 
-        filter(year <= year_model_germany_max) %>% 
-        run_model() # Run model
-}
-
-fit_vals <- unlist(lapply(models_germany, function(x) summary(x)$r.squared))
-fit_vals <- unlist(lapply(models_germany, function(x) summary(x)$adj.r.squared))
-index_best <- which(fit_vals == max(fit_vals))
-
-# Best model: 
-model_germany <- models_germany[[index_best]]
-summary(model_germany)
-
-# Learning rate
-1 - 2^coef(model_germany)["log(cumCapacityKw)"]
-
-# Lambda:
-lambda[index_best]
-
-# Output ----------------------------------------------------------------------
-
+# Save fits 
 saveRDS(list(
-    model_us      = model_us,
-    data_us       = data_us,
-    model_china   = model_china,
-    data_china    = data_china,
-    model_germany = model_germany,
-    data_germany  = data_germany),
-    dir$lr_models
+    fit_us = fit_us,
+    data_us = data_us,
+    fit_china = fit_china,
+    data_china = data_china,
+    fit_germany = fit_germany,
+    data_germany = data_germany),
+    dir$lr_models_stan
 )

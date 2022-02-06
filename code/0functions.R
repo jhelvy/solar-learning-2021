@@ -1,24 +1,55 @@
-get_ci <- function(x, ci = 0.95) {
-  alpha <- (1 - ci)/2
-  df <- data.frame(
-    mean  = mean(x),
-    lower = stats::quantile(x, alpha),
-    upper = stats::quantile(x, 1 - alpha)
-  )
-  return(df)
+# NOTES
+#
+# Basic learning curve model: Y_x = A*x^b
+# where
+#   Y = the cost of unit x (dependent variable)
+#   A = the theoretical cost of unit 1 (a.k.a. T1)
+#   x = the unit number (independent variable)
+#   b = a constant representing the slope (slope = 2^b)
+#
+# Log transformation: ln(Y) = ln(A) + b*ln(x)
+#           Re-write: Y'    = int   + b*x'
+#
+# To convert log-space estimated coefficients back to original model:
+# A = exp(int)
+# b = b
+# Learning curve slope = 2^b
+# Learning Rate        = 1 - slope
+#
+# Approximation of the cumulative total cost of producing N units:
+# C = (A*N^(b + 1)) / (b + 1)
+#
+# Two factor learning curve model: Y = A * x^b * p^c
+# where
+#   Y = the cost of unit x at silicon price p (dependent variable)
+#   A = the theoretical cost of unit 1 (a.k.a. T1)
+#   x = the unit number (independent variable)
+#   p = silicon price
+#   b = lnCap_estimate = learning coefficient on capacity
+#   c = lnSi_estimate = coefficient on silicon price
+
+# Data formatting ----
+
+getFutureCapRate <- function(target_capacity, cap_begin, num_years) {
+  # Percent annual growth in cumulative capacity
+  return(((target_capacity / cap_begin)^(1 / (num_years))) - 1)
 }
 
-make_stan_data <- function(df) {
-    return(list(
-    	N    = nrow(df),
-    	qw   = df$cumCapKw_world,
-    	qj   = df$cumCapKw_other,
-    	p    = df$price_si,
-    	logc = log(df$costPerKw)
-    ))
+getFutureCapacities <- function(
+    rate, cap_begin, num_years, year_min_proj, price_si
+) {
+  cumCapacityKw <- rep(cap_begin, num_years + 1)
+  for (i in 2:(num_years + 1)) {
+      cumCapacityKw[i] <- cumCapacityKw[i-1]*(1 + rate)
+  }
+  # Add capacity to reach target
+  result <- data.frame(
+      year = year_min_proj - 1 + seq(num_years + 1),
+      cumCapacityKw = cumCapacityKw) %>%
+      mutate(price_si = price_si)
+  return(result)
 }
 
-# For formatting data for LR models
 formatCapData <- function(data_nation, data_world, year_beg, year_max) {
     cap_data_nation <- getAnnCapData(data_nation, year_beg)
     cap_data_world <- getAnnCapData(data_world, year_beg)
@@ -53,98 +84,17 @@ getAnnCapData <- function(df, year_beg) {
     return(result)
 }
 
-getFutureCapRate <- function(target_capacity, cap_begin, num_years) {
-  # Percent annual growth in cumulative capacity
-  return(((target_capacity / cap_begin)^(1 / (num_years))) - 1)
+make_stan_data <- function(df) {
+    return(list(
+        N    = nrow(df),
+        qw   = df$cumCapKw_world,
+        qj   = df$cumCapKw_other,
+        p    = df$price_si,
+        logc = log(df$costPerKw)
+    ))
 }
 
-getFutureCapacities <- function(
-    rate, cap_begin, num_years, year_min_proj, price_si
-) {
-  cumCapacityKw <- rep(cap_begin, num_years + 1)
-  for (i in 2:(num_years + 1)) {
-      cumCapacityKw[i] <- cumCapacityKw[i-1]*(1 + rate)
-  }
-  # Add capacity to reach target
-  result <- data.frame(
-      year = year_min_proj - 1 + seq(num_years + 1),
-      cumCapacityKw = cumCapacityKw) %>% 
-      mutate(price_si = price_si)
-  return(result)
-}
-
-# NOTES
-#
-# Basic learning curve model: Y_x = A*x^b
-# where
-#   Y = the cost of unit x (dependent variable)
-#   A = the theoretical cost of unit 1 (a.k.a. T1)
-#   x = the unit number (independent variable)
-#   b = a constant representing the slope (slope = 2^b)
-#
-# Log transformation: ln(Y) = ln(A) + b*ln(x)
-#           Re-write: Y'    = int   + b*x'
-#
-# To convert log-space estimated coefficients back to original model:
-# A = exp(int)
-# b = b
-# Learning curve slope = 2^b
-# Learning Rate        = 1 - slope
-#
-# Approximation of the cumulative total cost of producing N units:
-# C = (A*N^(b + 1)) / (b + 1)
-#
-# Two factor learning curve model: Y = A * x^b * p^c
-# where
-#   Y = the cost of unit x at silicon price p (dependent variable)
-#   A = the theoretical cost of unit 1 (a.k.a. T1)
-#   x = the unit number (independent variable)
-#   p = silicon price
-#   b = lnCap_estimate = learning coefficient on capacity
-#   c = lnSi_estimate = coefficient on silicon price
-
-# run_model <- function(data) {
-#     model <- lm(
-#         formula = log(costPerKw) ~ log(cumCapacityKw) + log(price_si),
-#         data = data)
-#     return(model)
-# }
-# 
-# find_lambda <- function(
-#   data_nation, data_world, year_beg, lr_model, beg
-# ) {
-#   lambda <- seq(0, 1, 0.01)
-#   error_us <- list()
-#   for (i in 1:length(lambda)) {
-#     data_global <- makeGlobalCapData(
-#       data_nation = data_nation,
-#       data_world  = data_world,
-#       year_beg    = year_beg,
-#       lambda      = lambda[i])
-#     cost_global <- predict_cost(
-#       model    = lr_model,
-#       data     = data_global,
-#       cost_beg = beg$costPerKw,
-#       cap_beg  = beg$cumCapacityKw,
-#       si_beg   = beg$price_si,
-#       year_beg = year_beg,
-#       ci       = 0.95)
-#     error_us[[i]] <- cost_global %>% 
-#       select(year, cost_per_kw) %>% 
-#       left_join(
-#         data_nation %>% 
-#           select(year, cost_per_kw_true = costPerKw), 
-#         by = "year"
-#       ) %>% 
-#       mutate(err_sq = log(abs(cost_per_kw - cost_per_kw_true))^2) %>% 
-#       filter(err_sq != Inf)
-#   }
-#   result <- data.frame(
-#     sse = unlist(lapply(error_us, function(x) sum(x$err_sq))), 
-#     lambda = lambda) %>% 
-#     arrange(sse)
-#   return(result)
-# }
+# Scenario analyses ----
 
 get_csim_draws <- function(params, data, year_beg = NULL) {
     nobs <- data$N
@@ -242,43 +192,14 @@ compute_cost_diff <- function(
     names(cost_diff) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
     return(cost_diff)
 }
-    
-# predict_cost <- function(
-#   model, 
-#   data,
-#   cost_beg,
-#   cap_beg,
-#   si_beg,
-#   year_beg = NULL,
-#   ci = 0.95) {
-#     if (is.null(year_beg)) {
-#         year_beg <-min(data$year)
-#     }
-#     data <- filter(data, year >= year_beg)
-#     # Create multivariate normal draws of the model parameters to 
-#     # incorporate the full covariance matrix of the model
-#     draws <- data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
-#     colnames(draws) <- c('int', 'b', 'c')
-#     result <- list()
-#     # Compute cost_per_kw with uncertainty using parameter draws
-#     for (i in seq(nrow(data))) {
-#         row <- data[i,]
-#         result[[i]] <- ci(
-#             cost_beg * 
-#             (row$cumCapacityKw / cap_beg)^draws$b * 
-#             (row$price_si / si_beg)^draws$c)
-#     }
-#     # Combine results
-#     result <- do.call(rbind, result) %>% 
-#         as.data.frame() %>% 
-#         mutate(year = data$year) %>% 
-#         select(
-#             year,
-#             cost_per_kw = mean,
-#             cost_per_kw_lb = low,
-#             cost_per_kw_ub = high)
-#     return(result)
-# }
+
+
+
+
+
+
+
+
 
 makeGlobalCapData <- function(
     data_nation, data_world, year_beg = NULL, lambda = 0.1
@@ -365,14 +286,22 @@ getStartingCost <- function(df, year_min_proj) {
 }
 
 
+# General utility ----
+
+get_ci <- function(x, ci = 0.95) {
+  alpha <- (1 - ci)/2
+  df <- data.frame(
+    mean  = mean(x),
+    lower = stats::quantile(x, alpha),
+    upper = stats::quantile(x, 1 - alpha)
+  )
+  return(df)
+}
 
 
 
 
-
-
-
-# Stan utility functions
+# Stan utility ----
 
 # Check transitions that ended with a divergence
 check_div <- function(fit, quiet=FALSE) {
