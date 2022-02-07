@@ -20,9 +20,9 @@ data_germany <- lr_lambda$data_germany
 
 # Merge together true historical cost per kW
 cost_historical_true <- rbind(
-    data$cap_data_us %>% mutate(country = "U.S."),
-    data$cap_data_china %>% mutate(country = "China"),
-    data$cap_data_germany %>% mutate(country = "Germany"))
+    data$hist_us %>% mutate(country = "U.S."),
+    data$hist_china %>% mutate(country = "China"),
+    data$hist_germany %>% mutate(country = "Germany"))
 
 # Learning rates based on local cumulative capacity and local installed costs
 # Note: Since world data does not break down installation type

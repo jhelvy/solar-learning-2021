@@ -5,9 +5,9 @@ source(here::here('code', '0setup.R'))
 data <- readRDS(dir$data_formatted)
 
 # Setup data for stan
-data_us <- make_stan_data(data$cap_data_us)
-data_china <- make_stan_data(data$cap_data_china)
-data_germany <- make_stan_data(data$cap_data_germany)
+data_us <- make_stan_data(data$hist_us)
+data_china <- make_stan_data(data$hist_china)
+data_germany <- make_stan_data(data$hist_germany)
 
 # Fit the data for each country
 fit_us <- stan(

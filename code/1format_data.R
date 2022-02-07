@@ -622,14 +622,16 @@ hist_china <- formatCapData(
     data_world  = data$world,
     year_beg    = year_model_china_min,
     year_max    = year_model_china_max
-)
+) %>%
+    left_join(select(data$us, year, costPerKw), by = "year")
 
 hist_germany <- formatCapData(
     data_nation = data$germany,
     data_world  = data$world,
     year_beg    = year_model_germany_min,
     year_max    = year_model_germany_max
-)
+) %>%
+    left_join(select(data$us, year, costPerKw), by = "year")
 
 # Projections
 
