@@ -642,42 +642,42 @@ proj_nat_trends_us <- formatCapData(
     data_nation = proj_nat_trends_us,
     data_world  = proj_nat_trends_world,
     year_beg    = year_proj_min,
-    year_max    = max(proj_nat_trends_us$year)
+    year_max    = year_proj_max
 )
 
 proj_sus_dev_us <- formatCapData(
     data_nation = proj_sus_dev_us,
     data_world  = proj_sus_dev_world,
     year_beg    = year_proj_min,
-    year_max    = max(proj_nat_trends_us$year)
+    year_max    = year_proj_max
 )
 
 proj_nat_trends_china <- formatCapData(
     data_nation = proj_nat_trends_china,
     data_world  = proj_nat_trends_world,
     year_beg    = year_proj_min,
-    year_max    = max(proj_nat_trends_china$year)
+    year_max    = year_proj_max
 )
 
 proj_sus_dev_china <- formatCapData(
     data_nation = proj_sus_dev_china,
     data_world  = proj_sus_dev_world,
     year_beg    = year_proj_min,
-    year_max    = max(proj_nat_trends_china$year)
+    year_max    = year_proj_max
 )
 
 proj_nat_trends_germany <- formatCapData(
     data_nation = proj_nat_trends_germany,
     data_world  = proj_nat_trends_world,
     year_beg    = year_proj_min,
-    year_max    = max(proj_nat_trends_germany$year)
+    year_max    = year_proj_max
 )
 
 proj_sus_dev_germany <- formatCapData(
     data_nation = proj_sus_dev_germany,
     data_world  = proj_sus_dev_world,
     year_beg    = year_proj_min,
-    year_max    = max(proj_nat_trends_germany$year)
+    year_max    = year_proj_max
 )
 
 # Save all formatted data as a list object ----

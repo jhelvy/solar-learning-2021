@@ -1,232 +1,147 @@
 # Load libraries, functions, and dir paths
 source(here::here('code', '0setup.R'))
 
+# Naming convention for objects:
+#    scenario ("nat_trends" or "sus_dev") +
+#    market   ("global" or "national") +
+#    country  ("us", "china", or "germany")
+
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
 # Load estimated LR models
 lr_lambda <- readRDS(dir$lr_models_lambda)
 
+# Get baseline lambda values from model
+params_us <- extract(lr_lambda$fit_us)
+params_china <- extract(lr_lambda$fit_china)
+params_germany <- extract(lr_lambda$fit_germany)
+lambda_us <- mean(params_us$lambda)
+lambda_china <- mean(params_china$lambda)
+lambda_germany <- mean(params_germany$lambda)
+data_us <- lr_lambda$data_us
+data_china <- lr_lambda$data_china
+data_germany <- lr_lambda$data_germany
+
 # Load historical cost scenario data
 cost <- readRDS(dir$historical_scenarios)
 
-# Set beginning values
-beg_us <- data$cap_data_us %>%
-    filter(year == year_proj_min)
-beg_china <- data$cap_data_china %>%
-    filter(year == year_proj_min)
-beg_germany <- data$cap_data_germany %>%
-    filter(year == year_proj_min)
+# Setup proj data for each country and scenario
+data_nat_trends_us <- make_proj_data(data$proj_nat_trends_us)
+data_sus_dev_us <- make_proj_data(data$proj_sus_dev_us)
 
-# Naming convention for objects:
-#    scenario ("nat_trends" or "sus_dev") +
-#    market   ("global" or "national") +
-#    country  ("us", "china", or "germany")
+data_nat_trends_china <- make_proj_data(data$proj_nat_trends_china)
+data_sus_dev_china <- make_proj_data(data$proj_sus_dev_china)
 
-# Set global data for each scenario
-data_world_nat_trends <- data$proj_nat_trends %>%
-  filter(country == "World")
-data_world_sus_dev <- data$proj_sus_dev %>%
-  filter(country == "World")
+data_nat_trends_germany <- make_proj_data(data$proj_nat_trends_germany)
+data_sus_dev_germany <- make_proj_data(data$proj_sus_dev_germany)
 
-# Learning rates based on world cumulative capacity and local installed costs
-# Note: Since world data does not break down installation type
-#       (Commercial, Residential, Utility),
-#       we replicate capacities across all types
-#       (assuming in effect that learning is shared across installation type)
+# Set global "delay" variable
+# Controls how many years until 100% of national capacity is
+# domestically-supplied
+delay <- 1
 
-# Define country capacity data for each scenario
-cap_data_nat_trends_us <- data$proj_nat_trends %>%
-  filter(country == "U.S.")
-cap_data_sus_dev_us <- data$proj_sus_dev %>%
-  filter(country == "U.S.")
-cap_data_nat_trends_china <- data$proj_nat_trends %>%
-  filter(country == "China")
-cap_data_sus_dev_china <- data$proj_sus_dev %>%
-  filter(country == "China")
-cap_data_nat_trends_germany <- data$proj_nat_trends %>%
-  filter(country == "Germany")
-cap_data_sus_dev_germany <- data$proj_sus_dev %>%
-  filter(country == "Germany")
+# Set global ci value
+ci_all <- 0.95
 
-# Create GLOBAL learning capacity data for each country & scenario
-data_global_nat_trends_us <- makeGlobalCapData(
-  data_nation = cap_data_nat_trends_us,
-  data_world  = data_world_nat_trends,
-  year_beg    = year_model_us_min,
-  lambda      = lambda_us)
-data_global_sus_dev_us <- makeGlobalCapData(
-  data_nation = cap_data_sus_dev_us,
-  data_world  = data_world_sus_dev,
-  year_beg    = year_model_us_min,
-  lambda      = lambda_us)
+# Set global final lambda value
+lambda_final <- 0.9
 
-data_global_nat_trends_china <- makeGlobalCapData(
-  data_nation = cap_data_nat_trends_china,
-  data_world  = data_world_nat_trends,
-  year_beg    = year_model_china_min,
-  lambda      = lambda_china)
-data_global_sus_dev_china <- makeGlobalCapData(
-  data_nation = cap_data_sus_dev_china,
-  data_world  = data_world_sus_dev,
-  year_beg    = year_model_china_min,
-  lambda      = lambda_china)
+# Compute GLOBAL cost scenarios by country & scenario ----
 
-data_global_nat_trends_germany <- makeGlobalCapData(
-  data_nation = cap_data_nat_trends_germany,
-  data_world  = data_world_nat_trends,
-  year_beg    = year_model_germany_min,
-  lambda      = lambda_germany)
-data_global_sus_dev_germany <- makeGlobalCapData(
-  data_nation = cap_data_sus_dev_germany,
-  data_world  = data_world_sus_dev,
-  year_beg    = year_model_germany_min,
-  lambda      = lambda_germany)
+proj_nat_trends_global_us <- project_cost(
+    params   = params_us,
+    data     = data_nat_trends_us,
+    year_beg = year_proj_min,
+    ci       = ci_all
+)
+proj_sus_dev_global_us <- project_cost(
+    params   = params_us,
+    data     = data_sus_dev_us,
+    year_beg = year_proj_min,
+    ci       = ci_all
+)
 
-# Create NATIONAL learning capacity data for each country & scenario
-data_national_nat_trends_us <- makeNationalCapData(
-  data_nation = cap_data_nat_trends_us,
-  data_world  = data_world_nat_trends,
-  year_beg    = year_model_us_min,
-  delay_years = delay,
-  lambda_start = lambda_us)
-data_national_sus_dev_us <- makeNationalCapData(
-  data_nation = cap_data_sus_dev_us,
-  data_world  = data_world_sus_dev,
-  year_beg    = year_model_us_min,
-  delay_years = delay,
-  lambda_start = lambda_us)
+proj_nat_trends_global_china <- project_cost(
+    params   = params_china,
+    data     = data_nat_trends_china,
+    year_beg = year_proj_min,
+    ci       = ci_all
+)
+proj_sus_dev_global_china <- project_cost(
+    params   = params_china,
+    data     = data_sus_dev_china,
+    year_beg = year_proj_min,
+    ci       = ci_all
+)
 
-data_national_nat_trends_china <- makeNationalCapData(
-  data_nation = cap_data_nat_trends_china,
-  data_world  = data_world_nat_trends,
-  year_beg    = year_model_china_min,
-  delay_years = delay,
-  lambda_start = lambda_china)
-data_national_sus_dev_china <- makeNationalCapData(
-  data_nation = cap_data_sus_dev_china,
-  data_world  = data_world_sus_dev,
-  year_beg    = year_model_china_min,
-  delay_years = delay,
-  lambda_start = lambda_china)
-
-data_national_nat_trends_germany <- makeNationalCapData(
-  data_nation = cap_data_nat_trends_germany,
-  data_world  = data_world_nat_trends,
-  year_beg    = year_model_germany_min,
-  delay_years = delay,
-  lambda_start = lambda_germany)
-data_national_sus_dev_germany <- makeNationalCapData(
-  data_nation = cap_data_sus_dev_germany,
-  data_world  = data_world_sus_dev,
-  year_beg    = year_model_germany_min,
-  delay_years = delay,
-  lambda_start = lambda_germany)
-
-# Compute GLOBAL cost scenarios by country & scenario
-proj_nat_trends_global_us <- predict_cost(
-  model    = lr$model_us,
-  data     = data_global_nat_trends_us,
-  cost_beg = us_beg$costPerKw,
-  cap_beg  = us_beg$cumCapacityKw,
-  si_beg   = us_beg$price_si,
-  year_beg = year_model_us_min,
-  ci       = 0.95)
-proj_sus_dev_global_us <- predict_cost(
-  model    = lr$model_us,
-  data     = data_global_sus_dev_us,
-  cost_beg = us_beg$costPerKw,
-  cap_beg  = us_beg$cumCapacityKw,
-  si_beg   = us_beg$price_si,
-  year_beg = year_model_us_min,
-  ci       = 0.95)
-
-proj_nat_trends_global_china <- predict_cost(
-  model    = lr$model_china,
-  data     = data_global_nat_trends_china,
-  cost_beg = china_beg$costPerKw,
-  cap_beg  = china_beg$cumCapacityKw,
-  si_beg   = china_beg$price_si,
-  year_beg = year_model_china_min,
-  ci       = 0.95)
-proj_sus_dev_global_china <- predict_cost(
-  model    = lr$model_china,
-  data     = data_global_sus_dev_china,
-  cost_beg = china_beg$costPerKw,
-  cap_beg  = china_beg$cumCapacityKw,
-  si_beg   = china_beg$price_si,
-  year_beg = year_model_china_min,
-  ci       = 0.95)
-
-proj_nat_trends_global_germany <- predict_cost(
-  model    = lr$model_germany,
-  data     = data_global_nat_trends_germany,
-  cost_beg = germany_beg$costPerKw,
-  cap_beg  = germany_beg$cumCapacityKw,
-  si_beg   = germany_beg$price_si,
-  year_beg = year_model_germany_min,
-  ci       = 0.95)
-proj_sus_dev_global_germany <- predict_cost(
-  model    = lr$model_germany,
-  data     = data_global_sus_dev_germany,
-  cost_beg = germany_beg$costPerKw,
-  cap_beg  = germany_beg$cumCapacityKw,
-  si_beg   = germany_beg$price_si,
-  year_beg = year_model_germany_min,
-  ci       = 0.95)
+proj_nat_trends_global_germany <- project_cost(
+    params   = params_germany,
+    data     = data_nat_trends_germany,
+    year_beg = year_proj_min,
+    ci       = ci_all
+)
+proj_sus_dev_global_germany <- project_cost(
+    params   = params_germany,
+    data     = data_sus_dev_germany,
+    year_beg = year_proj_min,
+    ci       = ci_all
+)
 
 
-# Compute NATIONAL cost scenarios by country & scenario
-proj_nat_trends_national_us <- predict_cost(
-  model    = lr$model_us,
-  data     = data_national_nat_trends_us,
-  cost_beg = us_beg$costPerKw,
-  cap_beg  = us_beg$cumCapacityKw,
-  si_beg   = us_beg$price_si,
-  year_beg = year_model_us_min,
-  ci       = 0.95)
-proj_sus_dev_national_us <- predict_cost(
-  model    = lr$model_us,
-  data     = data_national_sus_dev_us,
-  cost_beg = us_beg$costPerKw,
-  cap_beg  = us_beg$cumCapacityKw,
-  si_beg   = us_beg$price_si,
-  year_beg = year_model_us_min,
-  ci       = 0.95)
 
-proj_nat_trends_national_china <- predict_cost(
-  model    = lr$model_china,
-  data     = data_national_nat_trends_china,
-  cost_beg = china_beg$costPerKw,
-  cap_beg  = china_beg$cumCapacityKw,
-  si_beg   = china_beg$price_si,
-  year_beg = year_model_china_min,
-  ci       = 0.95)
-proj_sus_dev_national_china <- predict_cost(
-  model    = lr$model_china,
-  data     = data_national_sus_dev_china,
-  cost_beg = china_beg$costPerKw,
-  cap_beg  = china_beg$cumCapacityKw,
-  si_beg   = china_beg$price_si,
-  year_beg = year_model_china_min,
-  ci       = 0.95)
+# Compute NATIONAL cost scenarios by country & scenario ----
 
-proj_nat_trends_national_germany <- predict_cost(
-  model    = lr$model_germany,
-  data     = data_national_nat_trends_germany,
-  cost_beg = germany_beg$costPerKw,
-  cap_beg  = germany_beg$cumCapacityKw,
-  si_beg   = germany_beg$price_si,
-  year_beg = year_model_germany_min,
-  ci       = 0.95)
-proj_sus_dev_national_germany <- predict_cost(
-  model    = lr$model_germany,
-  data     = data_national_sus_dev_germany,
-  cost_beg = germany_beg$costPerKw,
-  cap_beg  = germany_beg$cumCapacityKw,
-  si_beg   = germany_beg$price_si,
-  year_beg = year_model_germany_min,
-  ci       = 0.95)
+proj_nat_trends_national_us <- project_cost(
+    params   = params_us,
+    data     = data_nat_trends_us,
+    year_beg = year_proj_min,
+    ci       = ci_all,
+    delay_years = delay,
+    lambda_end = lambda_final
+)
+proj_sus_dev_national_us <- project_cost(
+    params   = params_us,
+    data     = data_sus_dev_us,
+    year_beg = year_proj_min,
+    ci       = ci_all,
+    delay_years = delay,
+    lambda_end = lambda_final
+)
+
+proj_nat_trends_national_china <- project_cost(
+    params   = params_china,
+    data     = data_nat_trends_china,
+    year_beg = year_proj_min,
+    ci       = ci_all,
+    delay_years = delay,
+    lambda_end = lambda_final
+)
+proj_sus_dev_national_china <- project_cost(
+    params   = params_china,
+    data     = data_sus_dev_china,
+    year_beg = year_proj_min,
+    ci       = ci_all,
+    delay_years = delay,
+    lambda_end = lambda_final
+)
+
+proj_nat_trends_national_germany <- project_cost(
+    params   = params_germany,
+    data     = data_nat_trends_germany,
+    year_beg = year_proj_min,
+    ci       = ci_all,
+    delay_years = delay,
+    lambda_end = lambda_final
+)
+proj_sus_dev_national_germany <- project_cost(
+    params   = params_germany,
+    data     = data_sus_dev_germany,
+    year_beg = year_proj_min,
+    ci       = ci_all,
+    delay_years = delay,
+    lambda_end = lambda_final
+)
 
 # Combine Results -----
 
@@ -268,15 +183,15 @@ projections <- rbind(
     mutate(
       country = "Germany", learning = "national", scenario = "sus_dev"))
 
-# SENSITIVITY CHECK ---------------------------------------------------
-
-# This replicates the same calculations as above, except
-# using +/- 25% of the 2020 starting prices
-
-range <- c(0.75, 1.25)
-cost_orig_us <- us_beg$costPerKw * range
-cost_orig_china <- china_beg$costPerKw * range
-cost_orig_germany <- germany_beg$costPerKw * range
+# # SENSITIVITY CHECK ---------------------------------------------------
+# 
+# # This replicates the same calculations as above, except
+# # using +/- 25% of the 2020 starting prices
+# 
+# range <- c(0.75, 1.25)
+# cost_orig_us <- us_beg$costPerKw * range
+# cost_orig_china <- china_beg$costPerKw * range
+# cost_orig_germany <- germany_beg$costPerKw * range
 
 # # GLOBAL LEARNING ----
 # 
@@ -517,4 +432,5 @@ saveRDS(list(
   base = projections),
   # lb = projections_lb,
   # ub = projections_ub),
-  dir$projection_scenarios)
+  dir$projection_scenarios
+)

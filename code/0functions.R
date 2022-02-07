@@ -93,6 +93,15 @@ make_stan_data <- function(df) {
     ))
 }
 
+make_proj_data <- function(df) {
+    return(list(
+        N    = nrow(df),
+        qw   = df$cumCapKw_world,
+        qj   = df$cumCapKw_other,
+        p    = df$price_si
+    ))
+}
+
 # Scenario analyses ----
 
 get_csim_draws <- function(params, data, year_beg = NULL) {
@@ -164,6 +173,32 @@ predict_cost <- function(
     c_sim <- as.data.frame(exp(c_sim))
     names(c_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
     c_sim <- cbind(c_sim, cost_per_kw_true = exp(data$logc)) %>% 
+        mutate(year = seq(year_beg, year_beg + nobs - 1))
+    return(c_sim)
+}
+
+project_cost <- function(
+    params, 
+    data, 
+    year_beg = NULL, 
+    ci = 0.95, 
+    delay_years = NULL, 
+    lambda_end = NULL
+) {
+    nobs <- data$N
+    if (is.null(delay_years)) {
+        c_sim_draws <- get_csim_draws(params, data, year_beg)
+    } else {
+        c_sim_draws <- get_csim_draws_national(
+            params, data, year_beg, delay_years, lambda_end)
+    }
+    c_sim <- matrix(0, ncol = 3, nrow = nobs)
+    for (i in 1:nobs) {
+        c_sim[i,] <- as.matrix(get_ci(c_sim_draws[[i]], ci))
+    }
+    c_sim <- as.data.frame(exp(c_sim))
+    names(c_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
+    c_sim <- c_sim %>% 
         mutate(year = seq(year_beg, year_beg + nobs - 1))
     return(c_sim)
 }

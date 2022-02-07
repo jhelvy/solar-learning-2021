@@ -318,10 +318,12 @@ cost_proj <- proj$base %>%
 
 ggsave(
   file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
-  cost_proj, height = 6.5, width = 11, device = cairo_pdf)
+  cost_proj, height = 6.5, width = 11, device = cairo_pdf
+)
 ggsave(
   file.path(dir$figs, 'png', 'cost_proj.png'),
-  cost_proj, height = 6.5, width = 11)
+  cost_proj, height = 6.5, width = 11
+)
 
 # Compare predicted 2030 costs based on different starting costs --------
 
