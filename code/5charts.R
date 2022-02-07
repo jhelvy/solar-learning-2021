@@ -81,12 +81,12 @@ cost_historical_plot <- cost$cost %>%
       year = lubridate::ymd(paste0(year, "-01-01"))) %>% 
     ggplot() +
     facet_wrap(vars(country), nrow = 1) +
-    # First add historical cost line as dashed line
-    geom_line(
+    # First add historical cost line as points
+    geom_point(
         data = cost$cost_historical_true %>% 
             mutate(year = lubridate::ymd(paste0(year, "-01-01"))),
         aes(x = year, y = costPerKw), 
-        linetype = 2, alpha = 0.4, size = 1) +
+        size = 1) +
     # Now add modeled cost lines with uncertainty bands
     geom_ribbon(
         aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub, 
@@ -99,9 +99,10 @@ cost_historical_plot <- cost$cost %>%
         date_labels = "'%y",
         date_breaks = "2 years") +
     scale_y_continuous(
-      limits = c(0, 6500),
-      breaks = seq(0, 6000, 1000),
+      limits = c(0, 8000),
+      breaks = seq(0, 8000, 1000),
       labels = scales::dollar) +
+    # scale_y_log10(labels = scales::dollar) +
     scale_color_manual("Learning", values = colors_learning) +
     scale_fill_manual("Learning", values = colors_learning) +
     theme_minimal_grid(
@@ -110,27 +111,23 @@ cost_historical_plot <- cost$cost %>%
     panel_border() +
     labs(
       title = paste0(
-        "Estimated module prices using <span style = 'color: ",
+        "Estimated Module Cost Under <span style = 'color: ",
         colors_learning["Global"], 
         ";'>Global</span> vs. <span style = 'color: ", 
         colors_learning["National"], 
-        ";'>National</span> learning"),
+        ";'>National</span> Market Scenarios"),
         y = paste0("Price per kW (", year_inflation, " $USD)"),
         x = "Year"
     ) + 
     theme(
         plot.title.position = "plot",
         strip.background = element_rect(fill = "grey80"), 
-        panel.grid.major = element_line(size = 0.5, colour = "grey90"),
+        panel.grid.major = element_line(size = 0.3, colour = "grey90"),
         axis.line.x = element_blank(),
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 1, size = 11, face = "italic"),
         plot.title = element_markdown(),
         legend.position = "none"
-        # legend.position = c(0.87, 0.78),
-        # legend.margin = margin(6, 6, 6, 6),
-        # legend.background = element_rect(
-        #     fill = "white", color = "black", size = 0.2),
     ) +
     # Add "historical" labels
     geom_text(
@@ -140,17 +137,17 @@ cost_historical_plot <- cost$cost %>%
             country = c("China", "Germany", "U.S."),
             label = rep("Historical", 3)), 
         aes(x = x, y = y, label = label), 
-        color = "grey60", size = 5, family = font_main
+        color = "black", size = 5, family = font_main
     ) + 
     geom_segment(
         data = data.frame(
-            x = lubridate::ymd(rep("2011-01-01", 3)), 
-            xend = lubridate::ymd(c("2011-12-01", "2011-06-01", "2012-01-01")), 
+            x = lubridate::ymd(rep("2010-11-01", 3)), 
+            xend = lubridate::ymd(c("2011-10-01", "2011-10-01", "2011-11-01")), 
             y = c(500, 500, 500), 
-            yend = c(700, 650, 800), 
+            yend = c(720, 600, 850), 
             country = c("China", "Germany", "U.S.")),
         aes(x = x, y = y, xend = xend, yend = yend), 
-        color = "grey60", size = 0.5
+        color = "black", size = 0.5
     )
 
 ggsave(
@@ -173,15 +170,15 @@ savings_cum_historical_plot <- cost$savings %>%
       limits = c(year_savings_min, year_savings_max)) +
     scale_y_continuous(
       labels = dollar,
-      breaks = seq(0, 200, 50),
-      limits = c(0, 200),
+      breaks = seq(0, 80, 20),
+      limits = c(0, 80),
       expand = expansion(mult = c(0, 0.05))) +
     theme_minimal_hgrid(font_family = font_main) +
     scale_color_manual(values = c("white", "black", "white")) +
     labs(
-        title = "Cumulative module savings from global vs. national learning",
+        title = "Cumulative Module Savings Under Global vs. National Market Scenarios (2008 - 2020)",
         x = "Year",
-        y = paste0("Cumulative savings (Billion ", year_inflation, " $USD)"),
+        y = paste0("Cumulative Savings (Billion ", year_inflation, " $USD)"),
         fill = "Country") +
     theme(
         plot.title.position = "plot",
@@ -190,14 +187,14 @@ savings_cum_historical_plot <- cost$savings %>%
     # Add country labels
     geom_text(
         data = data.frame(
-            x = c(2018, 2018, 2016.5), 
-            y = c(45, 110, 175), 
+            x = c(2018, 2018, 2017), 
+            y = c(20, 44, 64), 
             label = c("China", "U.S.", "Germany")), 
         aes(x = x, y = y, label = label, color = label), 
         size = 6, family = font_main
     ) +
     annotate(
-        "segment", x = 2017.5, xend = 2018.2, y = 171, yend = 155,
+        "segment", x = 2018, xend = 2018.5, y = 63, yend = 59,
         colour = "black"
     )
 
@@ -234,8 +231,8 @@ savings_ann_historical_plot <- cost$savings %>%
     scale_x_continuous(breaks = seq(year_savings_min, year_savings_max, 2)) +
     scale_y_continuous(
         labels = scales::dollar, 
-        breaks = seq(-5, 15, 5),
-        limits = c(-5, 15),
+        breaks = seq(-5, 20, 5),
+        limits = c(-5, 20),
         expand = expansion(mult = c(0, 0.05))) +
     scale_fill_manual(values = colors_country) +
     theme_minimal_hgrid(
@@ -251,9 +248,9 @@ savings_ann_historical_plot <- cost$savings %>%
             size = 0.5, colour = "grey90")
     ) +
      labs(
-        title = "Annual module savings from global vs. national learning (2008 - 2020)",
+        title = "Annual Module Savings Under Global vs. National Market Scenarios (2008 - 2020)",
         x = NULL,
-        y = paste0("Annual savings (Billion ", year_inflation, " $USD)"),
+        y = paste0("Annual Savings (Billion ", year_inflation, " $USD)"),
         fill = "Country") + 
     # Add totals
     geom_text(
