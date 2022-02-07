@@ -116,7 +116,7 @@ cost_historical_plot <- cost$cost %>%
         ";'>Global</span> vs. <span style = 'color: ", 
         colors_learning["National"], 
         ";'>National</span> Market Scenarios"),
-        y = paste0("Price per kW (", year_inflation, " $USD)"),
+        y = paste0("Cost per kW (", year_inflation, " $USD)"),
         x = "Year"
     ) + 
     theme(
@@ -307,14 +307,14 @@ cost_proj <- proj$base %>%
     panel.grid.major = element_line(size = 0.5, colour = "grey90")
   ) +
   labs(
-    y = paste0("Price per kW (", year_inflation, " $USD)"),
+    y = paste0("Cost per kW (", year_inflation, " $USD)"),
     x = "Year",
     title = paste0(
-      "Projected module prices using <span style = 'color: ",
+      "Projected Module Cost Under <span style = 'color: ",
       colors_learning["Global"], 
       ";'>Global</span> vs. <span style = 'color: ", 
       colors_learning["National"], 
-      ";'>National</span> learning (2020 - 2030)"))
+      ";'>National</span> Market Scenarios (2020 - 2030)"))
 
 ggsave(
   file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
@@ -370,15 +370,15 @@ sens_cost_proj <- rbind(
     plot.caption = element_text(hjust = 1, size = 11, face = "italic")
   ) +
   labs(
-    y = paste0("Price per kW (", year_inflation, " $USD)"),
+    y = paste0("Cost per kW (", year_inflation, " $USD)"),
     x = "Year",
     title = paste0(
-      "Projected module prices using <span style = 'color: ",
+      "Projected Module Cost Under <span style = 'color: ",
       colors_learning["Global"], 
       ";'>Global</span> vs. <span style = 'color: ", 
       colors_learning["National"], 
-      ";'>National</span> learning (2020 - 2030)"),
-    subtitle = "Bands reflect a 25% range around the 2020 starting price")
+      ";'>National</span> Market Scenarios (2020 - 2030)"),
+    subtitle = "Bands reflect a 25% range around the 2020 starting cost")
 
 ggsave(
   file.path(dir$figs, 'pdf', 'sens_cost_proj.pdf'),
@@ -488,9 +488,9 @@ sens_compare_cost <- cost_compare %>%
     breaks = c("NREL", "LBNL", "SPV")) +
   theme_bw() +
   labs(x = NULL,
-       y = "Price per kW ($USD)",
+       y = "Cost per kW ($USD)",
        color = "Data source",
-       title = "Comparison of price per kW by data source")
+       title = "Comparison of cost per kW by data source")
 
 ggsave(here::here(dir$figs, 'pdf', "sens_compare_cost.pdf"),
        sens_compare_cost, width = 5, height = 3, device = cairo_pdf)

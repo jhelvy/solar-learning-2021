@@ -114,9 +114,9 @@ cost %>%
     geom_line(
         data = cost_historical_true,
         aes(x = year, y = costPerKw), linetype = 2) +
-    theme_bw() 
-    # scale_y_log10()
-# 
+    theme_bw() +
+    scale_y_log10()
+
 # ggsave("cost_historical.png", width = 15, height = 5)
 
 # Calculate savings between national and global learning scenarios
