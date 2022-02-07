@@ -609,29 +609,32 @@ rates <- data.frame(
 # Data frames for modeling & scenarios
 
 # Historical
+data_nation_us <- us
+data_nation_china <- china %>% filter(component == "Module")
+data_nation_germany <- germany
 hist_us <- formatCapData(
-    data_nation = data$us,
-    data_world  = data$world,
+    data_nation = data_nation_us,
+    data_world  = world,
     year_beg    = year_model_us_min,
     year_max    = year_model_us_max
 ) %>%
-    left_join(select(data$us, year, costPerKw), by = "year")
+    left_join(select(data_nation_us, year, costPerKw), by = "year")
 
 hist_china <- formatCapData(
-    data_nation = data$china %>% filter(component == "Module"),
-    data_world  = data$world,
+    data_nation = data_nation_china,
+    data_world  = world,
     year_beg    = year_model_china_min,
     year_max    = year_model_china_max
 ) %>%
-    left_join(select(data$us, year, costPerKw), by = "year")
+    left_join(select(data_nation_china, year, costPerKw), by = "year")
 
 hist_germany <- formatCapData(
-    data_nation = data$germany,
-    data_world  = data$world,
+    data_nation = data_nation_germany,
+    data_world  = world,
     year_beg    = year_model_germany_min,
     year_max    = year_model_germany_max
 ) %>%
-    left_join(select(data$us, year, costPerKw), by = "year")
+    left_join(select(data_nation_germany, year, costPerKw), by = "year")
 
 # Projections
 
