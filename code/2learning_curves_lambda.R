@@ -63,6 +63,15 @@ beta <- mean(params$beta)
 gamma <- mean(params$gamma)
 lambda <- mean(params$lambda)
 
+# Estimate lambda distribution parameters
+# lambda_fit <- MASS::fitdistr(
+#     x = params$lambda, 
+#     densfun = "beta", 
+#     start = list(shape1 = 1, shape2 = 1)
+# )
+# shape1 <- lambda_fit$estimate[1]
+# shape2 <- lambda_fit$estimate[2]
+
 # Learning rate & lambda
 round(1 - (2^get_ci(params$beta, ci = 0.95)), 2)
 round(get_ci(params$lambda, ci = 0.95), 2)
