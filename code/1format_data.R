@@ -50,7 +50,7 @@ exchangeRatesPath <- file.path(dir$data, "exchange-rates.xlsx")
 productionFilePath <- file.path(dir$data, "production", "production.csv")
 inflationPath <- file.path(dir$data, "inflation.Rds")
   
-# Load exchange rates --------------------------------------------------------
+# Load exchange rates --------------------------------------------------
 
 exchangeRatesRMB <- read_excel(
   exchangeRatesPath, sheet = "usd-rmb", skip = 2) %>%
@@ -65,8 +65,6 @@ exchangeRatesEUR <- read_excel(
   rename(year = row_labels) %>% 
   mutate(year = as.numeric(year)) %>% 
   filter(!is.na(year))
-
-# Format PV production data ----------------------------------------------------
 
 # # Get inflation and country data frames from priceR package
 # inflation_df <- priceR::retrieve_inflation_data(country = "US")
@@ -114,7 +112,7 @@ pvProduction <- read_csv(productionFilePath) %>%
 
 # U.S. ----
 
-# Format SEIA capacity data (US) ---------------------------------------------
+# U.S. SEIA capacity data ---------------------------------------------
 
 # Capacity data from 2000 - 2013 are from this image in the raw data:
 # seia_2013_year_review_fig_2.1.jpg
@@ -161,7 +159,7 @@ seiaCapacity <- seiaCapacity %>%
   select(year, installType, cumCapacityKw) %>%
   arrange(year)
 
-# Format LBNL cost data (US) -----------------------------------------------
+# U.S. LBNL cost data -----------------------------------------------
 
 # LBNL cost data are in 2018 dollars
 lbnlCost <- read_excel(usLbnlFilePath, sheet = "Fig 17", skip = 3) %>%
@@ -218,7 +216,7 @@ lbnlCost_hard <- lbnlCost %>%
 lbnlCost <- rbind(lbnlCost_hard, lbnlCost_soft) %>%
   filter(!is.na(costPerKw))
 
-# Format NREL cost data (US) -------------------------------------------------
+# U.S. NREL cost data -------------------------------------------------
 
 # NREL cost data are in 2019 dollars
 nrelCost <- read_excel(
@@ -268,7 +266,7 @@ nrelCost <- nrelCost %>%
   filter(! str_detect(installType, "utility")) %>%
   rbind(nrelUtility)
 
-# Format NREL capacity data (US) --------------------------------------------
+# U.S. NREL capacity data --------------------------------------------
 
 nrelCapacity <- read_excel(usNrel2018FilePath, sheet = "Figure 1") %>%
   clean_names() %>%
@@ -593,7 +591,7 @@ proj_sus_dev_world <- getFutureCapacities(
   year_min_proj = year_proj_min,
   price_si = price_si)
 
-# Combine ---
+# Combine rates ---
 
 rates <- data.frame(
   country = rep(c("U.S.", "Germany", "China", "World"), 2),
@@ -604,65 +602,103 @@ rates <- data.frame(
     rate_sus_dev_china, rate_sus_dev_world)
 )
 
-proj_nat_trends <- rbind(
-  proj_nat_trends_us %>% mutate(country = "U.S."),
-  proj_nat_trends_germany %>% mutate(country = "Germany"),
-  proj_nat_trends_china %>% mutate(country = "China"),
-  proj_nat_trends_world %>% mutate(country = "World")
-)
 
-proj_sus_dev <- rbind(
-  proj_sus_dev_us %>% mutate(country = "U.S."),
-  proj_sus_dev_germany %>% mutate(country = "Germany"),
-  proj_sus_dev_china %>% mutate(country = "China"),
-  proj_sus_dev_world %>% mutate(country = "World")
-)
 
-# Data frames for modeling ----
 
-cap_data_us <- formatCapData(
+# Final formatting ----
+# Data frames for modeling & scenarios
+
+# Historical
+hist_us <- formatCapData(
     data_nation = data$us,
     data_world  = data$world,
     year_beg    = year_model_us_min,
     year_max    = year_model_us_max
-)
+) %>%
+    left_join(select(data$us, year, costPerKw), by = "year")
 
-cap_data_china <- formatCapData(
+hist_china <- formatCapData(
     data_nation = data$china %>% filter(component == "Module"),
     data_world  = data$world,
     year_beg    = year_model_china_min,
     year_max    = year_model_china_max
 )
 
-cap_data_germany <- formatCapData(
+hist_germany <- formatCapData(
     data_nation = data$germany,
     data_world  = data$world,
     year_beg    = year_model_germany_min,
     year_max    = year_model_germany_max
 )
 
+# Projections
 
+proj_nat_trends_us <- formatCapData(
+    data_nation = proj_nat_trends_us,
+    data_world  = proj_nat_trends_world,
+    year_beg    = year_proj_min,
+    year_max    = max(proj_nat_trends_us$year)
+)
+
+proj_sus_dev_us <- formatCapData(
+    data_nation = proj_sus_dev_us,
+    data_world  = proj_sus_dev_world,
+    year_beg    = year_proj_min,
+    year_max    = max(proj_nat_trends_us$year)
+)
+
+proj_nat_trends_china <- formatCapData(
+    data_nation = proj_nat_trends_china,
+    data_world  = proj_nat_trends_world,
+    year_beg    = year_proj_min,
+    year_max    = max(proj_nat_trends_china$year)
+)
+
+proj_sus_dev_china <- formatCapData(
+    data_nation = proj_sus_dev_china,
+    data_world  = proj_sus_dev_world,
+    year_beg    = year_proj_min,
+    year_max    = max(proj_nat_trends_china$year)
+)
+
+proj_nat_trends_germany <- formatCapData(
+    data_nation = proj_nat_trends_germany,
+    data_world  = proj_nat_trends_world,
+    year_beg    = year_proj_min,
+    year_max    = max(proj_nat_trends_germany$year)
+)
+
+proj_sus_dev_germany <- formatCapData(
+    data_nation = proj_sus_dev_germany,
+    data_world  = proj_sus_dev_world,
+    year_beg    = year_proj_min,
+    year_max    = max(proj_nat_trends_germany$year)
+)
 
 # Save all formatted data as a list object ----
 
 saveRDS(list(
-    pvProduction       = pvProduction,
-    irenaCumCapacityMw = irenaCumCapacityMw,
-    nrelCapacity       = nrelCapacity,
-    nrelCost           = nrelCost,
-    seiaCapacity       = seiaCapacity,
-    lbnlCost           = lbnlCost,
-    usNrel             = usNrel,
-    us                 = us,
-    china              = china,
-    germany            = germany,
-    world              = world, 
-    rates              = rates,
-    proj_nat_trends    = proj_nat_trends,
-    proj_sus_dev       = proj_sus_dev,
-    cap_data_us        = cap_data_us,
-    cap_data_china     = cap_data_china,
-    cap_data_germany   = cap_data_germany
+    pvProduction            = pvProduction,
+    irenaCumCapacityMw      = irenaCumCapacityMw,
+    nrelCapacity            = nrelCapacity,
+    nrelCost                = nrelCost,
+    seiaCapacity            = seiaCapacity,
+    lbnlCost                = lbnlCost,
+    usNrel                  = usNrel,
+    us                      = us,
+    china                   = china,
+    germany                 = germany,
+    world                   = world,
+    rates                   = rates,
+    hist_us                 = hist_us,
+    hist_china              = hist_china,
+    hist_germany            = hist_germany,
+    proj_nat_trends_us      = proj_nat_trends_us,
+    proj_sus_dev_us         = proj_sus_dev_us,
+    proj_nat_trends_china   = proj_nat_trends_china,
+    proj_sus_dev_china      = proj_sus_dev_china,
+    proj_nat_trends_germany = proj_nat_trends_germany,
+    proj_sus_dev_germany    = proj_sus_dev_germany
     ),
     dir$data_formatted
 )

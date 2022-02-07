@@ -5,7 +5,6 @@ source(here::here('code', '0setup.R'))
 data <- readRDS(dir$data_formatted)
 
 # Load estimated LR models
-lr <- readRDS(dir$lr_models)
 lr_lambda <- readRDS(dir$lr_models_lambda)
 
 # Get baseline lambda values from model

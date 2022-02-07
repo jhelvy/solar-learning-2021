@@ -5,23 +5,23 @@ source(here::here('code', '0setup.R'))
 data <- readRDS(dir$data_formatted)
 
 # Load estimated LR models
-lr <- readRDS(dir$lr_models)
+lr_lambda <- readRDS(dir$lr_models_lambda)
 
 # Load historical cost scenario data
 cost <- readRDS(dir$historical_scenarios)
 
 # Set beginning values
-us_beg <- lr$data_us %>%
+beg_us <- data$cap_data_us %>%
     filter(year == year_proj_min)
-china_beg <- lr$data_china %>%
+beg_china <- data$cap_data_china %>%
     filter(year == year_proj_min)
-germany_beg <- lr$data_germany %>%
+beg_germany <- data$cap_data_germany %>%
     filter(year == year_proj_min)
 
-# Naming convention for objects is:
+# Naming convention for objects:
 #    scenario ("nat_trends" or "sus_dev") +
-#    learning ("global" or "national") +
-#    country ("us", "china", or "germany")
+#    market   ("global" or "national") +
+#    country  ("us", "china", or "germany")
 
 # Set global data for each scenario
 data_world_nat_trends <- data$proj_nat_trends %>%

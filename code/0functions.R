@@ -69,7 +69,6 @@ formatCapData <- function(data_nation, data_world, year_beg, year_max) {
         filter(year <= year_max) %>%
         select(year, cumCapKw_world, cumCapKw_other, annCapKw_nation) %>% 
         # Add price data
-        left_join(select(data_nation, year, costPerKw), by = "year") %>% 
         left_join(select(data_world, year, price_si), by = "year")
     return(result)
 }
