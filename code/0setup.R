@@ -31,7 +31,7 @@ dir <- list(
     figs                 = here::here('figs'),
     output               = here::here('output'),
     lr_models            = here::here('output', 'lr_models.Rds'),
-    lr_models_stan       = here::here('output', 'lr_models_stan.Rds'),
+    lr_models_lambda     = here::here('output', 'lr_models_lambda.Rds'),
     historical_scenarios = here::here('output', 'historical_scenarios.Rds'),
     projection_scenarios = here::here('output', 'projection_scenarios.Rds')
 )

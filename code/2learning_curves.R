@@ -4,53 +4,43 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
-# Setup data
-df_us <- formatCapData(
-    data_nation = data$us,
-    data_world  = data$world, 
-    year_beg    = year_model_us_min, 
-    year_max    = year_model_us_max
-) 
-
-df_china <- formatCapData(
-    data_nation = data$china %>% filter(component == "Module"),
-    data_world  = data$world, 
-    year_beg    = year_model_china_min, 
-    year_max    = year_model_china_max
-) 
-
-df_germany <- formatCapData(
-    data_nation = data$germany,
-    data_world  = data$world, 
-    year_beg    = year_model_germany_min, 
-    year_max    = year_model_germany_max
-) 
-
 # Setup data for stan
-data_us <- make_stan_data(df_us)
-data_china <- make_stan_data(df_china)
-data_germany <- make_stan_data(df_germany)
+data_us <- make_stan_data(data$cap_data_us)
+data_china <- make_stan_data(data$cap_data_china)
+data_germany <- make_stan_data(data$cap_data_germany)
 
 # Fit the data for each country
 fit_us <- stan(
     file = here::here('code', 'lrmodel.stan'),
     data = data_us,
-    iter = 4000,
-    control = list(max_treedepth = 10, adapt_delta = 0.9)
+    iter = 10000,
+    warmup = 1500, 
+    chains = 4,
+    control = list(
+        max_treedepth = 11, 
+        adapt_delta = 0.95)
 )
 
 fit_china <- stan(
     file = here::here('code', 'lrmodel.stan'),
     data = data_china,
-    iter = 4000,
-    control = list(max_treedepth = 10, adapt_delta = 0.9)
+    iter = 10000,
+    warmup = 1500, 
+    chains = 4,
+    control = list(
+        max_treedepth = 11, 
+        adapt_delta = 0.95)
 )
 
 fit_germany <- stan(
     file = here::here('code', 'lrmodel.stan'),
     data = data_germany,
-    iter = 4000,
-    control = list(max_treedepth = 11, adapt_delta = 0.90)
+    iter = 10000,
+    warmup = 1500, 
+    chains = 4,
+    control = list(
+        max_treedepth = 11, 
+        adapt_delta = 0.95)
 )
 
 # Set country to view results
@@ -105,15 +95,13 @@ y_sim %>%
         y = "log(Cost per kW, $USD)"
     )
 
-# ggsave("fit.png", width = 6, height = 4)
-
-# # Save fits 
-# saveRDS(list(
-#     fit_us = fit_us,
-#     data_us = data_us,
-#     fit_china = fit_china,
-#     data_china = data_china,
-#     fit_germany = fit_germany,
-#     data_germany = data_germany),
-#     dir$lr_models_stan
-# )
+# Save fits
+saveRDS(list(
+    fit_us = fit_us,
+    data_us = data_us,
+    fit_china = fit_china,
+    data_china = data_china,
+    fit_germany = fit_germany,
+    data_germany = data_germany),
+    dir$lr_models
+)

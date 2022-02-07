@@ -5,9 +5,9 @@ source(here::here('code', '0setup.R'))
 data <- readRDS(dir$data_formatted)
 
 # Setup data for stan
-data_us <- make_stan_data(df_us)
-data_china <- make_stan_data(df_china)
-data_germany <- make_stan_data(df_germany)
+data_us <- make_stan_data(data$cap_data_us)
+data_china <- make_stan_data(data$cap_data_china)
+data_germany <- make_stan_data(data$cap_data_germany)
 
 # Fit the data for each country
 fit_us <- stan(
@@ -97,8 +97,6 @@ y_sim %>%
         y = "log(Cost per kW, $USD)"
     )
 
-# ggsave("fit_germany.png", width = 6, height = 4)
-
 # Save fits 
 saveRDS(list(
     fit_us = fit_us,
@@ -107,5 +105,5 @@ saveRDS(list(
     data_china = data_china,
     fit_germany = fit_germany,
     data_germany = data_germany),
-    dir$lr_models_stan
+    dir$lr_models_lambda
 )
