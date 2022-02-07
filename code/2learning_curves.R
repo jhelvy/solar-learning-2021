@@ -71,11 +71,9 @@ params <- extract(fit)
 alpha <- mean(params$alpha)
 beta <- mean(params$beta)
 gamma <- mean(params$gamma)
-lambda <- mean(params$lambda)
 
 # Learning rate & lambda
-round(1 - (2^ci(params$beta, alpha = 0.05)), 2)
-round(ci(params$lambda, alpha = 0.05), 2)
+round(1 - (2^get_ci(params$beta, ci = 0.95)), 2)
 
 # Visualize
 nobs <- data$N
@@ -107,15 +105,15 @@ y_sim %>%
         y = "log(Cost per kW, $USD)"
     )
 
- ggsave("fit_germany.png", width = 6, height = 4)
+# ggsave("fit.png", width = 6, height = 4)
 
-# Save fits 
-saveRDS(list(
-    fit_us = fit_us,
-    data_us = data_us,
-    fit_china = fit_china,
-    data_china = data_china,
-    fit_germany = fit_germany,
-    data_germany = data_germany),
-    dir$lr_models_stan
-)
+# # Save fits 
+# saveRDS(list(
+#     fit_us = fit_us,
+#     data_us = data_us,
+#     fit_china = fit_china,
+#     data_china = data_china,
+#     fit_germany = fit_germany,
+#     data_germany = data_germany),
+#     dir$lr_models_stan
+# )

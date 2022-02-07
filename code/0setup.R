@@ -36,12 +36,6 @@ dir <- list(
     projection_scenarios = here::here('output', 'projection_scenarios.Rds')
 )
 
-# Set global "delay" variable 
-# Controls how many years until 100% of national capacity is 
-# domestically-supplied
-
-delay <- 10
-
 # Set global "year" variables
 
 # Set year for aligning all inflation adjustment 

@@ -67,7 +67,7 @@ formatCapData <- function(data_nation, data_world, year_beg, year_max) {
             cumCapKw_other = cumsum(annCapKw_other)
         ) %>%
         filter(year <= year_max) %>%
-        select(year, cumCapKw_world, cumCapKw_other) %>% 
+        select(year, cumCapKw_world, cumCapKw_other, annCapKw_nation) %>% 
         # Add price data
         left_join(select(data_nation, year, costPerKw), by = "year") %>% 
         left_join(select(data_world, year, price_si), by = "year")
@@ -126,14 +126,14 @@ get_csim_draws_national <- function(
     if (is.null(year_beg)) {
         year_beg <-min(data$year)
     } 
-    # Set lambda vector
-    lambda_start <- mean(params$lambda)
-    lambda <- seq(lambda_start, lambda_end, length.out = delay_years + 1)
-    lambda <- c(lambda, rep(lambda_end, nobs - length(lambda)))
     # Extract par vectors
     alpha <- params$alpha
     beta <- params$beta
     gamma <- params$gamma
+    lambda <- params$lambda
+    # Set lambda vector
+    lambda <- seq(mean(lambda), lambda_end, length.out = delay_years + 1)
+    lambda <- c(lambda, rep(lambda_end, nobs - length(lambda)))
     # Compute c_sim 
     c_sim <- list()
     for (i in 1:nobs) {

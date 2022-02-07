@@ -618,6 +618,31 @@ proj_sus_dev <- rbind(
   proj_sus_dev_world %>% mutate(country = "World")
 )
 
+# Data frames for modeling ----
+
+cap_data_us <- formatCapData(
+    data_nation = data$us,
+    data_world  = data$world,
+    year_beg    = year_model_us_min,
+    year_max    = year_model_us_max
+)
+
+cap_data_china <- formatCapData(
+    data_nation = data$china %>% filter(component == "Module"),
+    data_world  = data$world,
+    year_beg    = year_model_china_min,
+    year_max    = year_model_china_max
+)
+
+cap_data_germany <- formatCapData(
+    data_nation = data$germany,
+    data_world  = data$world,
+    year_beg    = year_model_germany_min,
+    year_max    = year_model_germany_max
+)
+
+
+
 # Save all formatted data as a list object ----
 
 saveRDS(list(
@@ -634,10 +659,10 @@ saveRDS(list(
     world              = world, 
     rates              = rates,
     proj_nat_trends    = proj_nat_trends,
-    proj_sus_dev       = proj_sus_dev),
+    proj_sus_dev       = proj_sus_dev,
+    cap_data_us        = cap_data_us,
+    cap_data_china     = cap_data_china,
+    cap_data_germany   = cap_data_germany
+    ),
     dir$data_formatted
 )
-
-germany %>% 
-    ggplot(aes(x = cumCapacityKw, y = costPerKw)) + 
-    geom_line()
