@@ -178,6 +178,9 @@ compute_cost_diff <- function(
     lambda_end = NULL
 ) {
     nobs <- data$N
+    if (is.null(year_beg)) {
+        year_beg <-min(data$year)
+    } 
     c_sim_draws_global <- get_csim_draws(params, data, year_beg)
     c_sim_draws_national <- get_csim_draws_national(
             params, data, year_beg, delay_years, lambda_end)
@@ -190,6 +193,7 @@ compute_cost_diff <- function(
     }
     cost_diff <- as.data.frame(cost_diff)
     names(cost_diff) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
+    cost_diff$year <- year_beg + seq(0, nrow(cost_diff) - 1)
     return(cost_diff)
 }
 

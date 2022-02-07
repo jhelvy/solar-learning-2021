@@ -6,34 +6,24 @@ data <- readRDS(dir$data_formatted)
 
 # Load estimated LR models
 lr <- readRDS(dir$lr_models)
-lr_stan <- readRDS(dir$lr_models_stan)
+lr_lambda <- readRDS(dir$lr_models_lambda)
 
 # Get baseline lambda values from model
-params_us <- extract(lr_stan$fit_us)
-params_china <- extract(lr_stan$fit_china)
-params_germany <- extract(lr_stan$fit_germany)
+params_us <- extract(lr_lambda$fit_us)
+params_china <- extract(lr_lambda$fit_china)
+params_germany <- extract(lr_lambda$fit_germany)
 lambda_us <- mean(params_us$lambda)
 lambda_china <- mean(params_china$lambda)
 lambda_germany <- mean(params_germany$lambda)
-data_us <- lr_stan$data_us
-data_china <- lr_stan$data_china
-data_germany <- lr_stan$data_germany
-
-# Set beginning values
-us_beg <- lr$data_us %>%
-    filter(year == year_model_us_min)
-china_beg <- lr$data_china %>%
-    filter(year == year_model_china_min)
-germany_beg <- lr$data_germany %>%
-    filter(year == year_model_germany_min)
-world_beg <- data$world %>%
-    filter(year == year_model_world_min)
+data_us <- lr_lambda$data_us
+data_china <- lr_lambda$data_china
+data_germany <- lr_lambda$data_germany
 
 # Merge together true historical cost per kW
 cost_historical_true <- rbind(
-    lr$data_us %>% mutate(country = "U.S."),
-    lr$data_china %>% mutate(country = "China"),
-    lr$data_germany %>% mutate(country = "Germany"))
+    data$cap_data_us %>% mutate(country = "U.S."),
+    data$cap_data_china %>% mutate(country = "China"),
+    data$cap_data_germany %>% mutate(country = "Germany"))
 
 # Learning rates based on local cumulative capacity and local installed costs
 # Note: Since world data does not break down installation type
@@ -113,37 +103,34 @@ cost <- rbind(
            learning = "national", country = "Germany")
 )
 
-# Preview results
-cost %>%
-    ggplot() +
-    facet_wrap(vars(country)) +
-    geom_line(
-        aes(x = year, y = cost_per_kw, color = learning)) +
-    geom_ribbon(
-        aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
-            fill = learning), alpha = 0.22) +
-    geom_line(
-        data = rbind(
-            lr$data_us %>% mutate(country = "U.S."),
-            lr$data_china %>% mutate(country = "China"),
-            lr$data_germany %>% mutate(country = "Germany")),
-        aes(x = year, y = costPerKw), linetype = 2) +
-    theme_bw() +
-    scale_y_log10()
-
-ggsave("cost_historical.png", width = 15, height = 5)
+# # Preview results
+# cost %>%
+#     ggplot() +
+#     facet_wrap(vars(country)) +
+#     geom_line(
+#         aes(x = year, y = cost_per_kw, color = learning)) +
+#     geom_ribbon(
+#         aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
+#             fill = learning), alpha = 0.22) +
+#     geom_line(
+#         data = cost_historical_true,
+#         aes(x = year, y = costPerKw), linetype = 2) +
+#     theme_bw() +
+#     scale_y_log10()
+# 
+# ggsave("cost_historical.png", width = 15, height = 5)
 
 # Calculate savings between national and global learning scenarios
 
 # First, compute the cost difference CIs for each country
-
 cost_diff_us <- compute_cost_diff(
     params   = params_us,
     data     = data_us,
     year_beg = year_model_us_min,
     ci       = ci_all,
     delay_years = 10,
-    lambda_end = 0.9)
+    lambda_end = 0.9) %>% 
+    mutate(country = "U.S.")
 
 cost_diff_china <- compute_cost_diff(
     params   = params_china,
@@ -151,7 +138,8 @@ cost_diff_china <- compute_cost_diff(
     year_beg = year_model_china_min,
     ci       = ci_all,
     delay_years = 10,
-    lambda_end = 0.9)
+    lambda_end = 0.9) %>% 
+    mutate(country = "China")
 
 cost_diff_germany <- compute_cost_diff(
     params   = params_germany,
@@ -159,29 +147,24 @@ cost_diff_germany <- compute_cost_diff(
     year_beg = year_model_germany_min,
     ci       = ci_all,
     delay_years = 10,
-    lambda_end = 0.9)
+    lambda_end = 0.9) %>% 
+    mutate(country = "Germany")
+
+cost_diffs <- rbind(cost_diff_us, cost_diff_china, cost_diff_germany) %>% 
+    filter(year >= year_savings_min, year <= year_savings_max)
 
 # Compute the additional capacity in each country in each year
-cap_additions <- rbind(
-    cap_data_us %>%
-        select(year, cumCapacityKw)  %>%
-        mutate(country = "U.S."),
-    cap_data_china %>%
-        mutate(country = "China"),
-    cap_data_germany %>%
-        mutate(country = "Germany")) %>%
-    group_by(country) %>%
-    mutate(annCapKw_new = cumCapacityKw - lag(cumCapacityKw, 1)) %>%
-    select(year, country, annCapKw_new) %>%
+cap_additions <- cost_historical_true %>% 
+    select(year, country, annCapKw_nation) %>%
     filter(year >= year_savings_min, year <= year_savings_max)
 
 # Compute savings
-savings <- cost_stats %>%
+savings <- cost_diffs %>%
     left_join(cap_additions, by = c("year", "country")) %>%
     mutate(
-        ann_savings_bil = (annCapKw_new * mean) / 10^9,
-        ann_savings_bil_lb = (annCapKw_new * low) / 10^9,
-        ann_savings_bil_ub = (annCapKw_new * high) / 10^9
+        ann_savings_bil = (annCapKw_nation * cost_per_kw) / 10^9,
+        ann_savings_bil_lb = (annCapKw_nation * cost_per_kw_lb) / 10^9,
+        ann_savings_bil_ub = (annCapKw_nation * cost_per_kw_ub) / 10^9
     ) %>%
     select(
         year, country, ann_savings_bil, ann_savings_bil_lb,
