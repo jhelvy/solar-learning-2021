@@ -334,14 +334,14 @@ germany <- read_csv(germanyFilePath) %>%
   # Currency conversion first, then adjust for inflation
   left_join(exchangeRatesEUR, by = "year") %>%
   mutate(
-    costPerKw = costPerKw / average_of_rate) %>% 
-    # costPerKw = priceR::adjust_for_inflation(
-    #   price = costPerKw, 
-    #   from_date = year, 
-    #   country = "Germany", 
-    #   to_date = year_inflation,
-    #   inflation_dataframe = inflation$inflation_df,
-    #   countries_dataframe = inflation$countries_df)) %>%
+    costPerKw = costPerKw / average_of_rate,
+    costPerKw = priceR::adjust_for_inflation(
+      price = costPerKw,
+      from_date = year,
+      country = "Germany",
+      to_date = year_inflation,
+      inflation_dataframe = inflation$inflation_df,
+      countries_dataframe = inflation$countries_df)) %>%
   left_join(germany_cap) %>%
   mutate(
     cumCapacityKw = capacityCumulativeMw * 10^3,

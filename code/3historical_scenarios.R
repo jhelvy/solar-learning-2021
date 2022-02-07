@@ -102,20 +102,20 @@ cost <- rbind(
            learning = "national", country = "Germany")
 )
 
-# # Preview results
-# cost %>%
-#     ggplot() +
-#     facet_wrap(vars(country)) +
-#     geom_line(
-#         aes(x = year, y = cost_per_kw, color = learning)) +
-#     geom_ribbon(
-#         aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
-#             fill = learning), alpha = 0.22) +
-#     geom_line(
-#         data = cost_historical_true,
-#         aes(x = year, y = costPerKw), linetype = 2) +
-#     theme_bw() +
-#     scale_y_log10()
+# Preview results
+cost %>%
+    ggplot() +
+    facet_wrap(vars(country)) +
+    geom_line(
+        aes(x = year, y = cost_per_kw, color = learning)) +
+    geom_ribbon(
+        aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
+            fill = learning), alpha = 0.22) +
+    geom_line(
+        data = cost_historical_true,
+        aes(x = year, y = costPerKw), linetype = 2) +
+    theme_bw() 
+    # scale_y_log10()
 # 
 # ggsave("cost_historical.png", width = 15, height = 5)
 
