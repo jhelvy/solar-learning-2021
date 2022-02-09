@@ -72,18 +72,67 @@ project_cost <- function(model, df, lambda) {
     return(y_sim)
 }
 
+make_historical_plot <- function(cost_national, cost_global) {
+    plot <- rbind(
+        cost_global %>% mutate(scenario = "global"),
+        cost_national %>% mutate(scenario = "national")) %>% 
+        ggplot() + 
+        geom_line(
+            mapping = aes(x = cumCapKw_world, y = mean, color = scenario), 
+        ) +
+        geom_ribbon(
+            mapping = aes(
+                x = cumCapKw_world, ymin = lower, ymax = upper, fill = scenario),
+            alpha = 0.2
+        ) +
+        geom_point(aes(x = cumCapKw_world, y = costPerKw)) + 
+        scale_x_log10() +
+        scale_y_log10() +
+        theme_bw() + 
+        labs(
+            x = "log(Cumulative Global Installed Capacity, kW)",
+            y = "log(Cost per kW, $USD)"
+        )
+    return(plot)
+}
+
+make_projection_plot <- function(proj_national, proj_global) {
+    plot <- rbind(
+        proj_global %>% mutate(scenario = "global"),
+        proj_national %>% mutate(scenario = "national")) %>% 
+        ggplot() + 
+        geom_line(
+            mapping = aes(x = cumCapKw_world, y = mean, color = scenario), 
+        ) +
+        geom_ribbon(
+            mapping = aes(
+                x = cumCapKw_world, ymin = lower, ymax = upper, fill = scenario),
+            alpha = 0.2
+        ) +
+        # scale_x_log10() + 
+        # scale_y_log10() + 
+        theme_bw() + 
+        labs(
+            x = "log(Cumulative Global Installed Capacity, kW)",
+            y = "log(Cost per kW, $USD)"
+        )
+    return(plot)
+}
+
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
 # Select data
 df <- data$hist_us
-df <- data$hist_china
-df <- data$hist_germany
+# df <- data$hist_china
+# df <- data$hist_germany
 
 df_proj <- data$proj_nat_trends_us
 # df_sus_dev <- data$proj_sus_dev_us
-df_proj <- data$proj_nat_trends_china
-df_proj <- data$proj_nat_trends_germany
+# df_proj <- data$proj_nat_trends_china
+# df_proj <- data$proj_sus_dev_china
+# df_proj <- data$proj_nat_trends_germany
+# df_proj <- data$proj_sus_dev_germany
 
 # Set parameters
 delay_hist <- 6
@@ -91,11 +140,10 @@ delay_proj <- 10
 lambda_end_hist <- 0.9
 lambda_end_proj <- 0.9
 
-# Fit model
+# Fit historical model
 results <- run_model(df)
 model <- results$model
 lambda <- results$lambda
-# lambda <- 0.8
 1 - 2^coef(model)["log_q"] # Learning rate
 
 # Predict cost - historical, global
@@ -106,30 +154,6 @@ lambda_nat <- seq(lambda, lambda_end_hist, length.out = delay_hist + 1)
 lambda_nat <- c(lambda_nat, rep(lambda_end_hist, nrow(df) - length(lambda_nat)))
 cost_national <- predict_cost(model, df, lambda_nat)    
 
-# Visualize
-rbind(
-    cost_global %>% mutate(scenario = "global"),
-    cost_national %>% mutate(scenario = "national")) %>% 
-    ggplot() + 
-    geom_line(
-        mapping = aes(x = cumCapKw_world, y = mean, color = scenario), 
-    ) +
-    geom_ribbon(
-        mapping = aes(
-            x = cumCapKw_world, ymin = lower, ymax = upper, fill = scenario),
-        alpha = 0.2
-    ) +
-    geom_point(aes(x = cumCapKw_world, y = costPerKw)) + 
-    scale_x_log10() +
-    scale_y_log10() +
-    theme_bw() + 
-    labs(
-        x = "log(Cumulative Global Installed Capacity, kW)",
-        y = "log(Cost per kW, $USD)"
-    )
-
-# Projections 
-
 # Project cost - global
 proj_global <- project_cost(model, df_proj, lambda)
 
@@ -139,22 +163,5 @@ lambda_nat <- c(lambda_nat, rep(lambda_end_proj, nrow(df_proj) - length(lambda_n
 proj_national <- project_cost(model, df_proj, lambda_nat)
 
 # Visualize
-rbind(
-    proj_global %>% mutate(scenario = "global"),
-    proj_national %>% mutate(scenario = "national")) %>% 
-    ggplot() + 
-    geom_line(
-        mapping = aes(x = cumCapKw_world, y = mean, color = scenario), 
-    ) +
-    geom_ribbon(
-        mapping = aes(
-            x = cumCapKw_world, ymin = lower, ymax = upper, fill = scenario),
-        alpha = 0.2
-    ) +
-    # scale_x_log10() + 
-    # scale_y_log10() + 
-    theme_bw() + 
-    labs(
-        x = "log(Cumulative Global Installed Capacity, kW)",
-        y = "log(Cost per kW, $USD)"
-    )
+make_historical_plot(cost_national, cost_global)
+make_projection_plot(proj_national, proj_global)

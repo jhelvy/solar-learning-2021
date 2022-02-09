@@ -48,7 +48,7 @@ $$
 \gamma_i \ln s_t 
 $$
 
-Using global cumulative installed PV capacity for $q_t$ produces "global" learning coefficients for country $i$. But learning can be broken into components that are national and global. Assuming that the national learning is derived from national cumulative installed capacity, $q_{it}$, and that the global learning is derived from the cumulative installed capacity in all other countries, $q_{jt}$, then $q_t$ in the above equations can be defined as a weighted sum of $q_{it}$ and $q_{jt}$:
+Using global cumulative installed PV capacity for $q_t$ produces global learning coefficients for country $i$. But learning can be broken into components that are national and global. Assuming that the national learning is derived from national cumulative installed capacity, $q_{it}$, and that the global learning is derived from the cumulative installed capacity in all other countries, $q_{jt}$, then $q_t$ in the above equations can be defined as a weighted sum of $q_{it}$ and $q_{jt}$:
 
 $$
 q_t = q_{it} + (1 - \lambda_i) q_{jt},
@@ -140,17 +140,18 @@ As the figure shows, the same value of $\lambda_i$ does not translate to the sam
 
 ## When should we use $\lambda_i$? 
 
-The hybrid model that includes a $\lambda_i$ term is rooted in the concept that capacity installed within a nation should contribute to that nation's learning rate. However, if a nation largely _imports_ the PV panels that are installed domestically, then the learning is more likely occuring in the country where those panels were manufactured.
+The hybrid model that includes a $\lambda_i$ term is rooted in the concept that capacity installed within a nation should contribute to that nation's learning rate. However, if a nation largely _imports_ the PV panels that are installed domestically, then the learning is more likely occurring in the country where those panels were _manufactured_ rather than in the country where they were installed.
 
-The U.S. and Germany serve as an illustrative comparison. Both countries have sizeable domestic capacities but limited domestic production. Nonetheless, the values for $\lambda_i$ that best fit the data in each country are in stark contrast. The Germany case suggests considerably large learning from domestic capacity whereas the U.S. case suggests the opposite. 
+This raises a few questions.
 
+### Perhaps we should _not_ use the hybrid model for the "global markets" scenario?
 
+One benefit of estimating the hybrid model for the "global markets" scenario is that it produces a value for $\lambda_i$ that can be used as a starting value in the national markets scenario. However, it also attributes national learning to domestic capacity that was largely imported. 
 
+If we instead stick with a traditional learning curve using global capacities for the "global markets" scenario, then we're no longer attributing learning as global versus national. We're simply saying this was the historical learning rate in country $i$. It's only in the "national markets" scenario where we have to then start to break down how much learning is coming from national versus global capacity. That said, in this counter factual world the domestic capacity is being domestically manufactured, so the hybrid model makes sense. The drawback here is that we now have to pick values both starting and end values for $\lambda_i$ as well as how we want them to change over time.
 
+### Perhaps we should consider adding production into the model? 
 
-
-
-
-
+I'm wondering if a three-factor model might make sense where we include both installed capacity as well as domestic production somehow?
 
 

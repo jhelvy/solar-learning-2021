@@ -258,7 +258,7 @@ c_{it} =
 \beta_i \ln q_t + 
 \gamma_i \ln s_t 
 \]</span></p>
-<p>Using global cumulative installed PV capacity for <span class="math inline">\(q_t\)</span> produces “global” learning coefficients for country <span class="math inline">\(i\)</span>. But learning can be broken into components that are national and global. Assuming that the national learning is derived from national cumulative installed capacity, <span class="math inline">\(q_{it}\)</span>, and that the global learning is derived from the cumulative installed capacity in all other countries, <span class="math inline">\(q_{jt}\)</span>, then <span class="math inline">\(q_t\)</span> in the above equations can be defined as a weighted sum of <span class="math inline">\(q_{it}\)</span> and <span class="math inline">\(q_{jt}\)</span>:</p>
+<p>Using global cumulative installed PV capacity for <span class="math inline">\(q_t\)</span> produces global learning coefficients for country <span class="math inline">\(i\)</span>. But learning can be broken into components that are national and global. Assuming that the national learning is derived from national cumulative installed capacity, <span class="math inline">\(q_{it}\)</span>, and that the global learning is derived from the cumulative installed capacity in all other countries, <span class="math inline">\(q_{jt}\)</span>, then <span class="math inline">\(q_t\)</span> in the above equations can be defined as a weighted sum of <span class="math inline">\(q_{it}\)</span> and <span class="math inline">\(q_{jt}\)</span>:</p>
 <p><span class="math display">\[
 q_t = q_{it} + (1 - \lambda_i) q_{jt},
 \]</span></p>
@@ -291,8 +291,17 @@ p_{it} &amp;= \frac{q_{it}}{q_t} \\
 </div>
 <div id="when-should-we-use-lambda_i" class="section level2">
 <h2>When should we use <span class="math inline">\(\lambda_i\)</span>?</h2>
-<p>The hybrid model that includes a <span class="math inline">\(\lambda_i\)</span> term is rooted in the concept that capacity installed within a nation should contribute to that nation’s learning rate. However, if a nation largely <em>imports</em> the PV panels that are installed domestically, then the learning is more likely occuring in the country where those panels were manufactured.</p>
-<p>The U.S. and Germany serve as an illustrative comparison. Both countries have sizeable domestic capacities but limited domestic production. Nonetheless, the values for <span class="math inline">\(\lambda_i\)</span> that best fit the data in each country are in stark contrast. The Germany case suggests considerably large learning from domestic capacity whereas the U.S. case suggests the opposite.</p>
+<p>The hybrid model that includes a <span class="math inline">\(\lambda_i\)</span> term is rooted in the concept that capacity installed within a nation should contribute to that nation’s learning rate. However, if a nation largely <em>imports</em> the PV panels that are installed domestically, then the learning is more likely occurring in the country where those panels were <em>manufactured</em> rather than in the country where they were installed.</p>
+<p>This raises a few questions.</p>
+<div id="perhaps-we-should-not-use-the-hybrid-model-for-the-global-markets-scenario" class="section level3">
+<h3>Perhaps we should <em>not</em> use the hybrid model for the “global markets” scenario?</h3>
+<p>One benefit of estimating the hybrid model for the “global markets” scenario is that it produces a value for <span class="math inline">\(\lambda_i\)</span> that can be used as a starting value in the national markets scenario. However, it also attributes national learning to domestic capacity that was largely imported.</p>
+<p>If we instead stick with a traditional learning curve using global capacities for the “global markets” scenario, then we’re no longer attributing learning as global versus national. We’re simply saying this was the historical learning rate in country <span class="math inline">\(i\)</span>. It’s only in the “national markets” scenario where we have to then start to break down how much learning is coming from national versus global capacity. That said, in this counter factual world the domestic capacity is being domestically manufactured, so the hybrid model makes sense. The drawback here is that we now have to pick values both starting and end values for <span class="math inline">\(\lambda_i\)</span> as well as how we want them to change over time.</p>
+</div>
+<div id="perhaps-we-should-consider-adding-production-into-the-model" class="section level3">
+<h3>Perhaps we should consider adding production into the model?</h3>
+<p>I’m wondering if a three-factor model might make sense where we include both installed capacity as well as domestic production somehow?</p>
+</div>
 </div>
 
 
