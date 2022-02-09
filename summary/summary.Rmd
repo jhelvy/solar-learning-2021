@@ -1,0 +1,152 @@
+---
+title: "Learning models"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  fig.path = "figs/",
+  fig.width = 7.252,
+  fig.height = 4,
+  comment = "#>",
+  fig.retina = 3
+)
+
+# Load libraries, functions, and dir paths
+source(here::here('code', '0setup.R'))
+
+# Load formatted data
+data <- readRDS(dir$data_formatted)
+
+# Select data
+df_us <- data$hist_us
+df_china <- data$hist_china
+df_germany <- data$hist_germany
+```
+
+## Two-factor learning model
+
+A two-factor learning model relating the unit cost, $c_{it}$, in year $t$ and country $i$ of solar PV modules to the cumulative installed PV capacity in year $t$, $q_t$, and globally-averaged polysilicon prices in year $t$, $s_t$, (the primary input material to PV modules) is given by:
+
+$$
+c_{it} = 
+\alpha_i q_t^{\beta_i} s_t^{\gamma_i}
+$$
+
+Here, $\alpha_i$ is a constant related to the starting year conditions in country $i$, $\gamma_i$ measures the sensitivity to polysilicon prices, and $\beta_i$ is the learning coefficient in country $i$. A log transformation produces the typical log-log formulation of the model that can be estimated via ordinary linear regression:
+
+$$
+\ln c_{it} = 
+\ln \alpha_i + 
+\beta_i \ln q_t + 
+\gamma_i \ln s_t 
+$$
+
+Using global cumulative installed PV capacity for $q_t$ produces "global" learning coefficients for country $i$. But learning can be broken into components that are national and global. Assuming that the national learning is derived from national cumulative installed capacity, $q_{it}$, and that the global learning is derived from the cumulative installed capacity in all other countries, $q_{jt}$, then $q_t$ in the above equations can be defined as a weighted sum of $q_{it}$ and $q_{jt}$:
+
+$$
+q_t = q_{it} + (1 - \lambda_i) q_{jt},
+$$
+
+where $\lambda_i$ is a value ranging from 0 to 1 that controls the proportion of learning-related cost improvements from national versus global learning for country $i$. If $\lambda_i = 1$, then all learning is nationally-derived, and if $\lambda_i = 0$, then all learning is globally-derived. Substituting this into the above equation yields:
+
+$$
+\ln c_{it} = 
+\ln \alpha_i + 
+\beta_i \ln \left [ q_{it} + (1 - \lambda_i) q_{jt} \right ] + 
+\gamma_i \ln s_t 
+$$
+
+Since $0 \le \lambda_i \le 1$, the above model can be iteratively estimated using every possible value of $\lambda_i$ from $0$ to $1$. The "best" value of $\lambda_i$ for country $i$ is the one that results in the smallest sum of squared residuals.
+
+## Interpreting $\lambda$ in the context of learning
+
+A core assumption in the above model is that national and global learning are proportionally derived from national and global cumulative installed capacities. With this in mind, the value of $\lambda_i$ itself cannot be directly interpreted as the proportion of national learning; rather, the proportion of national learning must be computed as the ratio between the national and global installed capacities for a given value of $\lambda_i$:
+
+$$
+\begin{aligned}
+p_{it} &= \frac{q_{it}}{q_t} \\
+    &= \frac{q_{it}}{q_{it} + (1 - \lambda_i) q_{jt}}
+\end{aligned}
+$$
+
+Using this definition, 100% of learning will be national when $\lambda_i = 1$; however, if $\lambda_i = 0$, then national learning will be $q_{it} / q_t$, which will always be greater than 0. The figure below illustrates the relationship between $\lambda_i$ and the median value of $p_i$ in each year for each country.
+
+```{r, echo=FALSE}
+compareCapData <- function(df) {
+    lambda <- seq(0, 1, 0.2)
+    results <- list()
+    for (i in 1:length(lambda)) {
+        results[[i]] <- df %>% 
+            mutate(
+                q = cumCapKw_world - lambda[i] * cumCapKw_other,
+                p = (cumCapKw_world - cumCapKw_other) / q, 
+                median_p = round(median(p), 2)
+            )
+    }
+    result <- do.call(rbind, results)
+    result$lambda <- rep(lambda, each = nrow(df))
+    result <- result %>% 
+        mutate(label = paste0("λ = ", lambda, ", p_i = ", median_p))
+    return(result)
+}
+```
+
+```{r, echo=FALSE, fig.width=12, fig.height=3.5}
+plotData <- rbind(
+    compareCapData(df_us) %>% mutate(country = "U.S."),
+    compareCapData(df_china) %>% mutate(country = "China"),
+    compareCapData(df_germany) %>% mutate(country = "Germany")
+) 
+
+ggplot(plotData) + 
+    geom_line(
+        aes(x = year, y = q, group = lambda)
+    ) + 
+    geom_text(
+        data = plotData %>% 
+            group_by(country, lambda) %>% 
+            filter(year == max(year)),
+        aes(x = year, y = q, label = label),
+        hjust = 0, nudge_x = 0.2
+    ) +
+    facet_wrap(vars(country)) +
+    expand_limits(x = c(2006, 2030)) +
+    theme_bw() + 
+    labs(
+        x = "Year", 
+        y = "Cumulative installed capacity (kW)"
+    )
+
+labelData <- plotData %>% 
+    filter(lambda == 0.4) %>% 
+    distinct(country, median_p)
+p_us <- labelData %>% filter(country == "U.S.") %>% pull(median_p)
+p_china <- labelData %>% filter(country == "China") %>% pull(median_p)
+p_germany <- labelData %>% filter(country == "Germany") %>% pull(median_p)
+```
+
+As the figure shows, the same value of $\lambda_i$ does not translate to the same proportion of national learning for each country. For example, if $\lambda_i = 0.4$, then the proportion of national learning for each country is:
+
+- U.S.: `r percent(p_us)`
+- China: `r percent(p_china)`
+- Germany: `r percent(p_germany)`
+
+## When should we use $\lambda_i$? 
+
+The hybrid model that includes a $\lambda_i$ term is rooted in the concept that capacity installed within a nation should contribute to that nation's learning rate. However, if a nation largely _imports_ the PV panels that are installed domestically, then the learning is more likely occuring in the country where those panels were manufactured.
+
+The U.S. and Germany serve as an illustrative comparison. Although Germany has a large domestic capacity, it's domestic _production_ is relatively low. For Germany, a relatively large value for $\lambda_i$ fits the data better, suggesting that Germany's national installed capacity has contributed more to it's learning, but that goes against the knowledge that Germany has very limited domestic production. In contrast, a smaller value for $\lambda_i$ fits the U.S. data better, suggesting less learning from national capacity, which is more consistent with the U.S.'s limited PV production. 
+
+So for two countries with sizeable domestic capacities and limited domestic production, why would the same model suggest one has significantly greater domestic learning?
+
+
+
+
+
