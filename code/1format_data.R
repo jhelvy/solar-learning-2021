@@ -693,7 +693,9 @@ saveRDS(list(
     proj_nat_trends_china   = proj_nat_trends_china,
     proj_sus_dev_china      = proj_sus_dev_china,
     proj_nat_trends_germany = proj_nat_trends_germany,
-    proj_sus_dev_germany    = proj_sus_dev_germany
+    proj_sus_dev_germany    = proj_sus_dev_germany, 
+    exchangeRatesRMB        = exchangeRatesRMB,
+    exchangeRatesEUR        = exchangeRatesEUR
     ),
     dir$data_formatted
 )
