@@ -142,9 +142,13 @@ As the figure shows, the same value of $\lambda_i$ does not translate to the sam
 
 The hybrid model that includes a $\lambda_i$ term is rooted in the concept that capacity installed within a nation should contribute to that nation's learning rate. However, if a nation largely _imports_ the PV panels that are installed domestically, then the learning is more likely occuring in the country where those panels were manufactured.
 
-The U.S. and Germany serve as an illustrative comparison. Although Germany has a large domestic capacity, it's domestic _production_ is relatively low. For Germany, a relatively large value for $\lambda_i$ fits the data better, suggesting that Germany's national installed capacity has contributed more to it's learning, but that goes against the knowledge that Germany has very limited domestic production. In contrast, a smaller value for $\lambda_i$ fits the U.S. data better, suggesting less learning from national capacity, which is more consistent with the U.S.'s limited PV production. 
+The U.S. and Germany serve as an illustrative comparison. Both countries have sizeable domestic capacities but limited domestic production. Nonetheless, the values for $\lambda_i$ that best fit the data in each country are in stark contrast. The Germany case suggests considerably large learning from domestic capacity whereas the U.S. case suggests the opposite. 
 
-So for two countries with sizeable domestic capacities and limited domestic production, why would the same model suggest one has significantly greater domestic learning?
+
+
+
+
+
 
 
 
