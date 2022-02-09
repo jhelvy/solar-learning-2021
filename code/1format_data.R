@@ -331,17 +331,9 @@ germany <- read_csv(germanyFilePath) %>%
   mutate(year = round(year)) %>% 
   # Add 2020 year
   rbind(germany2020) %>% 
-  # Currency conversion first, then adjust for inflation
-  left_join(exchangeRatesEUR, by = "year") %>%
-  mutate(
-    costPerKw = costPerKw / average_of_rate,
-    costPerKw = priceR::adjust_for_inflation(
-      price = costPerKw,
-      from_date = year,
-      country = "Germany",
-      to_date = year_inflation,
-      inflation_dataframe = inflation$inflation_df,
-      countries_dataframe = inflation$countries_df)) %>%
+  # Currency conversion to USD
+  # left_join(exchangeRatesEUR, by = "year") %>%
+  # mutate(costPerKw = costPerKw / average_of_rate) %>% 
   left_join(germany_cap) %>%
   mutate(
     cumCapacityKw = capacityCumulativeMw * 10^3,
@@ -349,9 +341,6 @@ germany <- read_csv(germanyFilePath) %>%
   select(year, costPerKw, cumCapacityKw)
 
 
-  
-  
-  
   
   
 # China ----
@@ -370,14 +359,15 @@ china <- read_csv(chinaFilePath) %>%
     cumCapacityKw = total_capacity_gw * 10^6,
     # convert to cost / kW
     costPerKw = rmbPerW * 10^3) %>%
-  # Currency conversion first, then adjust for inflation
-  merge(exchangeRatesRMB) %>%
+  # Currency conversion
+  # merge(exchangeRatesRMB) %>%
+  # mutate(costPerKw = costPerKw / average_of_rate) %>% 
+  # Adjust for inflation
   mutate(
-    costPerKw = costPerKw / average_of_rate,
     costPerKw = priceR::adjust_for_inflation(
       price = costPerKw, 
-      from_date = year, 
-      country = "US", 
+      from_date = 2019, 
+      country = "China", 
       to_date = year_inflation,
       inflation_dataframe = inflation$inflation_df, 
       countries_dataframe = inflation$countries_df),
