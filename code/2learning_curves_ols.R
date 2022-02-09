@@ -135,15 +135,16 @@ df_proj <- data$proj_nat_trends_us
 # df_proj <- data$proj_sus_dev_germany
 
 # Set parameters
-delay_hist <- 6
+delay_hist <- 10
 delay_proj <- 10
 lambda_end_hist <- 0.9
-lambda_end_proj <- 0.9
+lambda_end_proj <- 1
 
 # Fit historical model
 results <- run_model(df)
 model <- results$model
 lambda <- results$lambda
+lambda <- 0.1
 1 - 2^coef(model)["log_q"] # Learning rate
 
 # Predict cost - historical, global
