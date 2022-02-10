@@ -203,23 +203,24 @@ ui <- fluidPage(
                 selected = "U.S."
             ),
             sliderInput(
-                inputId = "delay",
-                label = "Years delay",
-                min = 1,
-                max = 10,
-                value = 6),
-            sliderInput(
                 inputId = "lambda_start",
                 label = "lambda (start)",
                 min = 0,
                 max = 1,
                 value = 0.32),
+            h4("National Markets Scenario Controls:"),
             sliderInput(
                 inputId = "lambda_end",
                 label = "lambda (end)",
                 min = 0,
                 max = 1,
-                value = 0.9)
+                value = 0.9),
+            sliderInput(
+                inputId = "delay",
+                label = "Years delay",
+                min = 1,
+                max = 10,
+                value = 6)
         ),
 
         # Show a plot of the generated distribution
