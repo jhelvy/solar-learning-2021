@@ -73,12 +73,14 @@ Using this definition, 100% of learning will be national when $\lambda_i = 1$; h
 ```{r, echo=FALSE}
 compareCapData <- function(df) {
     lambda <- seq(0, 1, 0.2)
+    q0 <- df$cumCapKw_world[1]
     results <- list()
     for (i in 1:length(lambda)) {
         results[[i]] <- df %>% 
             mutate(
-                q = cumCapKw_world - lambda[i] * cumCapKw_other,
-                p = (cumCapKw_world - cumCapKw_other) / q, 
+                q = cumsum(q0 + annCapKw_nation + (1 - lambda[i]) * annCapKw_other),
+                q_i = cumsum(q0 + annCapKw_nation), 
+                p = q_i / q, 
                 median_p = round(median(p), 2)
             )
     }
