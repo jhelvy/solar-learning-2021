@@ -77,6 +77,137 @@ formatCapData <- function(data_nation, data_world, year_beg, year_max) {
     return(result)
 }
 
+# Modeling ----
+
+
+# load custom functions
+run_model <- function(df, lambda) {
+    # Run the linear model for a given lambda
+    q0 <- df$cumCapKw_world[1]
+    temp <- df %>%
+        mutate(
+            q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
+            log_q = log(q),
+            log_c = log(costPerKw),
+            log_p = log(price_si)
+        )
+    return(lm(formula = log_c ~ log_q + log_p, data = temp))
+}
+
+predict_cost <- function(model, df, lambda) {
+    nobs <- nrow(df)
+    q0 <- df$cumCapKw_world[1]
+    y_sim <- matrix(0, ncol = 3, nrow = nobs)
+    temp <- df %>%
+        mutate(
+            q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
+            log_q = log(q),
+            log_c = log(costPerKw),
+            log_p = log(price_si)
+        )
+    params <- as.data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
+    names(params) <- c("alpha", "beta", "gamma")
+    for (i in 1:nobs) {
+        sim <- params$alpha + params$beta * temp$log_q[i] + params$gamma * temp$log_p[i]
+        y_sim[i,] <- c(mean(sim), quantile(sim, probs = c(0.05, 0.95)))
+    }
+    y_sim <- as.data.frame(exp(y_sim))
+    names(y_sim) <- c("mean", "lower", "upper")
+    y_sim <- cbind(
+        y_sim,
+        cumCapKw = temp$q,
+        costPerKw = df$costPerKw,
+        year = df$year
+    )
+    return(y_sim)
+}
+
+project_cost <- function(model, df, lambda) {
+    nobs <- nrow(df)
+    q0 <- df$cumCapKw_world[1]
+    y_sim <- matrix(0, ncol = 3, nrow = nobs)
+    temp <- df %>%
+        mutate(
+            q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
+            log_q = log(q),
+            log_p = log(price_si)
+        )
+    params <- as.data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
+    names(params) <- c("alpha", "beta", "gamma")
+    for (i in 1:nobs) {
+        sim <- params$alpha + params$beta * temp$log_q[i] + params$gamma * temp$log_p[i]
+        y_sim[i,] <- c(mean(sim), quantile(sim, probs = c(0.05, 0.95)))
+    }
+    y_sim <- as.data.frame(exp(y_sim))
+    names(y_sim) <- c("mean", "lower", "upper")
+    y_sim <- cbind(y_sim, year = df$year, cumCapKw = temp$q)
+    return(y_sim)
+}
+
+make_historical_plot <- function(cost_national, cost_global) {
+    plot <- rbind(
+        cost_global %>% mutate(scenario = "global"),
+        cost_national %>% mutate(scenario = "national")) %>%
+        mutate(scenario = fct_relevel(scenario, c("national", "global"))) %>%
+        ggplot() +
+        geom_line(
+            mapping = aes(x = year, y = mean, color = scenario),
+        ) +
+        geom_ribbon(
+            mapping = aes(
+                x = year, ymin = lower, ymax = upper, fill = scenario),
+            alpha = 0.2
+        ) +
+        geom_point(aes(x = year, y = costPerKw)) +
+        scale_x_continuous(breaks = cost_global$year) +
+        scale_y_log10() +
+        theme_bw() +
+        labs(
+            title = "Estimated Module Cost Under Global vs. National Markets",
+            x = "log(Cumulative Global Installed Capacity, kW)",
+            y = "log(Cost per kW)"
+        )
+    return(plot)
+}
+
+make_projection_plot <- function(
+    proj_national_nt, proj_global_nt, proj_national_sd, proj_global_sd
+) {
+    plot <- rbind(
+        proj_global_nt %>%
+            mutate(learning = "global", scenario = "National Trends"),
+        proj_national_nt %>%
+            mutate(learning = "national", scenario = "National Trends"),
+        proj_global_sd %>%
+            mutate(learning = "global", scenario = "Sustainable Development"),
+        proj_national_sd %>%
+            mutate(learning = "national", scenario = "Sustainable Development")
+        ) %>%
+        mutate(
+            learning = fct_relevel(learning, c("national", "global"))
+        ) %>%
+        ggplot() +
+        geom_line(
+            mapping = aes(x = year, y = mean, color = learning),
+        ) +
+        geom_ribbon(
+            mapping = aes(
+                x = year, ymin = lower, ymax = upper, fill = learning),
+            alpha = 0.2
+        ) +
+        scale_x_continuous(breaks = proj_global_nt$year) +
+        facet_wrap(vars(scenario), nrow = 1) +
+        theme_bw() +
+        labs(
+            title = "Estimated Module Cost Under Global vs. National Markets",
+            x = "log(Cumulative Global Installed Capacity, kW)",
+            y = "log(Cost per kW, $USD)"
+        )
+    return(plot)
+}
+
+
+
 
 
 
@@ -110,96 +241,6 @@ compute_cost_diff <- function(
 }
 
 
-
-
-
-
-
-
-
-makeGlobalCapData <- function(
-    data_nation, data_world, year_beg = NULL, lambda = 0.1
-) {
-    if (is.null(year_beg)) { year_beg = min(data$year) }
-    # Setup data
-    data_nation <- prepNationData(data_nation, year_beg)
-    data_world <- prepWorldData(data_world, year_beg)
-    cap_beg_world <- data_world[1,]$cumCapKw_world
-    # Compute global cumulative capacity additions for each year
-    result <- computeCapData(data_nation, data_world, cap_beg_world, lambda)
-    return(result)
-}
-
-makeNationalCapData <- function(
-    data_nation, data_world, year_beg = NULL, delay_years = 10, 
-    lambda_start = 0.1, lambda_end = 0.9
-) {
-    if (is.null(year_beg)) { year_beg = min(data$year) }
-    # Setup data
-    data_nation <- prepNationData(data_nation, year_beg)
-    data_world <- prepWorldData(data_world, year_beg)
-    cap_beg_world <- data_world[1,]$cumCapKw_world
-    # Compute national cumulative capacity additions starting with global 
-    # capacity and gradually shifting down to only national capacity after 
-    # delay_years years
-    # First set up the lambda to phase out global cap
-    lambda <- seq(lambda_start, lambda_end, length.out = delay_years + 1)
-    lambda <- c(lambda, rep(lambda_end, nrow(data_nation) - length(lambda)))
-    result <- computeCapData(data_nation, data_world, cap_beg_world, lambda)
-    return(result)
-}
-
-prepNationData <- function(df, year_beg) {
-    result <- df %>%
-        filter(year >= year_beg) %>%
-        select(year, cumCapKw_nation = cumCapacityKw) %>%
-        mutate(
-            annCapKw_nation = cumCapKw_nation - lag(cumCapKw_nation, 1),
-            annCapKw_nation = ifelse(
-                is.na(annCapKw_nation), 0, annCapKw_nation))
-    return(result)
-}
-
-prepWorldData <- function(df, year_beg) {
-    result <- df %>%
-        filter(year >= year_beg) %>%
-        select(year, cumCapKw_world = cumCapacityKw, price_si) %>%
-        mutate(
-            annCapKw_world = cumCapKw_world - lag(cumCapKw_world, 1),
-            annCapKw_world = ifelse(is.na(annCapKw_world), 0, annCapKw_world))
-    return(result)
-}
-
-computeCapData <- function(data_nation, data_world, cap_beg_world, lambda) {
-    result <- data_nation %>%
-        left_join(data_world, by = "year") %>%
-        mutate(
-            lambda = lambda,
-            annCapKw_other = (1 - lambda)*(annCapKw_world - annCapKw_nation),
-            annCapKw_new = annCapKw_other + annCapKw_nation,
-            cumCapKw_new = cumsum(annCapKw_new),
-            cumCapacityKw = cap_beg_world + cumCapKw_new) %>%
-        select(year, cumCapacityKw, annCapKw_new, price_si)
-    return(result)
-}
-
-computeSavings <- function(cost_national, cost_global, cap_additions) {
-    result <- cost_national %>% 
-        left_join(cost_global, by = c("year", "country")) %>% 
-        left_join(cap_additions, by = c("year", "country")) %>% 
-        mutate(
-            ann_savings_bil = annCapKw_new*(national - global) / 10^9) %>%
-        select(year, country, ann_savings_bil)
-    return(result)
-}
-
-getStartingCapcity <- function(df, year_min_proj) {
-  return(df[which(df$year == year_min_proj),]$cumCapacityKw)
-}
-
-getStartingCost <- function(df, year_min_proj) {
-  return(df[which(df$year == year_min_proj),]$costPerKw)
-}
 
 
 # General utility ----
