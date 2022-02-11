@@ -48,14 +48,18 @@ $$
 \gamma_i \ln s_t 
 $$
 
-For each country, $i$, we estimate "global learning" coefficients (Extended Data Table 1), $i$, using linear least-squares regression on (2). The "global learning" model is based on the assumptions that 1) learning was global during the historical period of scaling up PV module production, and 2) variations in country-level module pricing were due to transportation, administrative, and other non-learning costs. We then construct counterfactual "national learning" scenarios by assuming that the learning-related cost improvements in country $i$ from the starting year, $t_0$, are only derived from incrementally more nationally-installed PV capacity: 
+For each country, $i$, we estimate "global learning" coefficients (Extended Data Table 1), $i$, using linear least-squares regression on (2). The "global learning" model is based on the assumptions that 1) learning was global during the historical period of scaling up PV module production, and 2) variations in country-level module pricing were due to transportation, administrative, and other non-learning costs. 
+
+We then construct counterfactual "national learning" scenarios by assuming that the learning-related cost improvements in country $i$ from the starting year, $t_0$, are only derived from incrementally more nationally-installed PV capacity: 
 
 $$
 q_t - q_{t-1} = (q_{it} - q_{it-1}) + (1 - \lambda_i) (q_{jt} - q_{jt-1}),
 $$
 
 \noindent
-where $q_{it}$ is the cumulative installed capacity in country $i$ in year $t$, $q_{jt}$ is the cumulative installed capacity in all other countries in year $t$, and $\lambda_i$ is a value ranging from 0 to 1. This defines a scenario of incremental capacity in each year that increasingly comes from national as opposed to global installations as $\lambda_i$ shifts from 0 to 1. Since $0 \le \lambda_i \le 1$, equation (2) can be iteratively estimated using every possible value of $\lambda_i$ from $0$ to $1$. The "best" value of $\lambda_i$ for country $i$ is the one that results in the smallest sum of squared residuals.
+where $q_{it}$ is the cumulative installed capacity in country $i$ in year $t$, $q_{jt}$ is the cumulative installed capacity in all other countries in year $t$, and $\lambda_i$ is a value ranging from 0 to 1. This defines a scenario of incremental capacity in each year that increasingly comes from national as opposed to global installations as $\lambda_i$ shifts from 0 to 1. 
+
+In our baseline simulations, $\lambda_t$ ranges from 0.1 to 1.0 in increments of 0.1 as $t$ goes from 1 to 10, simulating a gradual transition to a scenario where all new national PV capacity is domestically-supplied. At the starting year of both the historical and project scenarios, $\lambda_t = 0$ and the cumulative capacity is set to the globally installed capacity in that year.
 
 ## Interpreting $\lambda$ in the context of learning
 
