@@ -598,13 +598,21 @@ rates <- data.frame(
 # Final formatting ----
 # Data frames for modeling & scenarios
 
-# Historical
-data_nation_us <- us
-data_nation_china <- china %>% filter(component == "Module")
-data_nation_germany <- germany
+# Historical - make columns for annual capacity
+data_nation_us <- us %>% 
+    addAnnCap()
+data_nation_china <- china %>% 
+    filter(component == "Module") %>% 
+    addAnnCap() %>% 
+    select(year, costPerKw, cumCapacityKw, annCapacityKw)
+data_nation_germany <- germany %>% 
+    addAnnCap()
+data_world <- world %>% 
+    addAnnCap()
+
 hist_us <- formatCapData(
     data_nation = data_nation_us,
-    data_world  = world,
+    data_world  = data_world,
     year_beg    = year_model_us_min,
     year_max    = year_model_us_max
 ) %>%
@@ -612,7 +620,7 @@ hist_us <- formatCapData(
 
 hist_china <- formatCapData(
     data_nation = data_nation_china,
-    data_world  = world,
+    data_world  = data_world,
     year_beg    = year_model_china_min,
     year_max    = year_model_china_max
 ) %>%
@@ -620,7 +628,7 @@ hist_china <- formatCapData(
 
 hist_germany <- formatCapData(
     data_nation = data_nation_germany,
-    data_world  = world,
+    data_world  = data_world,
     year_beg    = year_model_germany_min,
     year_max    = year_model_germany_max
 ) %>%

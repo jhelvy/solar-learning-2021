@@ -46,42 +46,38 @@ getFutureCapacities <- function(
   result <- data.frame(
       year = year_min_proj - 1 + seq(num_years + 1),
       cumCapacityKw = cumCapacityKw) %>%
+      addAnnCap() %>% 
       mutate(price_si = price_si)
   return(result)
 }
 
+addAnnCap <- function(df) {
+    result <- df %>%
+        mutate(
+            annCapacityKw = cumCapacityKw - lag(cumCapacityKw, 1),
+            annCapacityKw = ifelse(is.na(annCapacityKw), 0, annCapacityKw))
+    return(result)
+}
+
 formatCapData <- function(data_nation, data_world, year_beg, year_max) {
-    cap_data_nation <- getAnnCapData(data_nation, year_beg)
-    cap_data_world <- getAnnCapData(data_world, year_beg)
-    result <- cap_data_nation %>%
-        select(year, annCapKw_nation = annCapKw) %>%
+    result <- data_nation %>%
+        select(year, annCapKw_nation = annCapacityKw) %>%
         left_join(
-            cap_data_world %>%
+            data_world %>%
                 select(
-                    year, cumCapKw_world = cumCapKw, annCapKw_world = annCapKw
+                    year, cumCapKw_world = cumCapacityKw, 
+                    annCapKw_world = annCapacityKw
                 ),
             by = "year"
         ) %>%
-        mutate(
-            annCapKw_other = annCapKw_world - annCapKw_nation,
-            cumCapKw_other = cumsum(annCapKw_other)
-        ) %>%
-        filter(year <= year_max) %>%
-        select(year, cumCapKw_world, cumCapKw_other, annCapKw_nation) %>% 
+        filter(year >= year_beg, year <= year_max) %>% 
+        mutate(annCapKw_other = annCapKw_world - annCapKw_nation) %>% 
         # Add price data
         left_join(select(data_world, year, price_si), by = "year")
     return(result)
 }
 
-getAnnCapData <- function(df, year_beg) {
-    result <- df %>%
-        filter(year >= year_beg) %>%
-        select(year, cumCapKw = cumCapacityKw) %>%
-        mutate(
-            annCapKw = cumCapKw - lag(cumCapKw, 1),
-            annCapKw = ifelse(is.na(annCapKw), 0, annCapKw))
-    return(result)
-}
+
 
 make_stan_data <- function(df) {
     return(list(
