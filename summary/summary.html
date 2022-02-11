@@ -258,18 +258,11 @@ c_{it} =
 \beta_i \ln q_t + 
 \gamma_i \ln s_t 
 \]</span></p>
-<p>Using global cumulative installed PV capacity for <span class="math inline">\(q_t\)</span> produces global learning coefficients for country <span class="math inline">\(i\)</span>. But learning can be broken into components that are national and global. Assuming that the national learning is derived from national cumulative installed capacity, <span class="math inline">\(q_{it}\)</span>, and that the global learning is derived from the cumulative installed capacity in all other countries, <span class="math inline">\(q_{jt}\)</span>, then <span class="math inline">\(q_t\)</span> in the above equations can be defined as a weighted sum of <span class="math inline">\(q_{it}\)</span> and <span class="math inline">\(q_{jt}\)</span>:</p>
+<p>For each country, <span class="math inline">\(i\)</span>, we estimate “global learning” coefficients (Extended Data Table 1), <span class="math inline">\(i\)</span>, using linear least-squares regression on (2). The “global learning” model is based on the assumptions that 1) learning was global during the historical period of scaling up PV module production, and 2) variations in country-level module pricing were due to transportation, administrative, and other non-learning costs. We then construct counterfactual “national learning” scenarios by assuming that the learning-related cost improvements in country <span class="math inline">\(i\)</span> from the starting year, <span class="math inline">\(t_0\)</span>, are only derived from incrementally more nationally-installed PV capacity:</p>
 <p><span class="math display">\[
-q_t = q_{it} + (1 - \lambda_i) q_{jt},
+q_t - q_{t-1} = q_{t_0} + (q_{it} - q_{it-1}) + (1 - \lambda_i) (q_{jt} - q_{jt-1}),
 \]</span></p>
-<p>where <span class="math inline">\(\lambda_i\)</span> is a value ranging from 0 to 1 that controls the proportion of learning-related cost improvements from national versus global learning for country <span class="math inline">\(i\)</span>. If <span class="math inline">\(\lambda_i = 1\)</span>, then all learning is nationally-derived, and if <span class="math inline">\(\lambda_i = 0\)</span>, then all learning is globally-derived. Substituting this into the above equation yields:</p>
-<p><span class="math display">\[
-\ln c_{it} = 
-\ln \alpha_i + 
-\beta_i \ln \left [ q_{it} + (1 - \lambda_i) q_{jt} \right ] + 
-\gamma_i \ln s_t 
-\]</span></p>
-<p>Since <span class="math inline">\(0 \le \lambda_i \le 1\)</span>, the above model can be iteratively estimated using every possible value of <span class="math inline">\(\lambda_i\)</span> from <span class="math inline">\(0\)</span> to <span class="math inline">\(1\)</span>. The “best” value of <span class="math inline">\(\lambda_i\)</span> for country <span class="math inline">\(i\)</span> is the one that results in the smallest sum of squared residuals.</p>
+<p> where <span class="math inline">\(q_{it}\)</span> is the cumulative installed capacity in country <span class="math inline">\(i\)</span> in year <span class="math inline">\(t\)</span>, <span class="math inline">\(q_{jt}\)</span> is the cumulative installed capacity in all other countries in year <span class="math inline">\(t\)</span>, and <span class="math inline">\(\lambda_i\)</span> is a value ranging from 0 to 1. This defines a scenario of incremental capacity in each year that increasingly comes from national as opposed to global installations as <span class="math inline">\(\lambda_i\)</span> shifts from 0 to 1. Since <span class="math inline">\(0 \le \lambda_i \le 1\)</span>, equation (2) can be iteratively estimated using every possible value of <span class="math inline">\(\lambda_i\)</span> from <span class="math inline">\(0\)</span> to <span class="math inline">\(1\)</span>. The “best” value of <span class="math inline">\(\lambda_i\)</span> for country <span class="math inline">\(i\)</span> is the one that results in the smallest sum of squared residuals.</p>
 </div>
 <div id="interpreting-lambda-in-the-context-of-learning" class="section level2">
 <h2>Interpreting <span class="math inline">\(\lambda\)</span> in the context of learning</h2>
