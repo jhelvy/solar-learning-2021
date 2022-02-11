@@ -13,32 +13,7 @@ run_model <- function(df, lambda) {
             log_c = log(costPerKw),
             log_p = log(price_si)
         )
-    model <- lm(formula = log_c ~ log_q + log_p, data = temp)
-    err <- sum(model$residuals^2)
-    return(list(model = model, err = err))
-}
-
-run_models <- function(df) {
-    
-    # For every value of lambda, run the linear model
-    lambdas <- seq(0, 1, by = 0.005)
-    models <- list()
-    errs <- list()
-    for (i in 1:length(lambdas)) {
-        result <- run_model(df, lambdas[i])
-        models[[i]] <- result$model
-        errs[[i]] <- result$err
-    }
-    
-    # Get the best model based on the lowest error
-    err <- unlist(errs)
-    # plot(lambdas, err)
-    index_best <- which(err == min(err))
-    model <- models[[index_best]]
-
-    # Best lambda
-    lambda <- lambdas[index_best]
-    return(list(model = model, lambda = lambda))
+    return(lm(formula = log_c ~ log_q + log_p, data = temp))
 }
 
 predict_cost <- function(model, df, lambda) {
@@ -174,24 +149,19 @@ df_proj_sd_list <- list(
 )
 
 # Run historical models
-results_us <- run_models(df_list[["U.S."]])
-results_china <- run_models(df_list[["China"]])
-results_germany <- run_models(df_list[["Germany"]])
+model_us <- run_model(df_list[["U.S."]], lambda = 0)
+model_china <- run_model(df_list[["China"]], lambda = 0)
+model_germany <- run_model(df_list[["Germany"]], lambda = 0)
 
 model_list <- list(
-    "U.S." = results_us$model,
-    "China" = results_china$model, 
-    "Germany" = results_germany$model 
-)
-lambda_list <- list(
-    "U.S." = results_us$lambda,
-    "China" = results_china$lambda, 
-    "Germany" = results_germany$lambda
+    "U.S." = model_us,
+    "China" = model_china, 
+    "Germany" = model_germany
 )
 lr_list <- list(
-    "U.S." = percent(1 - 2^coef(model_list[["U.S."]])["log_q"]),
-    "China" = percent(1 - 2^coef(model_list[["China"]])["log_q"]), 
-    "Germany" = percent(1 - 2^coef(model_list[["Germany"]])["log_q"])
+    "U.S." = percent(1 - 2^coef(model_us)["log_q"]),
+    "China" = percent(1 - 2^coef(model_china)["log_q"]), 
+    "Germany" = percent(1 - 2^coef(model_germany)["log_q"])
 )
 
 # # Example calculations
@@ -199,12 +169,16 @@ lr_list <- list(
 # model <- model_list[[country]]
 # df <- df_list[[country]]
 # df_proj <- df_proj_nt_list[[country]]
-# lambda <- lambda_list[[country]]
-# temp <- seq(lambda, 0.9, length.out = 6 + 1)
-# predict_cost(model, df, lambda)
-# predict_cost(model, df, c(temp, rep(0.9, nrow(df) - length(temp))))
-# project_cost(model, df_proj, lambda)
-# project_cost(model, df_proj, c(temp, rep(0.9, nrow(df_proj) - length(temp))))
+# lambda_start <- 0
+# lambda_end <- 1
+# delay <- 10
+# temp <- seq(lambda_start, lambda_end, length.out = delay + 1)
+# lambda_hist <- c(temp, rep(lambda_end, nrow(df) - length(temp)))
+# lambda_proj <- c(temp, rep(lambda_end, nrow(df_proj) - length(temp)))
+# predict_cost(model, df, lambda = 0)
+# predict_cost(model, df, lambda_hist)
+# project_cost(model, df_proj, lambda <- 0)
+# project_cost(model, df_proj, lambda_proj)
 
 # ui ----
 
@@ -228,33 +202,28 @@ ui <- fluidPage(
                 label = "lambda (start)",
                 min = 0,
                 max = 1,
-                value = 0.1),
-            h4("National Markets Scenario Controls:"),
+                value = 0),
             sliderInput(
                 inputId = "lambda_end",
                 label = "lambda (end)",
                 min = 0,
                 max = 1,
-                value = 0.9),
+                value = 1),
             sliderInput(
                 inputId = "delay",
                 label = "Years delay",
                 min = 1,
                 max = 10,
-                value = 6)
+                value = 10)
         ),
 
         # Show a plot of the generated distribution
         mainPanel(
-            h2("Best Model Results:"),
-            textOutput('lr_best'),
-            textOutput('lambda_best'),
-            h2("Current Model Results:"),
+            h3("Learning Rate:"),
             textOutput('lr'),
-            textOutput('lambda'),
-            h2("Historical cost"),
+            h3("Historical cost"),
             plotOutput("historical"),
-            h2("Future cost"),
+            h3("Future cost"),
             plotOutput("projection")
         )
     )
@@ -266,30 +235,33 @@ ui <- fluidPage(
 server <- function(input, output) {
     
     # Get variables based on inputs
-    lambda <- reactive({ 
-        return(input$lambda_start)
-    })
-    
-    lambda_end <- reactive({ 
-        return(input$lambda_end)
-    })
 
     lambda_nat <- reactive({
-        temp <- seq(input$lambda_start, input$lambda_end, length.out = delay() + 1)
-        temp <- c(temp, rep(input$lambda_end, nrow(df()) - length(temp)))
+        temp <- seq(
+            input$lambda_start, 
+            input$lambda_end, 
+            length.out = input$delay + 1
+        )
+        temp <- c(
+            temp, 
+            rep(input$lambda_end, nrow(df()) - length(temp))
+        )
         return(temp)
     })
     
     lambda_nat_proj <- reactive({
-        temp <- seq(input$lambda_start, input$lambda_end, length.out = delay() + 1)
-        temp <- c(temp, rep(input$lambda_end, nrow(df_proj_nt()) - length(temp)))
+        temp <- seq(
+            input$lambda_start, 
+            input$lambda_end, 
+            length.out = input$delay + 1
+        )
+        temp <- c(
+            temp, 
+            rep(input$lambda_end, nrow(df_proj_nt()) - length(temp))
+        )
         return(temp)
     })
     
-    delay <- reactive({ 
-        return(input$delay)
-    })
-
     df <- reactive({
         return(df_list[[input$country]])
     })
@@ -303,25 +275,12 @@ server <- function(input, output) {
     })
 
     model <- reactive({
-        result <- run_model(df(), lambda())
-        return(result$model)
-    })
-
-    lr <- reactive({
-        return(percent(1 - 2^coef(model())["log_q"]))
-    })
-    
-    lr_best <- reactive({
-        return(lr_list[[input$country]])
-    })
-
-    lambda_best <- reactive({ 
-        return(lambda_list[[input$country]])
+        return(model_list[[input$country]])
     })
 
     # Compute outcomes
     cost_global <- reactive({ 
-        return(predict_cost(model(), df(), lambda()))
+        return(predict_cost(model(), df(), lambda = 0))
     })
     
     cost_national <- reactive({ 
@@ -329,7 +288,7 @@ server <- function(input, output) {
     })
     
     proj_global_nt <- reactive({ 
-        return(project_cost(model(), df_proj_nt(), lambda())) 
+        return(project_cost(model(), df_proj_nt(), lambda = 0)) 
     })
     
     proj_national_nt <- reactive({ 
@@ -337,7 +296,7 @@ server <- function(input, output) {
     })
 
     proj_global_sd <- reactive({ 
-        return(project_cost(model(), df_proj_sd(), lambda())) 
+        return(project_cost(model(), df_proj_sd(), lambda = 0)) 
     })
     
     proj_national_sd <- reactive({ 
@@ -346,13 +305,7 @@ server <- function(input, output) {
     
     # Output
     
-    output$lr_best <- renderText(paste0("Learning Rate: ", lr_best()))
-    
-    output$lambda_best <- renderText(paste0("λ: ", lambda_best()))
-    
-    output$lr <- renderText(paste0("Learning Rate: ", lr()))
-    
-    output$lambda <- renderText(paste0("λ: ", lambda()))
+    output$lr <- renderText(lr_list[[input$country]])
     
     output$historical <- renderPlot(
         make_historical_plot(cost_national(), cost_global()),
