@@ -1,3 +1,6 @@
+# Load libraries, functions, and dir paths
+source(here::here('code', '0setup.R'))
+library(shiny)
 
 # load custom functions
 run_model <- function(df, lambda) {
@@ -5,7 +8,7 @@ run_model <- function(df, lambda) {
     q0 <- df$cumCapKw_world[1]
     temp <- df %>%
         mutate(
-            q = cumsum(q0 + annCapKw_nation + (1 - lambda) * annCapKw_other),
+            q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
             log_q = log(q),
             log_c = log(costPerKw),
             log_p = log(price_si)
@@ -44,7 +47,7 @@ predict_cost <- function(model, df, lambda) {
     y_sim <- matrix(0, ncol = 3, nrow = nobs)
     temp <- df %>%
         mutate(
-            q = cumsum(q0 + annCapKw_nation + (1 - lambda) * annCapKw_other),
+            q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
             log_q = log(q),
             log_c = log(costPerKw),
             log_p = log(price_si)
@@ -72,7 +75,7 @@ project_cost <- function(model, df, lambda) {
     y_sim <- matrix(0, ncol = 3, nrow = nobs)
     temp <- df %>%
         mutate(
-            q = cumsum(q0 + annCapKw_nation + (1 - lambda) * annCapKw_other),
+            q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
             log_q = log(q),
             log_p = log(price_si)
         )
@@ -150,9 +153,7 @@ make_projection_plot <- function(
     return(plot)
 }
 
-# Load libraries, functions, and dir paths
-source(here::here('code', '0setup.R'))
-library(shiny)
+# calculations ----
 
 # Load formatted data
 data <- readRDS(dir$data_formatted)
@@ -193,8 +194,21 @@ lr_list <- list(
     "Germany" = percent(1 - 2^coef(model_list[["Germany"]])["log_q"])
 )
 
+# # Example calculations
+# country <- "U.S."
+# model <- model_list[[country]]
+# df <- df_list[[country]]
+# df_proj <- df_proj_nt_list[[country]]
+# lambda <- lambda_list[[country]]
+# temp <- seq(lambda, 0.9, length.out = 6 + 1)
+# predict_cost(model, df, lambda)
+# predict_cost(model, df, c(temp, rep(0.9, nrow(df) - length(temp))))
+# project_cost(model, df_proj, lambda)
+# project_cost(model, df_proj, c(temp, rep(0.9, nrow(df_proj) - length(temp))))
 
-# Define UI for application that draws a histogram
+# ui ----
+
+# Define UI for application that draws a histogram 
 ui <- fluidPage(
 
     # Application title
@@ -245,6 +259,8 @@ ui <- fluidPage(
         )
     )
 )
+
+# server ----
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {

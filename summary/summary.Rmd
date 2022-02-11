@@ -51,7 +51,7 @@ $$
 For each country, $i$, we estimate "global learning" coefficients (Extended Data Table 1), $i$, using linear least-squares regression on (2). The "global learning" model is based on the assumptions that 1) learning was global during the historical period of scaling up PV module production, and 2) variations in country-level module pricing were due to transportation, administrative, and other non-learning costs. We then construct counterfactual "national learning" scenarios by assuming that the learning-related cost improvements in country $i$ from the starting year, $t_0$, are only derived from incrementally more nationally-installed PV capacity: 
 
 $$
-q_t - q_{t-1} = q_{t_0} + (q_{it} - q_{it-1}) + (1 - \lambda_i) (q_{jt} - q_{jt-1}),
+q_t - q_{t-1} = (q_{it} - q_{it-1}) + (1 - \lambda_i) (q_{jt} - q_{jt-1}),
 $$
 
 \noindent
@@ -78,8 +78,8 @@ compareCapData <- function(df) {
     for (i in 1:length(lambda)) {
         results[[i]] <- df %>% 
             mutate(
-                q = cumsum(q0 + annCapKw_nation + (1 - lambda[i]) * annCapKw_other),
-                q_i = cumsum(q0 + annCapKw_nation), 
+                q = q0 + cumsum(annCapKw_nation + (1 - lambda[i]) * annCapKw_other),
+                q_i = q0 + cumsum(annCapKw_nation), 
                 p = q_i / q, 
                 median_p = round(median(p), 2)
             )
@@ -87,7 +87,7 @@ compareCapData <- function(df) {
     result <- do.call(rbind, results)
     result$lambda <- rep(lambda, each = nrow(df))
     result <- result %>% 
-        mutate(label = paste0("λ = ", lambda, ", p_i = ", median_p))
+        mutate(label = paste0("λ = ", lambda, ", p_i = ", percent(median_p)))
     return(result)
 }
 ```
@@ -134,18 +134,6 @@ As the figure shows, the same value of $\lambda_i$ does not translate to the sam
 
 ## When should we use $\lambda_i$? 
 
-The hybrid model that includes a $\lambda_i$ term is rooted in the concept that capacity installed within a nation should contribute to that nation's learning rate. However, if a nation largely _imports_ the PV panels that are installed domestically, then the learning is more likely occurring in the country where those panels were _manufactured_ rather than in the country where they were installed.
+The hybrid model that includes a $\lambda_i$ term is rooted in the concept that national learning is derived from capacity installed within a nation. However, if a nation largely _imports_ the PV panels that are domestically installed, then the learning is more likely occurring in the country where those panels were _manufactured_ rather than in the country where they were installed.
 
-This raises a few questions.
-
-### Perhaps we should _not_ use the hybrid model for the "global markets" scenario?
-
-One benefit of estimating the hybrid model for the "global markets" scenario is that it produces a value for $\lambda_i$ that can be used as a starting value in the national markets scenario. However, it also attributes national learning to domestic capacity that was largely imported. 
-
-If we instead stick with a traditional learning curve using global capacities for the "global markets" scenario, then we're no longer attributing learning as global versus national. We're simply saying this was the historical learning rate in country $i$. It's only in the "national markets" scenario where we have to then start to break down how much learning is coming from national versus global capacity. That said, in this counter factual world the domestic capacity is being domestically manufactured, so the hybrid model makes sense. The drawback here is that we now have to pick values both starting and end values for $\lambda_i$ as well as how we want them to change over time.
-
-### Perhaps we should consider adding production into the model? 
-
-I'm wondering if a three-factor model might make sense where we include both installed capacity as well as domestic production somehow?
-
-
+This raises an important question: What is an appropriate value of $\lambda_i$?
