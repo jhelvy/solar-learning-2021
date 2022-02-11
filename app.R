@@ -2,9 +2,11 @@
 # load custom functions
 run_model <- function(df, lambda) {
     # Run the linear model for a given lambda
+    q0 <- df$cumCapKw_world[1]
     temp <- df %>%
         mutate(
-            log_q = log(cumCapKw_world - (lambda*cumCapKw_other)),
+            q = cumsum(q0 + annCapKw_nation + (1 - lambda) * annCapKw_other),
+            log_q = log(q),
             log_c = log(costPerKw),
             log_p = log(price_si)
         )
@@ -38,10 +40,12 @@ run_models <- function(df) {
 
 predict_cost <- function(model, df, lambda) {
     nobs <- nrow(df)
+    q0 <- df$cumCapKw_world[1]
     y_sim <- matrix(0, ncol = 3, nrow = nobs)
     temp <- df %>%
         mutate(
-            log_q = log(cumCapKw_world - (lambda*cumCapKw_other)),
+            q = cumsum(q0 + annCapKw_nation + (1 - lambda) * annCapKw_other),
+            log_q = log(q),
             log_c = log(costPerKw),
             log_p = log(price_si)
         )
@@ -55,18 +59,21 @@ predict_cost <- function(model, df, lambda) {
     names(y_sim) <- c("mean", "lower", "upper")
     y_sim <- cbind(
         y_sim,
-        cumCapKw_world = df$cumCapKw_world,
+        cumCapKw = temp$q,
         costPerKw = df$costPerKw, 
-        year = df$year)
+        year = df$year
+    )
     return(y_sim)
 }
 
 project_cost <- function(model, df, lambda) {
     nobs <- nrow(df)
+    q0 <- df$cumCapKw_world[1]
     y_sim <- matrix(0, ncol = 3, nrow = nobs)
     temp <- df %>%
         mutate(
-            log_q = log(cumCapKw_world - (lambda*cumCapKw_other)),
+            q = cumsum(q0 + annCapKw_nation + (1 - lambda) * annCapKw_other),
+            log_q = log(q),
             log_p = log(price_si)
         )
     params <- as.data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
@@ -77,7 +84,7 @@ project_cost <- function(model, df, lambda) {
     }
     y_sim <- as.data.frame(exp(y_sim))
     names(y_sim) <- c("mean", "lower", "upper")
-    y_sim <- cbind(y_sim, cumCapKw_world = df$cumCapKw_world, year = df$year)
+    y_sim <- cbind(y_sim, year = df$year, cumCapKw = temp$q)
     return(y_sim)
 }
 
@@ -207,7 +214,7 @@ ui <- fluidPage(
                 label = "lambda (start)",
                 min = 0,
                 max = 1,
-                value = 0.32),
+                value = 0.1),
             h4("National Markets Scenario Controls:"),
             sliderInput(
                 inputId = "lambda_end",
