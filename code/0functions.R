@@ -79,7 +79,6 @@ formatCapData <- function(data_nation, data_world, year_beg, year_max) {
 
 # Modeling ----
 
-
 # load custom functions
 run_model <- function(df, lambda) {
     # Run the linear model for a given lambda
@@ -94,59 +93,67 @@ run_model <- function(df, lambda) {
     return(lm(formula = log_c ~ log_q + log_p, data = temp))
 }
 
+# Scenarios ----
+
 make_lambda_national <- function(lambda_start, lambda_end, df) {
   temp <- seq(lambda_start, lambda_end, length.out = delay + 1)
   lambda_nat <- c(temp, rep(lambda_end, nrow(df) - length(temp)))
   return(lambda_nat)
 }
 
-predict_cost <- function(params, df, lambda) {
-    temp <- df %>%
-        mutate(
-            q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
-            log_q = log(q),
-            log_c = log(costPerKw),
-            log_p = log(price_si)
-        )
-    nobs <- nrow(df)
-    q0 <- df$cumCapKw_world[1]
-    y_sim <- matrix(0, ncol = 3, nrow = nobs)
-    for (i in 1:nobs) {
-        sim <- params$alpha + params$beta * temp$log_q[i] + params$gamma * temp$log_p[i]
-        y_sim[i,] <- c(mean(sim), quantile(sim, probs = c(0.05, 0.95)))
+predict_cost <- function(params, df, lambda, include_hist = TRUE) {
+    y_sim <- get_y_sim_draws(params, df, lambda)
+    result <- cbind(year = df$year, y_sim, cumCapKw = temp$q)
+    if (include_hist) {
+      result$cost_per_kw_hist <- df$costPerKw
     }
-    y_sim <- as.data.frame(exp(y_sim))
-    names(y_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
-    result <- cbind(
-        year = df$year,
-        y_sim,
-        cumCapKw = temp$q,
-        cost_per_kw_hist = df$costPerKw
-    )
     return(result)
 }
 
-project_cost <- function(model, df, lambda) {
-    nobs <- nrow(df)
-    q0 <- df$cumCapKw_world[1]
-    y_sim <- matrix(0, ncol = 3, nrow = nobs)
-    temp <- df %>%
-        mutate(
-            q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
-            log_q = log(q),
-            log_p = log(price_si)
-        )
-    params <- as.data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
-    names(params) <- c("alpha", "beta", "gamma")
-    for (i in 1:nobs) {
-        sim <- params$alpha + params$beta * temp$log_q[i] + params$gamma * temp$log_p[i]
-        y_sim[i,] <- c(mean(sim), quantile(sim, probs = c(0.05, 0.95)))
-    }
-    y_sim <- as.data.frame(exp(y_sim))
-    names(y_sim) <- c("mean", "lower", "upper")
-    y_sim <- cbind(y_sim, year = df$year, cumCapKw = temp$q)
-    return(y_sim)
+get_y_sim_draws <- function(params, df, lambda) {
+  temp <- df %>%
+    mutate(
+      q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
+      log_q = log(q),
+      log_p = log(price_si)
+    )
+  nobs <- nrow(df)
+  q0 <- df$cumCapKw_world[1]
+  y_sim <- matrix(0, ncol = 3, nrow = nobs)
+  for (i in 1:nobs) {
+    sim <- params$alpha + params$beta * temp$log_q[i] + params$gamma * temp$log_p[i]
+    y_sim[i,] <- c(mean(sim), quantile(sim, probs = c(0.05, 0.95)))
+  }
+  y_sim <- as.data.frame(exp(y_sim))
+  names(y_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
+  return(y_sim)
 }
+
+compute_cost_diff <- function(params, df, year_beg = NULL, lambda = NULL) {
+  nobs <- nrow(df)
+  if (is.null(year_beg)) {
+    year_beg <-min(df$year)
+  } 
+  c_sim_draws_global <- get_csim_draws(params, data, year_beg)
+  c_sim_draws_national <- get_csim_draws_national(
+    params, data, year_beg, delay_years, lambda_end)
+  cost_diff <- matrix(0, ncol = 3, nrow = nobs)
+  alpha_ci <- (1 - ci) / 2
+  probs <- c(alpha_ci, 1 - alpha_ci)
+  for (i in 1:nobs) {
+    diff <- exp(c_sim_draws_national[[i]]) - exp(c_sim_draws_global[[i]])
+    cost_diff[i,] <- as.matrix(get_ci(diff, ci))
+  }
+  cost_diff <- as.data.frame(cost_diff)
+  names(cost_diff) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
+  cost_diff$year <- year_beg + seq(0, nrow(cost_diff) - 1)
+  return(cost_diff)
+}
+
+
+
+
+# Plotting ----
 
 make_historical_plot <- function(cost_national, cost_global) {
     plot <- rbind(
@@ -214,35 +221,6 @@ make_projection_plot <- function(
 
 
 
-
-
-compute_cost_diff <- function(
-    params, 
-    data, 
-    year_beg = NULL, 
-    ci = 0.95,
-    delay_years = NULL, 
-    lambda_end = NULL
-) {
-    nobs <- data$N
-    if (is.null(year_beg)) {
-        year_beg <-min(data$year)
-    } 
-    c_sim_draws_global <- get_csim_draws(params, data, year_beg)
-    c_sim_draws_national <- get_csim_draws_national(
-            params, data, year_beg, delay_years, lambda_end)
-    cost_diff <- matrix(0, ncol = 3, nrow = nobs)
-    alpha_ci <- (1 - ci) / 2
-    probs <- c(alpha_ci, 1 - alpha_ci)
-    for (i in 1:nobs) {
-        diff <- exp(c_sim_draws_national[[i]]) - exp(c_sim_draws_global[[i]])
-        cost_diff[i,] <- as.matrix(get_ci(diff, ci))
-    }
-    cost_diff <- as.data.frame(cost_diff)
-    names(cost_diff) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
-    cost_diff$year <- year_beg + seq(0, nrow(cost_diff) - 1)
-    return(cost_diff)
-}
 
 
 

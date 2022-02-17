@@ -22,54 +22,57 @@ delay <- 10
 lambda_start <- 0
 lambda_end <- 1
 
+# Set common data frames for data and params
+df_us <- data$hist_us
+df_china <- data$hist_china
+df_germany <- data$hist_germany
+
+params_us <- lr$params_us
+params_china <- lr$params_china
+params_germany <- lr$params_germany
+
 # Set lambda values for national markets scenario
-lambda_nat_us <- make_lambda_national(
-    lambda_start, lambda_end, data$hist_us
-)
-lambda_nat_china <- make_lambda_national(
-    lambda_start, lambda_end, data$hist_china
-)
-lambda_nat_germany <- make_lambda_national(
-    lambda_start, lambda_end, data$hist_germany
-)
+lambda_nat_us <- make_lambda_national(lambda_start, lambda_end, df_us)
+lambda_nat_china <- make_lambda_national(lambda_start, lambda_end, df_china)
+lambda_nat_germany <- make_lambda_national(lambda_start, lambda_end, df_germany)
 
 # Compute GLOBAL cost scenarios by country
 cost_global_us <- predict_cost(
-    params   = lr$params_us,
-    df       = data$hist_us,
-    lambda   = 0
+    params = params_us,
+    df     = df_us,
+    lambda = 0
 )
 
 cost_global_china <- predict_cost(
-    params   = lr$params_china,
-    df       = data$hist_china,
-    lambda   = 0
-) %>% convertToUsd(data$exchangeRatesRMB) # Currency conversion
+    params = params_china,
+    df     = df_china,
+    lambda = 0) %>% 
+    convertToUsd(data$exchangeRatesRMB) # Currency conversion
 
 cost_global_germany <- predict_cost(
-    params   = lr$params_germany,
-    df       = data$hist_germany,
-    lambda   = 0
-) %>% convertToUsd(data$exchangeRatesEUR) # Currency conversion
+    params = params_germany,
+    df     = df_germany,
+    lambda = 0) %>% 
+    convertToUsd(data$exchangeRatesEUR) # Currency conversion
 
 # Compute NATIONAL cost scenarios by country
 cost_national_us <- predict_cost(
-    params   = lr$params_us,
-    df       = data$hist_us,
-    lambda   = lambda_nat_us
+    params = params_us,
+    df     = df_us,
+    lambda = lambda_nat_us
 )
 
 cost_national_china <- predict_cost(
-    params   = lr$params_china,
-    df       = data$hist_china,
-    lambda   = lambda_nat_china
-) %>% convertToUsd(data$exchangeRatesRMB) # Currency conversion
+    params = params_china,
+    df     = df_china,
+    lambda = lambda_nat_china) %>% 
+    convertToUsd(data$exchangeRatesRMB) # Currency conversion
 
 cost_national_germany <- predict_cost(
-    params   = lr$params_germany,
-    df       = data$hist_germany,
-    lambda   = lambda_nat_germany
-) %>% convertToUsd(data$exchangeRatesEUR) # Currency conversion
+    params = params_germany,
+    df     = df_germany,
+    lambda = lambda_nat_germany) %>% 
+    convertToUsd(data$exchangeRatesEUR) # Currency conversion
 
 # Combine Cost Scenarios ----
 cost <- rbind(
@@ -117,11 +120,10 @@ cost %>%
 # First, compute the cost difference CIs for each country
 cost_diff_us <- compute_cost_diff(
     params   = params_us,
-    data     = data_us,
+    df     = df_us,
     year_beg = year_model_us_min,
-    ci       = ci_all,
-    delay_years = 10,
-    lambda_end = 0.9) %>% 
+    lambda = lambda_nat_us
+) %>% 
     mutate(country = "U.S.")
 
 cost_diff_china <- compute_cost_diff(
