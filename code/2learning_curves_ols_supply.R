@@ -9,13 +9,6 @@ df <- data$hist_us
 df <- data$hist_china
 df <- data$hist_germany
 
-df_proj <- data$proj_nat_trends_us
-# df_sus_dev <- data$proj_sus_dev_us
-# df_proj <- data$proj_nat_trends_china
-# df_proj <- data$proj_sus_dev_china
-# df_proj <- data$proj_nat_trends_germany
-# df_proj <- data$proj_sus_dev_germany
-
 df <- df %>% 
     left_join(
         filter(data$pvProduction, country == "china"),
@@ -35,7 +28,8 @@ temp <- df %>%
         log_s = log(price_si)
     )
 model <- lm(formula = log_c ~ log_q + log_p + log_s, data = temp)
-    
+
+# View results    
 summary(model)
 
 1 - 2^coef(model)["log_q"] # Learning rate
