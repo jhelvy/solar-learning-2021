@@ -5,24 +5,7 @@ source(here::here('code', '0setup.R'))
 data <- readRDS(dir$data_formatted)
 
 # Load estimated LR models
-lr_lambda <- readRDS(dir$lr_models_lambda)
-
-# Get baseline lambda values from model
-params_us <- extract(lr_lambda$fit_us)
-params_china <- extract(lr_lambda$fit_china)
-params_germany <- extract(lr_lambda$fit_germany)
-lambda_us <- mean(params_us$lambda)
-lambda_china <- mean(params_china$lambda)
-lambda_germany <- mean(params_germany$lambda)
-data_us <- lr_lambda$data_us
-data_china <- lr_lambda$data_china
-data_germany <- lr_lambda$data_germany
-
-# Merge together true historical cost per kW
-cost_historical_true <- rbind(
-    data$hist_us %>% mutate(country = "U.S."),
-    data$hist_china %>% mutate(country = "China"),
-    data$hist_germany %>% mutate(country = "Germany"))
+lr <- readRDS(dir$lr_models)
 
 # Learning rates based on local cumulative capacity and local installed costs
 # Note: Since world data does not break down installation type
@@ -30,90 +13,100 @@ cost_historical_true <- rbind(
 #       we replicate capacities across all types
 #       (assuming in effect that learning is shared across installation type)
 
-# Set global "delay" variable 
+# Set global baseline "delay" variable
 # Controls how many years until 100% of national capacity is 
 # domestically-supplied
-delay <- 6
+delay <- 10
 
-# Set global ci value
-ci_all <- 0.95
+# Set starting and ending lambda values for national market scenarios
+lambda_start <- 0
+lambda_end <- 1
 
-# Set global final lambda value
-lambda_final <- 0.9
+# Set lambda values for national markets scenario
+lambda_nat_us <- make_lambda_national(
+    lambda_start, lambda_end, data$hist_us
+)
+lambda_nat_china <- make_lambda_national(
+    lambda_start, lambda_end, data$hist_china
+)
+lambda_nat_germany <- make_lambda_national(
+    lambda_start, lambda_end, data$hist_germany
+)
 
 # Compute GLOBAL cost scenarios by country
 cost_global_us <- predict_cost(
-    params   = params_us,
-    data     = data_us,
-    year_beg = year_model_us_min,
-    ci       = ci_all)
+    params   = lr$params_us,
+    df       = data$hist_us,
+    lambda   = 0
+)
 
 cost_global_china <- predict_cost(
-    params   = params_china,
-    data     = data_china,
-    year_beg = year_model_china_min,
-    ci       = ci_all)
+    params   = lr$params_china,
+    df       = data$hist_china,
+    lambda   = 0
+) %>% convertToUsd(data$exchangeRatesRMB) # Currency conversion
 
 cost_global_germany <- predict_cost(
-    params   = params_germany,
-    data     = data_germany,
-    year_beg = year_model_germany_min,
-    ci       = ci_all)
+    params   = lr$params_germany,
+    df       = data$hist_germany,
+    lambda   = 0
+) %>% convertToUsd(data$exchangeRatesEUR) # Currency conversion
 
 # Compute NATIONAL cost scenarios by country
 cost_national_us <- predict_cost(
-    params   = params_us,
-    data     = data_us,
-    year_beg = year_model_us_min,
-    ci       = ci_all, 
-    delay_years = delay, 
-    lambda_end = lambda_final)
+    params   = lr$params_us,
+    df       = data$hist_us,
+    lambda   = lambda_nat_us
+)
 
 cost_national_china <- predict_cost(
-    params   = params_china,
-    data     = data_china,
-    year_beg = year_model_china_min,
-    ci       = ci_all, 
-    delay_years = delay, 
-    lambda_end = lambda_final)
+    params   = lr$params_china,
+    df       = data$hist_china,
+    lambda   = lambda_nat_china
+) %>% convertToUsd(data$exchangeRatesRMB) # Currency conversion
 
 cost_national_germany <- predict_cost(
-    params   = params_germany,
-    data     = data_germany,
-    year_beg = year_model_germany_min,
-    ci       = ci_all, 
-    delay_years = delay, 
-    lambda_end = lambda_final)
+    params   = lr$params_germany,
+    df       = data$hist_germany,
+    lambda   = lambda_nat_germany
+) %>% convertToUsd(data$exchangeRatesEUR) # Currency conversion
 
 # Combine Cost Scenarios ----
-
 cost <- rbind(
-    mutate(cost_global_us,
-           learning = "global", country = "U.S."),
-    mutate(cost_national_us,
-           learning = "national", country = "U.S."),
-    mutate(cost_global_china,
-           learning = "global", country = "China"),
-    mutate(cost_national_china,
-           learning = "national", country = "China"),
-    mutate(cost_global_germany,
-           learning = "global", country = "Germany"),
-    mutate(cost_national_germany,
-           learning = "national", country = "Germany")
+    mutate(cost_global_us, learning = "global", country = "U.S."),
+    mutate(cost_national_us, learning = "national", country = "U.S."),
+    mutate(cost_global_china, learning = "global", country = "China"),
+    mutate(cost_national_china, learning = "national", country = "China"),
+    mutate(cost_global_germany, learning = "global", country = "Germany"),
+    mutate(cost_national_germany, learning = "national", country = "Germany")
 )
+
+# Extract just historical costs
+cost_historical <- cost %>% 
+    filter(learning == 'global') %>% 
+    select(year, cumCapKw, costPerKw = cost_per_kw_hist, country)
 
 # Preview results
 cost %>%
     ggplot() +
     facet_wrap(vars(country)) +
     geom_line(
-        aes(x = year, y = cost_per_kw, color = learning)) +
+        aes(
+            x = year, 
+            y = cost_per_kw, 
+            color = learning
+        )
+    ) +
     geom_ribbon(
-        aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
-            fill = learning), alpha = 0.22) +
-    geom_line(
-        data = cost_historical_true,
-        aes(x = year, y = costPerKw), linetype = 2) +
+        aes(
+            x = year, 
+            ymin = cost_per_kw_lb, 
+            ymax = cost_per_kw_ub,
+            fill = learning
+        ), 
+        alpha = 0.22
+    ) +
+    geom_point(aes(x = year, y = cost_per_kw_hist)) +
     theme_bw() +
     scale_y_log10()
 

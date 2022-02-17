@@ -94,10 +94,13 @@ run_model <- function(df, lambda) {
     return(lm(formula = log_c ~ log_q + log_p, data = temp))
 }
 
-predict_cost <- function(model, df, lambda) {
-    nobs <- nrow(df)
-    q0 <- df$cumCapKw_world[1]
-    y_sim <- matrix(0, ncol = 3, nrow = nobs)
+make_lambda_national <- function(lambda_start, lambda_end, df) {
+  temp <- seq(lambda_start, lambda_end, length.out = delay + 1)
+  lambda_nat <- c(temp, rep(lambda_end, nrow(df) - length(temp)))
+  return(lambda_nat)
+}
+
+predict_cost <- function(params, df, lambda) {
     temp <- df %>%
         mutate(
             q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
@@ -105,21 +108,22 @@ predict_cost <- function(model, df, lambda) {
             log_c = log(costPerKw),
             log_p = log(price_si)
         )
-    params <- as.data.frame(MASS::mvrnorm(10^4, coef(model), vcov(model)))
-    names(params) <- c("alpha", "beta", "gamma")
+    nobs <- nrow(df)
+    q0 <- df$cumCapKw_world[1]
+    y_sim <- matrix(0, ncol = 3, nrow = nobs)
     for (i in 1:nobs) {
         sim <- params$alpha + params$beta * temp$log_q[i] + params$gamma * temp$log_p[i]
         y_sim[i,] <- c(mean(sim), quantile(sim, probs = c(0.05, 0.95)))
     }
     y_sim <- as.data.frame(exp(y_sim))
-    names(y_sim) <- c("mean", "lower", "upper")
-    y_sim <- cbind(
+    names(y_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
+    result <- cbind(
+        year = df$year,
         y_sim,
         cumCapKw = temp$q,
-        costPerKw = df$costPerKw,
-        year = df$year
+        cost_per_kw_hist = df$costPerKw
     )
-    return(y_sim)
+    return(result)
 }
 
 project_cost <- function(model, df, lambda) {
@@ -255,5 +259,21 @@ get_ci <- function(x, ci = 0.95) {
   return(df)
 }
 
+convertToUsd <- function(df, exchangeRates) {
+  result <- df %>% 
+    left_join(exchangeRates, by = "year") %>% 
+    pivot_longer(
+      cols = starts_with("cost"),
+      names_to = "label",
+      values_to = "cost"
+    ) %>% 
+    mutate(cost = cost / average_of_rate) %>% 
+    pivot_wider(
+      names_from = label, 
+      values_from = cost
+    ) %>% 
+    select(-average_of_rate)
+  return(result)
+}
 
 

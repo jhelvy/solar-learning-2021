@@ -26,7 +26,7 @@ params_germany <- as.data.frame(
 )
 names(params_us) <- c("alpha", "beta", "gamma")
 names(params_china) <- c("alpha", "beta", "gamma")
-names(params_us) <- c("alpha", "beta", "gamma")
+names(params_germany) <- c("alpha", "beta", "gamma")
 
 # Save output 
 saveRDS(list(
