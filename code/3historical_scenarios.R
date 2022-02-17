@@ -7,6 +7,12 @@ data <- readRDS(dir$data_formatted)
 # Load estimated LR models
 lr <- readRDS(dir$lr_models)
 
+# Merge together true historical cost per kW
+cost_historical_true <- rbind(
+    data$hist_us %>% mutate(country = "U.S."),
+    data$hist_china %>% mutate(country = "China"),
+    data$hist_germany %>% mutate(country = "Germany"))
+
 # Learning rates based on local cumulative capacity and local installed costs
 # Note: Since world data does not break down installation type
 #       (Commercial, Residential, Utility),
@@ -40,8 +46,7 @@ lambda_nat_germany <- make_lambda_national(lambda_start, lambda_end, df_germany)
 cost_global_us <- predict_cost(
     params = params_us,
     df     = df_us,
-    lambda = 0
-)
+    lambda = 0)
 
 cost_global_china <- predict_cost(
     params = params_china,
@@ -59,8 +64,7 @@ cost_global_germany <- predict_cost(
 cost_national_us <- predict_cost(
     params = params_us,
     df     = df_us,
-    lambda = lambda_nat_us
-)
+    lambda = lambda_nat_us)
 
 cost_national_china <- predict_cost(
     params = params_china,
@@ -83,11 +87,6 @@ cost <- rbind(
     mutate(cost_global_germany, learning = "global", country = "Germany"),
     mutate(cost_national_germany, learning = "national", country = "Germany")
 )
-
-# Extract just historical costs
-cost_historical <- cost %>% 
-    filter(learning == 'global') %>% 
-    select(year, cumCapKw, costPerKw = cost_per_kw_hist, country)
 
 # Preview results
 cost %>%
@@ -119,29 +118,24 @@ cost %>%
 
 # First, compute the cost difference CIs for each country
 cost_diff_us <- compute_cost_diff(
-    params   = params_us,
-    df     = df_us,
-    year_beg = year_model_us_min,
-    lambda = lambda_nat_us
-) %>% 
+    params     = params_us,
+    df         = df_us,
+    lambda_nat = lambda_nat_us,
+    ci         = 0.95) %>%
     mutate(country = "U.S.")
 
 cost_diff_china <- compute_cost_diff(
-    params   = params_china,
-    data     = data_china,
-    year_beg = year_model_china_min,
-    ci       = ci_all,
-    delay_years = 10,
-    lambda_end = 0.9) %>% 
+    params     = params_china,
+    df         = df_china,
+    lambda_nat = lambda_nat_china,
+    ci         = 0.95) %>%
     mutate(country = "China")
 
 cost_diff_germany <- compute_cost_diff(
-    params   = params_germany,
-    data     = data_germany,
-    year_beg = year_model_germany_min,
-    ci       = ci_all,
-    delay_years = 10,
-    lambda_end = 0.9) %>% 
+    params     = params_germany,
+    df         = df_germany,
+    lambda_nat = lambda_nat_germany,
+    ci         = 0.95) %>%
     mutate(country = "Germany")
 
 cost_diffs <- rbind(cost_diff_us, cost_diff_china, cost_diff_germany) %>% 

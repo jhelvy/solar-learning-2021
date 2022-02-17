@@ -101,20 +101,16 @@ make_lambda_national <- function(lambda_start, lambda_end, df) {
   return(lambda_nat)
 }
 
-predict_cost <- function(params, df, lambda, include_hist = TRUE) {
-    df <- prep_predict_data(df, lambda)
-    draws <- get_y_draws(params, df)
-    lb <- 0.05
-    ub <- 0.95
-    y_sim <- data.frame(
-        cost_per_kw = unlist(lapply(draws, mean)),
-        cost_per_kw_lb = unlist(lapply(draws, function(x) quantile(x, lb))),
-        cost_per_kw_ub = unlist(lapply(draws, function(x) quantile(x, ub)))
-    )
+predict_cost <- function(params, df, lambda, ci = 0.95, include_hist = TRUE) {
+    df_predict <- prep_predict_data(df, lambda)
+    draws <- get_y_draws(params, df_predict)
+    y_sim <- lapply(draws, function(x) get_ci(x, ci))
+    y_sim <- do.call(rbind, y_sim)
+    names(y_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
     y_sim <- exp(y_sim)
-    result <- cbind(year = df$year, y_sim, cumCapKw = df$q)
+    result <- cbind(year = df_predict$year, y_sim, cumCapKw = df_predict$q)
     if (include_hist) {
-      result$cost_per_kw_hist <- df$costPerKw
+      result$cost_per_kw_hist <- df_predict$costPerKw
     }
     return(result)
 }
@@ -139,25 +135,23 @@ get_y_draws <- function(params, df) {
   return(y_sim)
 }
 
-compute_cost_diff <- function(params, df, year_beg = NULL, lambda = NULL) {
-  nobs <- nrow(df)
-  if (is.null(year_beg)) {
-    year_beg <-min(df$year)
-  } 
-  c_sim_draws_global <- get_csim_draws(params, data, year_beg)
-  c_sim_draws_national <- get_csim_draws_national(
-    params, data, year_beg, delay_years, lambda_end)
-  cost_diff <- matrix(0, ncol = 3, nrow = nobs)
-  alpha_ci <- (1 - ci) / 2
-  probs <- c(alpha_ci, 1 - alpha_ci)
-  for (i in 1:nobs) {
-    diff <- exp(c_sim_draws_national[[i]]) - exp(c_sim_draws_global[[i]])
-    cost_diff[i,] <- as.matrix(get_ci(diff, ci))
-  }
-  cost_diff <- as.data.frame(cost_diff)
-  names(cost_diff) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
-  cost_diff$year <- year_beg + seq(0, nrow(cost_diff) - 1)
-  return(cost_diff)
+compute_cost_diff <- function(params, df, lambda_nat, ci = 0.95) {
+    # Get draws of cost for each scenarios
+    df_predict_global <- prep_predict_data(df, 0)
+    df_predict_national <- prep_predict_data(df, lambda_nat)
+    draws_global <- get_y_draws(params, df_predict_global)
+    draws_national <- get_y_draws(params, df_predict_national)
+    # Compute difference in draws
+    nobs <- nrow(df)
+    cost_diff <- matrix(0, ncol = 3, nrow = nobs)
+    for (i in 1:nobs) {
+        diff <- exp(draws_national[[i]]) - exp(draws_global[[i]])
+        cost_diff[i,] <- as.matrix(get_ci(diff, ci))
+    }
+    cost_diff <- as.data.frame(cost_diff)
+    names(cost_diff) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
+    cost_diff$year <- df$year
+    return(cost_diff)
 }
 
 
