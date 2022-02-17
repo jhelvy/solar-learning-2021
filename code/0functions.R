@@ -102,30 +102,40 @@ make_lambda_national <- function(lambda_start, lambda_end, df) {
 }
 
 predict_cost <- function(params, df, lambda, include_hist = TRUE) {
-    y_sim <- get_y_sim_draws(params, df, lambda)
-    result <- cbind(year = df$year, y_sim, cumCapKw = temp$q)
+    df <- prep_predict_data(df, lambda)
+    draws <- get_y_draws(params, df)
+    lb <- 0.05
+    ub <- 0.95
+    y_sim <- data.frame(
+        cost_per_kw = unlist(lapply(draws, mean)),
+        cost_per_kw_lb = unlist(lapply(draws, function(x) quantile(x, lb))),
+        cost_per_kw_ub = unlist(lapply(draws, function(x) quantile(x, ub)))
+    )
+    y_sim <- exp(y_sim)
+    result <- cbind(year = df$year, y_sim, cumCapKw = df$q)
     if (include_hist) {
       result$cost_per_kw_hist <- df$costPerKw
     }
     return(result)
 }
 
-get_y_sim_draws <- function(params, df, lambda) {
+prep_predict_data <- function(df, lambda) {
+  q0 <- df$cumCapKw_world[1]
   temp <- df %>%
     mutate(
       q = q0 + cumsum(annCapKw_nation + (1 - lambda) * annCapKw_other),
       log_q = log(q),
       log_p = log(price_si)
     )
+  return(temp)
+}
+
+get_y_draws <- function(params, df) {
   nobs <- nrow(df)
-  q0 <- df$cumCapKw_world[1]
-  y_sim <- matrix(0, ncol = 3, nrow = nobs)
+  y_sim <- list()
   for (i in 1:nobs) {
-    sim <- params$alpha + params$beta * temp$log_q[i] + params$gamma * temp$log_p[i]
-    y_sim[i,] <- c(mean(sim), quantile(sim, probs = c(0.05, 0.95)))
+    y_sim[[i]] <- params$alpha + params$beta * df$log_q[i] + params$gamma * df$log_p[i]
   }
-  y_sim <- as.data.frame(exp(y_sim))
-  names(y_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
   return(y_sim)
 }
 
