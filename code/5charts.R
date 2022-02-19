@@ -8,10 +8,10 @@ data <- readRDS(dir$data_formatted)
 lr <- readRDS(dir$lr_models)
 
 # Load historical cost scenario data
-cost <- readRDS(dir$historical_scenarios)
+cost <- readRDS(dir$scenarios_hist)
 
 # Load projections
-proj <- readRDS(dir$projection_scenarios)
+proj <- readRDS(dir$scenarios_proj)
 
 # Check any plot for color blindness
 # colorblindr::cvd_grid(plot)

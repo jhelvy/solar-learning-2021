@@ -42,8 +42,8 @@ dir <- list(
     figs           = here::here('figs'),
     output         = here::here('output'),
     lr_models      = here::here('output', 'lr_models.Rds'),
-    scenarios_hist = here::here('output', 'historical_scenarios.Rds'),
-    scenarios_proj = here::here('output', 'projection_scenarios.Rds')
+    scenarios_hist = here::here('output', 'scenarios_hist.Rds'),
+    scenarios_proj = here::here('output', 'scenarios_proj.Rds')
 )
 
 # Set global "year" variables

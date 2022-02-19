@@ -52,7 +52,7 @@ cat(
 
 # Historical cost implications -----
 
-cost <- readRDS(dir$historical_scenarios)
+cost <- readRDS(dir$scenarios_hist)
 
 # Comparison of 2020 costs under global vs national learning 
 cost_percentage <- cost$cost %>% 
@@ -89,7 +89,7 @@ cat(
 
 # Future cost projections -----
 
-proj <- readRDS(dir$projection_scenarios)
+proj <- readRDS(dir$scenarios_proj)
 proj_summary <- proj$base %>% 
     filter(year == year_proj_max) %>% 
     select(-cost_per_kw_lb, -cost_per_kw_ub) %>% 

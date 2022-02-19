@@ -13,7 +13,7 @@ data <- readRDS(dir$data_formatted)
 lr <- readRDS(dir$lr_models)
 
 # Load historical cost scenario data
-cost <- readRDS(dir$historical_scenarios)
+cost <- readRDS(dir$scenarios_hist)
 
 # Set global baseline "delay" variable
 # Controls how many years until 100% of national capacity is
@@ -155,5 +155,5 @@ projections <- rbind(
 # Save results --------
 saveRDS(
     list(projections = projections),
-    dir$projection_scenarios
+    dir$scenarios_proj
 )

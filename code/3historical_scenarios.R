@@ -169,5 +169,5 @@ saveRDS(list(
     cost_historical_true = cost_historical_true,
     cost = cost,
     savings = savings),
-    dir$historical_scenarios
+    dir$scenarios_hist
 )
