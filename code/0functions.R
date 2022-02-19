@@ -159,29 +159,92 @@ compute_cost_diff <- function(params, df, lambda_nat, ci = 0.95) {
 
 # Plotting ----
 
-make_historical_plot <- function(cost_national, cost_global) {
-    plot <- rbind(
-        cost_global %>% mutate(scenario = "global"),
-        cost_national %>% mutate(scenario = "national")) %>%
-        mutate(scenario = fct_relevel(scenario, c("national", "global"))) %>%
-        ggplot() +
-        geom_line(
-            mapping = aes(x = year, y = mean, color = scenario),
-        ) +
-        geom_ribbon(
-            mapping = aes(
-                x = year, ymin = lower, ymax = upper, fill = scenario),
-            alpha = 0.2
-        ) +
-        geom_point(aes(x = year, y = costPerKw)) +
-        scale_x_continuous(breaks = cost_global$year) +
-        scale_y_log10() +
-        theme_bw() +
-        labs(
-            title = "Estimated Module Cost Under Global vs. National Markets",
-            x = "log(Cumulative Global Installed Capacity, kW)",
-            y = "log(Cost per kW)"
-        )
+make_historical_plot <- function(
+    cost_global_us,
+    cost_national_us,
+    cost_global_china,
+    cost_national_china,
+    cost_global_germany,
+    cost_national_germany, 
+    log_scale = FALSE
+) {
+    plot <- combine_costs(
+        cost_global_us,
+        cost_national_us,
+        cost_global_china,
+        cost_national_china,
+        cost_global_germany,
+        cost_national_germany) %>% 
+    mutate(
+        learning = str_to_title(learning),
+        learning = fct_relevel(learning, c("National", "Global")),
+        year = lubridate::ymd(paste0(year, "-01-01"))) %>% 
+    ggplot() +
+    facet_wrap(vars(country), nrow = 1) +
+    geom_point(aes(x = year, y = cost_per_kw_hist), size = 1) +
+    geom_line(
+        aes(
+            x = year, 
+            y = cost_per_kw, 
+            color = learning
+        ),
+        alpha = 0.6, size = 1
+    ) +
+    geom_ribbon(
+        aes(
+            x = year, 
+            ymin = cost_per_kw_lb, 
+            ymax = cost_per_kw_ub,
+            fill = learning
+        ), 
+        alpha = 0.22
+    ) +
+    scale_x_date(
+        limits = lubridate::ymd(c(
+            paste0(plot_min_year - 1, "-07-01"),
+            paste0(plot_max_year, "-07-01"))
+        ),
+        date_labels = "'%y",
+        date_breaks = "2 years") +
+    scale_y_continuous(
+      limits = c(0, 6000),
+      breaks = seq(0, 6000, 1000),
+      labels = scales::dollar
+    ) +
+    scale_color_manual("Learning", values = colors_learning) +
+    scale_fill_manual("Learning", values = colors_learning) +
+    theme_minimal_grid(
+        font_size = 16,
+        font_family = font_main
+    ) +
+    panel_border() +
+    labs(
+      title = paste0(
+        "Estimated Module Cost Under <span style = 'color: ",
+        colors_learning["Global"], 
+        ";'>Global</span> vs. <span style = 'color: ", 
+        colors_learning["National"], 
+        ";'>National</span> Market Scenarios"),
+        y = paste0("Cost per kW (", year_inflation, " $USD)"),
+        x = "Year"
+    ) + 
+    theme(
+        plot.title.position = "plot",
+        strip.background = element_rect(fill = "grey80"), 
+        panel.grid.major = element_line(size = 0.3, colour = "grey90"),
+        axis.line.x = element_blank(),
+        plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 1, size = 11, face = "italic"),
+        plot.title = element_markdown(),
+        legend.position = "none"
+    ) 
+    if (log_scale) {
+        plot <- plot + 
+            scale_y_log10(
+                labels = function(x) scales::dollar(x, accuracy = 1)
+            ) + 
+            labs(y = paste0("log(Cost per kW), ", year_inflation, " $USD"))
+    }
     return(plot)
 }
 
@@ -224,11 +287,6 @@ make_projection_plot <- function(
 
 
 
-
-
-
-
-
 # General utility ----
 
 get_ci <- function(x, ci = 0.95) {
@@ -261,4 +319,23 @@ convertToUsd <- function(df, exchangeRates) {
     ) %>% 
     select(-average_of_rate)
   return(result)
+}
+
+combine_costs <- function(
+    cost_global_us,
+    cost_national_us,
+    cost_global_china,
+    cost_national_china,
+    cost_global_germany,
+    cost_national_germany
+) {
+    cost <- rbind(
+        mutate(cost_global_us, learning = "global", country = "U.S."),
+        mutate(cost_national_us, learning = "national", country = "U.S."),
+        mutate(cost_global_china, learning = "global", country = "China"),
+        mutate(cost_national_china, learning = "national", country = "China"),
+        mutate(cost_global_germany, learning = "global", country = "Germany"),
+        mutate(cost_national_germany, learning = "national", country = "Germany")
+    )
+    return(cost)
 }

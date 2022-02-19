@@ -78,41 +78,29 @@ cost_national_germany <- predict_cost(
     lambda = lambda_nat_germany) %>% 
     convertToUsd(data$exchangeRatesEUR) # Currency conversion
 
-# Combine Cost Scenarios ----
-cost <- rbind(
-    mutate(cost_global_us, learning = "global", country = "U.S."),
-    mutate(cost_national_us, learning = "national", country = "U.S."),
-    mutate(cost_global_china, learning = "global", country = "China"),
-    mutate(cost_national_china, learning = "national", country = "China"),
-    mutate(cost_global_germany, learning = "global", country = "Germany"),
-    mutate(cost_national_germany, learning = "national", country = "Germany")
+# Preview results
+
+make_historical_plot(
+    cost_global_us,
+    cost_national_us,
+    cost_global_china,
+    cost_national_china,
+    cost_global_germany,
+    cost_national_germany
 )
 
-# Preview results
-cost %>%
-    ggplot() +
-    facet_wrap(vars(country)) +
-    geom_line(
-        aes(
-            x = year, 
-            y = cost_per_kw, 
-            color = learning
-        )
-    ) +
-    geom_ribbon(
-        aes(
-            x = year, 
-            ymin = cost_per_kw_lb, 
-            ymax = cost_per_kw_ub,
-            fill = learning
-        ), 
-        alpha = 0.22
-    ) +
-    geom_point(aes(x = year, y = cost_per_kw_hist)) +
-    theme_bw() +
-    scale_y_log10()
-
 # ggsave("cost_historical.png", width = 15, height = 5)
+
+# Combine Cost Scenarios ----
+
+cost <- combine_costs(
+    cost_global_us,
+    cost_national_us,
+    cost_global_china,
+    cost_national_china,
+    cost_global_germany,
+    cost_national_germany
+)
 
 # Calculate savings between national and global learning scenarios
 

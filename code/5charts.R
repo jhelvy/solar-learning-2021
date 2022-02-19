@@ -73,33 +73,39 @@ cost_historical_plot <- cost$cost %>%
       year = lubridate::ymd(paste0(year, "-01-01"))) %>% 
     ggplot() +
     facet_wrap(vars(country), nrow = 1) +
-    # First add historical cost line as points
-    geom_point(
-        data = cost$cost_historical_true %>% 
-            mutate(year = lubridate::ymd(paste0(year, "-01-01"))),
-        aes(x = year, y = costPerKw), 
-        size = 1) +
-    # Now add modeled cost lines with uncertainty bands
-    geom_ribbon(
-        aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub, 
-            fill = learning), alpha = 0.22) +
+    geom_point(aes(x = year, y = cost_per_kw_hist), size = 1) +
     geom_line(
-        aes(x = year, y = cost_per_kw, color = learning),
-        alpha = 0.6, size = 1) +
+        aes(
+            x = year, 
+            y = cost_per_kw, 
+            color = learning
+        ),
+        alpha = 0.6, size = 1
+    ) +
+    geom_ribbon(
+        aes(
+            x = year, 
+            ymin = cost_per_kw_lb, 
+            ymax = cost_per_kw_ub,
+            fill = learning
+        ), 
+        alpha = 0.22
+    ) +
     scale_x_date(
         limits = x_lim,
         date_labels = "'%y",
         date_breaks = "2 years") +
     scale_y_continuous(
-      limits = c(0, 8000),
-      breaks = seq(0, 8000, 1000),
-      labels = scales::dollar) +
-    # scale_y_log10(labels = scales::dollar) +
+      limits = c(0, 6000),
+      breaks = seq(0, 6000, 1000),
+      labels = scales::dollar
+    ) +
     scale_color_manual("Learning", values = colors_learning) +
     scale_fill_manual("Learning", values = colors_learning) +
     theme_minimal_grid(
         font_size = 16,
-        font_family = font_main) +
+        font_family = font_main
+    ) +
     panel_border() +
     labs(
       title = paste0(
@@ -125,7 +131,7 @@ cost_historical_plot <- cost$cost %>%
     geom_text(
         data = data.frame(
             x = lubridate::ymd(rep("2009-01-01", 3)), 
-            y = c(500, 500, 500),
+            y = rep(400, 3),
             country = c("China", "Germany", "U.S."),
             label = rep("Historical", 3)), 
         aes(x = x, y = y, label = label), 
@@ -133,10 +139,10 @@ cost_historical_plot <- cost$cost %>%
     ) + 
     geom_segment(
         data = data.frame(
-            x = lubridate::ymd(rep("2010-11-01", 3)), 
+            x = lubridate::ymd(c("2011-02-01", "2011-02-01", "2011-02-01")), 
             xend = lubridate::ymd(c("2011-10-01", "2011-10-01", "2011-11-01")), 
-            y = c(500, 500, 500), 
-            yend = c(720, 600, 850), 
+            y = c(500, 400, 500), 
+            yend = c(660, 520, 850), 
             country = c("China", "Germany", "U.S.")),
         aes(x = x, y = y, xend = xend, yend = yend), 
         color = "black", size = 0.5
