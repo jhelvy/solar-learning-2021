@@ -50,8 +50,7 @@ cost_global_us <- predict_cost(
 cost_global_china <- predict_cost(
     params = params_china,
     df     = df_china,
-    lambda = 0, 
-    currency = "rmd") %>% 
+    lambda = 0) %>%
     convertToUsd(data$exchangeRatesRMB) # Currency conversion
 
 cost_global_germany <- predict_cost(
@@ -81,12 +80,12 @@ cost_national_germany <- predict_cost(
 # Preview results
 
 make_historical_plot(
-    cost_global_us,
-    cost_national_us,
-    cost_global_china,
-    cost_national_china,
-    cost_global_germany,
-    cost_national_germany
+    global_us        = cost_global_us,
+    national_us      = cost_national_us,
+    global_china     = cost_global_china,
+    national_china   = cost_national_china,
+    global_germany   = cost_global_germany,
+    national_germany = cost_national_germany
 )
 
 # ggsave("cost_historical.png", width = 15, height = 5)
@@ -146,13 +145,13 @@ savings <- cost_diffs %>%
 # Save outputs ----
 
 saveRDS(list(
-    cost_global_us        = cost_global_us,
-    cost_national_us      = cost_national_us,
-    cost_global_china     = cost_global_china,
-    cost_national_china   = cost_national_china,
-    cost_global_germany   = cost_global_germany,
-    cost_national_germany = cost_national_germany,
-    cost_historical_true  = cost_historical_true,
-    savings               = savings),
+    global_us        = cost_global_us,
+    national_us      = cost_national_us,
+    global_china     = cost_global_china,
+    national_china   = cost_national_china,
+    global_germany   = cost_global_germany,
+    national_germany = cost_national_germany,
+    historical_true  = cost_historical_true,
+    savings          = savings),
     dir$scenarios_hist
 )

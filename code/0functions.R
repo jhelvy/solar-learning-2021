@@ -160,21 +160,21 @@ compute_cost_diff <- function(params, df, lambda_nat, ci = 0.95) {
 # Plotting ----
 
 make_historical_plot <- function(
-    cost_global_us,
-    cost_national_us,
-    cost_global_china,
-    cost_national_china,
-    cost_global_germany,
-    cost_national_germany, 
+    global_us,
+    national_us,
+    global_china,
+    national_china,
+    global_germany,
+    national_germany,
     log_scale = FALSE
 ) {
-    plot <- combine_costs(
-        cost_global_us,
-        cost_national_us,
-        cost_global_china,
-        cost_national_china,
-        cost_global_germany,
-        cost_national_germany) %>% 
+    plot <- combine(
+        global_us,
+        national_us,
+        global_china,
+        national_china,
+        global_germany,
+        national_germany) %>%
     mutate(
         learning = str_to_title(learning),
         learning = fct_relevel(learning, c("National", "Global")),
@@ -321,21 +321,21 @@ convertToUsd <- function(df, exchangeRates) {
   return(result)
 }
 
-combine_costs <- function(
-    cost_global_us,
-    cost_national_us,
-    cost_global_china,
-    cost_national_china,
-    cost_global_germany,
-    cost_national_germany
+combine <- function(
+    global_us,
+    national_us,
+    global_china,
+    national_china,
+    global_germany,
+    national_germany
 ) {
-    cost <- rbind(
-        mutate(cost_global_us, learning = "global", country = "U.S."),
-        mutate(cost_national_us, learning = "national", country = "U.S."),
-        mutate(cost_global_china, learning = "global", country = "China"),
-        mutate(cost_national_china, learning = "national", country = "China"),
-        mutate(cost_global_germany, learning = "global", country = "Germany"),
-        mutate(cost_national_germany, learning = "national", country = "Germany")
+    result <- rbind(
+        mutate(global_us, learning = "global", country = "U.S."),
+        mutate(national_us, learning = "national", country = "U.S."),
+        mutate(global_china, learning = "global", country = "China"),
+        mutate(national_china, learning = "national", country = "China"),
+        mutate(global_germany, learning = "global", country = "Germany"),
+        mutate(national_germany, learning = "national", country = "Germany")
     )
-    return(cost)
+    return(result)
 }

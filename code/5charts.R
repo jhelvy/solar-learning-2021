@@ -65,12 +65,12 @@ ggsave(
 
 cost_historical_plot <- 
     make_historical_plot(
-        cost$cost_global_us,
-        cost$cost_national_us,
-        cost$cost_global_china,
-        cost$cost_national_china,
-        cost$cost_global_germany,
-        cost$cost_national_germany
+        cost$global_us,
+        cost$national_us,
+        cost$global_china,
+        cost$national_china,
+        cost$global_germany,
+        cost$national_germany
     ) +
     # Add "historical" labels
     geom_text(
