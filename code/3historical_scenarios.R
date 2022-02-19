@@ -91,17 +91,6 @@ make_historical_plot(
 
 # ggsave("cost_historical.png", width = 15, height = 5)
 
-# Combine Cost Scenarios ----
-
-cost <- combine_costs(
-    cost_global_us,
-    cost_national_us,
-    cost_global_china,
-    cost_national_china,
-    cost_global_germany,
-    cost_national_germany
-)
-
 # Calculate savings between national and global learning scenarios
 
 # First, compute the cost difference CIs for each country
@@ -157,8 +146,13 @@ savings <- cost_diffs %>%
 # Save outputs ----
 
 saveRDS(list(
-    cost_historical_true = cost_historical_true,
-    cost = cost,
-    savings = savings),
+    cost_global_us        = cost_global_us,
+    cost_national_us      = cost_national_us,
+    cost_global_china     = cost_global_china,
+    cost_national_china   = cost_national_china,
+    cost_global_germany   = cost_global_germany,
+    cost_national_germany = cost_national_germany,
+    cost_historical_true  = cost_historical_true,
+    savings               = savings),
     dir$scenarios_hist
 )

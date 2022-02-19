@@ -63,69 +63,14 @@ ggsave(
 
 # Cost per kw for global vs. national learning ------
 
-x_lim <- lubridate::ymd(c(
-    paste0(plot_min_year - 1, "-07-01"),
-    paste0(plot_max_year, "-07-01")))
-cost_historical_plot <- cost$cost %>%
-    mutate(
-      learning = str_to_title(learning),
-      learning = fct_relevel(learning, c("National", "Global")),
-      year = lubridate::ymd(paste0(year, "-01-01"))) %>% 
-    ggplot() +
-    facet_wrap(vars(country), nrow = 1) +
-    geom_point(aes(x = year, y = cost_per_kw_hist), size = 1) +
-    geom_line(
-        aes(
-            x = year, 
-            y = cost_per_kw, 
-            color = learning
-        ),
-        alpha = 0.6, size = 1
-    ) +
-    geom_ribbon(
-        aes(
-            x = year, 
-            ymin = cost_per_kw_lb, 
-            ymax = cost_per_kw_ub,
-            fill = learning
-        ), 
-        alpha = 0.22
-    ) +
-    scale_x_date(
-        limits = x_lim,
-        date_labels = "'%y",
-        date_breaks = "2 years") +
-    scale_y_continuous(
-      limits = c(0, 6000),
-      breaks = seq(0, 6000, 1000),
-      labels = scales::dollar
-    ) +
-    scale_color_manual("Learning", values = colors_learning) +
-    scale_fill_manual("Learning", values = colors_learning) +
-    theme_minimal_grid(
-        font_size = 16,
-        font_family = font_main
-    ) +
-    panel_border() +
-    labs(
-      title = paste0(
-        "Estimated Module Cost Under <span style = 'color: ",
-        colors_learning["Global"], 
-        ";'>Global</span> vs. <span style = 'color: ", 
-        colors_learning["National"], 
-        ";'>National</span> Market Scenarios"),
-        y = paste0("Cost per kW (", year_inflation, " $USD)"),
-        x = "Year"
-    ) + 
-    theme(
-        plot.title.position = "plot",
-        strip.background = element_rect(fill = "grey80"), 
-        panel.grid.major = element_line(size = 0.3, colour = "grey90"),
-        axis.line.x = element_blank(),
-        plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 1, size = 11, face = "italic"),
-        plot.title = element_markdown(),
-        legend.position = "none"
+cost_historical_plot <- 
+    make_historical_plot(
+        cost$cost_global_us,
+        cost$cost_national_us,
+        cost$cost_global_china,
+        cost$cost_national_china,
+        cost$cost_global_germany,
+        cost$cost_national_germany
     ) +
     # Add "historical" labels
     geom_text(
