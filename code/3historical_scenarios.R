@@ -50,7 +50,8 @@ cost_global_us <- predict_cost(
 cost_global_china <- predict_cost(
     params = params_china,
     df     = df_china,
-    lambda = 0) %>% 
+    lambda = 0, 
+    currency = "rmd") %>% 
     convertToUsd(data$exchangeRatesRMB) # Currency conversion
 
 cost_global_germany <- predict_cost(
@@ -128,14 +129,16 @@ cost_diff_china <- compute_cost_diff(
     df         = df_china,
     lambda_nat = lambda_nat_china,
     ci         = 0.95) %>%
-    mutate(country = "China")
+    mutate(country = "China") %>% 
+    convertToUsd(data$exchangeRatesRMB) # Currency conversion
 
 cost_diff_germany <- compute_cost_diff(
     params     = params_germany,
     df         = df_germany,
     lambda_nat = lambda_nat_germany,
     ci         = 0.95) %>%
-    mutate(country = "Germany")
+    mutate(country = "Germany") %>% 
+    convertToUsd(data$exchangeRatesEUR) # Currency conversion
 
 cost_diffs <- rbind(cost_diff_us, cost_diff_china, cost_diff_germany) %>% 
     filter(year >= year_savings_min, year <= year_savings_max)

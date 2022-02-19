@@ -34,7 +34,8 @@ pvProduction <- data$pvProduction %>%
     expand = expansion(mult = c(0, 0.05))) +
   scale_fill_manual(values = c(
     "#767676", "#0088cc", "#ff6611", "#ffee55", "#aa6688", "#aacc22",
-    "#ff1417")) +
+    "#ff1417"
+  )) +
   theme_minimal_hgrid(font_family = font_main, font_size = 16) +
   theme(
     legend.position = c(0.01, 0.7),
@@ -143,7 +144,8 @@ cost_historical_plot <- cost$cost %>%
 
 ggsave(
     file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
-    cost_historical_plot, height = 4.25, width = 11, device = cairo_pdf)
+    cost_historical_plot, height = 4.25, width = 11, device = cairo_pdf
+)
 ggsave(
     file.path(dir$figs, 'png', 'cost_historical.png'),
     cost_historical_plot, height = 4.25, width = 11
