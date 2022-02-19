@@ -48,6 +48,14 @@ lambda_nat_germany <- make_lambda_national(
     lambda_start, lambda_end, df_nat_trends_germany
 )
 
+# Set exchange rates
+exchangeRateRMB <- data$exchangeRatesRMB %>%
+    filter(year == year_proj_min) %>%
+    pull(average_of_rate)
+exchangeRateEUR <- data$exchangeRatesEUR %>%
+    filter(year == year_proj_min) %>%
+    pull(average_of_rate)
+
 # Compute GLOBAL cost scenarios by country & scenario ----
 
 proj_nat_trends_global_us <- predict_cost(
@@ -64,25 +72,25 @@ proj_nat_trends_global_china <- predict_cost(
     params = params_china,
     df     = df_nat_trends_china,
     lambda = 0) %>% 
-    convertToUsd(data$exchangeRatesRMB) # Currency conversion
+    convertToUsd(exchangeRateRMB) # Currency conversion
 
 proj_sus_dev_global_china <- predict_cost(
     params = params_china,
     df     = df_sus_dev_china,
     lambda = 0) %>% 
-    convertToUsd(data$exchangeRatesRMB) # Currency conversion
+    convertToUsd(exchangeRateRMB) # Currency conversion
 
 proj_nat_trends_global_germany <- predict_cost(
     params = params_germany,
     df     = df_nat_trends_germany,
     lambda = 0) %>% 
-    convertToUsd(data$exchangeRatesEUR) # Currency conversion
+    convertToUsd(exchangeRateEUR) # Currency conversion
 
 proj_sus_dev_global_germany <- predict_cost(
     params = params_germany,
     df     = df_sus_dev_germany,
     lambda = 0) %>% 
-    convertToUsd(data$exchangeRatesEUR) # Currency conversion
+    convertToUsd(exchangeRateEUR) # Currency conversion
 
 # Compute NATIONAL cost scenarios by country & scenario ----
 
@@ -100,25 +108,25 @@ proj_nat_trends_national_china <- predict_cost(
     params = params_china,
     df     = df_nat_trends_china,
     lambda = lambda_nat_china) %>% 
-    convertToUsd(data$exchangeRatesRMB) # Currency conversion
+    convertToUsd(exchangeRateRMB) # Currency conversion
 
 proj_sus_dev_national_china <- predict_cost(
     params = params_china,
     df     = df_sus_dev_china,
     lambda = lambda_nat_china) %>% 
-    convertToUsd(data$exchangeRatesRMB) # Currency conversion
+    convertToUsd(exchangeRateRMB) # Currency conversion
 
 proj_nat_trends_national_germany <- predict_cost(
     params = params_germany,
     df     = df_nat_trends_germany,
     lambda = lambda_nat_germany) %>% 
-    convertToUsd(data$exchangeRatesEUR) # Currency conversion
+    convertToUsd(exchangeRateEUR) # Currency conversion
 
 proj_sus_dev_national_germany <- predict_cost(
     params = params_germany,
     df     = df_sus_dev_germany,
     lambda = lambda_nat_germany) %>% 
-    convertToUsd(data$exchangeRatesEUR) # Currency conversion
+    convertToUsd(exchangeRateEUR) # Currency conversion
 
 # Combine Results -----
 

@@ -242,6 +242,11 @@ get_ci <- function(x, ci = 0.95) {
 }
 
 convertToUsd <- function(df, exchangeRates) {
+  if (length(exchangeRates) == 1) {
+    temp <- data.frame(year = df$year)
+    temp$average_of_rate <- exchangeRates
+    exchangeRates <- temp
+  }
   result <- df %>% 
     left_join(exchangeRates, by = "year") %>% 
     pivot_longer(
@@ -257,5 +262,3 @@ convertToUsd <- function(df, exchangeRates) {
     select(-average_of_rate)
   return(result)
 }
-
-
