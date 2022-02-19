@@ -32,7 +32,6 @@ lambda_end <- 1
 df_us <- data$hist_us
 df_china <- data$hist_china
 df_germany <- data$hist_germany
-
 params_us <- lr$params_us
 params_china <- lr$params_china
 params_germany <- lr$params_germany
