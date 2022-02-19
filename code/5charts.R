@@ -13,16 +13,7 @@ cost <- readRDS(dir$historical_scenarios)
 # Load projections
 proj <- readRDS(dir$projection_scenarios)
 
-# Chart settings
-colors_learning <- c("National" = "#E5601A", "Global" = "#1A9FE5")
-colors_country <- c("#E5C61A", "#1A9FE5", "#E5601A")
-font_main <- "Fira Sans Condensed"
-
-# Set boundaries for plots 
-min_year <- min(year_model_china_min, year_model_us_min, year_model_germany_min)
-max_year <- max(year_model_china_max, year_model_us_max, year_model_germany_max)
-
-# # Check for color blindness
+# Check any plot for color blindness
 # colorblindr::cvd_grid(plot)
 
 # Global PV production ------------
@@ -72,8 +63,8 @@ ggsave(
 # Cost per kw for global vs. national learning ------
 
 x_lim <- lubridate::ymd(c(
-    paste0(min_year - 1, "-07-01"),
-    paste0(max_year, "-07-01")))
+    paste0(plot_min_year - 1, "-07-01"),
+    paste0(plot_max_year, "-07-01")))
 cost_historical_plot <- cost$cost %>%
     mutate(
       learning = str_to_title(learning),
@@ -405,7 +396,7 @@ nrelSeia <- data$nrelCapacity %>%
 
 # Plot NREL vs. SEIA capacity comparison 
 sens_compare_capacity_type <- nrelSeia %>% 
-  filter(year <= max_year) %>%
+  filter(year <= plot_max_year) %>%
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line(alpha = 0.5) +
   geom_point(pch = 21, fill = "white") +
@@ -440,7 +431,7 @@ sens_compare_capacity_cumulative <- nrelSeia %>%
         cumCapacityGw = usa / 10^3) %>% 
       select(year, source, cumCapacityGw)
   ) %>%
-  filter(year <= max_year) %>% 
+  filter(year <= plot_max_year) %>%
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line(alpha = 0.5) +
   geom_point(pch = 21, fill = "white") +

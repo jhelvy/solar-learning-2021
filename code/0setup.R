@@ -1,6 +1,17 @@
 # install.packages(c(
-#     "tidyverse", "scales", "ggrepel", "broom", "readxl", "janitor", "rjson",
-#     "here", "cowplot", "priceR", "ggtext", "gtsummary", "flextable"
+#    "tidyverse",
+#    "scales",
+#    "ggrepel",
+#    "broom",
+#    "readxl",
+#    "janitor",
+#    "rjson",
+#    "here",
+#    "cowplot",
+#    "priceR",
+#    "ggtext",
+#    "gtsummary",
+#    "flextable"
 # ))
 
 # Load libraries
@@ -17,23 +28,22 @@ library(priceR)
 library(ggtext)
 library(gtsummary)
 library(flextable)
-library(rstan)
+
+# Set options
 options(dplyr.width = Inf)
-options(mc.cores = parallel::detectCores())
 
 # Load custom functions
 source(here::here('code', '0functions.R'))
 
 # Setup directories
 dir <- list(
-    data                 = here::here('data'),
-    data_formatted       = here::here('data', 'formatted.Rds'),
-    figs                 = here::here('figs'),
-    output               = here::here('output'),
-    lr_models            = here::here('output', 'lr_models.Rds'),
-    lr_models_lambda     = here::here('output', 'lr_models_lambda.Rds'),
-    historical_scenarios = here::here('output', 'historical_scenarios.Rds'),
-    projection_scenarios = here::here('output', 'projection_scenarios.Rds')
+    data           = here::here('data'),
+    data_formatted = here::here('data', 'formatted.Rds'),
+    figs           = here::here('figs'),
+    output         = here::here('output'),
+    lr_models      = here::here('output', 'lr_models.Rds'),
+    scenarios_hist = here::here('output', 'historical_scenarios.Rds'),
+    scenarios_proj = here::here('output', 'projection_scenarios.Rds')
 )
 
 # Set global "year" variables
@@ -88,3 +98,12 @@ target_sus_dev_us         <- 628*1e6
 target_sus_dev_china      <- 1106*1e6
 target_sus_dev_germany    <- 147*1e6
 target_sus_dev_world      <- 3125*1e6
+
+# Chart settings
+colors_learning <- c("National" = "#E5601A", "Global" = "#1A9FE5")
+colors_country <- c("#E5C61A", "#1A9FE5", "#E5601A")
+font_main <- "Fira Sans Condensed"
+
+# Set boundaries for plots
+plot_min_year <- min(year_model_china_min, year_model_us_min, year_model_germany_min)
+plot_max_year <- max(year_model_china_max, year_model_us_max, year_model_germany_max)
