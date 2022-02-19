@@ -101,7 +101,14 @@ make_lambda_national <- function(lambda_start, lambda_end, df) {
   return(lambda_nat)
 }
 
-predict_cost <- function(params, df, lambda, ci = 0.95, include_hist = TRUE) {
+predict_cost <- function(
+    params, 
+    df, 
+    lambda, 
+    ci = 0.95, 
+    include_hist = TRUE,
+    exchange_rate = 1
+) {
     df_predict <- prep_predict_data(df, lambda)
     draws <- get_y_draws(params, df_predict)
     y_sim <- lapply(draws, function(x) get_ci(x, ci))
@@ -112,6 +119,7 @@ predict_cost <- function(params, df, lambda, ci = 0.95, include_hist = TRUE) {
     if (include_hist) {
       result$cost_per_kw_hist <- df_predict$costPerKw
     }
+    result <- convertToUsd(result, exchange_rate)
     return(result)
 }
 
@@ -135,7 +143,13 @@ get_y_draws <- function(params, df) {
   return(y_sim)
 }
 
-compute_cost_diff <- function(params, df, lambda_nat, ci = 0.95) {
+compute_cost_diff <- function(
+    params, 
+    df, 
+    lambda_nat, 
+    ci = 0.95, 
+    exchange_rate = 1
+) {
     # Get draws of cost for each scenarios
     df_predict_global <- prep_predict_data(df, 0)
     df_predict_national <- prep_predict_data(df, lambda_nat)
@@ -151,6 +165,7 @@ compute_cost_diff <- function(params, df, lambda_nat, ci = 0.95) {
     cost_diff <- as.data.frame(cost_diff)
     names(cost_diff) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
     cost_diff$year <- df$year
+    cost_diff <- convertToUsd(cost_diff, exchange_rate)
     return(cost_diff)
 }
 
@@ -299,14 +314,14 @@ get_ci <- function(x, ci = 0.95) {
   return(df)
 }
 
-convertToUsd <- function(df, exchangeRates) {
-  if (length(exchangeRates) == 1) {
+convertToUsd <- function(df, exchange_rate) {
+  if (length(exchange_rate) == 1) {
     temp <- data.frame(year = df$year)
-    temp$average_of_rate <- exchangeRates
-    exchangeRates <- temp
+    temp$average_of_rate <- exchange_rate
+    exchange_rate <- temp
   }
   result <- df %>% 
-    left_join(exchangeRates, by = "year") %>% 
+    left_join(exchange_rate, by = "year") %>% 
     pivot_longer(
       cols = starts_with("cost"),
       names_to = "label",
