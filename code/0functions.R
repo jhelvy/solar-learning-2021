@@ -101,14 +101,7 @@ make_lambda_national <- function(lambda_start, lambda_end, df) {
   return(lambda_nat)
 }
 
-predict_cost <- function(
-    params, 
-    df, 
-    lambda, 
-    ci = 0.95, 
-    include_hist = TRUE,
-    exchange_rate = 1
-) {
+predict_cost <- function(params, df, lambda, ci = 0.95, exchange_rate = 1) {
     df_predict <- prep_predict_data(df, lambda)
     draws <- get_y_draws(params, df_predict)
     y_sim <- lapply(draws, function(x) get_ci(x, ci))
@@ -116,9 +109,8 @@ predict_cost <- function(
     names(y_sim) <- c("cost_per_kw", "cost_per_kw_lb", "cost_per_kw_ub")
     y_sim <- exp(y_sim)
     result <- cbind(year = df_predict$year, y_sim, cumCapKw = df_predict$q)
-    if (include_hist) {
-      result$cost_per_kw_hist <- df_predict$costPerKw
-    }
+    # Add historical cost (if exists)
+    result$cost_per_kw_hist <- df_predict$costPerKw
     result <- convertToUsd(result, exchange_rate)
     return(result)
 }
