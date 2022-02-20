@@ -77,7 +77,13 @@ ui <- fluidPage(
                 label = "Years delay",
                 min = 1,
                 max = 10,
-                value = 10)
+                value = 10), 
+            radioButtons(
+                inputId = "log_scale",
+                label = "Log scale on Y axis?",
+                choices = c("Yes", "No"),
+                selected = "No"
+            )
         ),
 
         # Show a plot of the generated distribution
@@ -94,6 +100,13 @@ ui <- fluidPage(
 server <- function(input, output) {
     
     # Get variables based on inputs
+    
+    log_scale_switch <- reactive({
+        if (input$log_scale == "Yes") {
+            return(TRUE)
+        }
+        return(FALSE)
+    })
 
     lambda_nat_hist <- reactive({
         us <- make_lambda_national(
@@ -188,7 +201,7 @@ server <- function(input, output) {
     # Outputs
     
     output$cost_historical <- renderPlot(
-        make_historical_plot(get_costs_hist()),
+        make_historical_plot(get_costs_hist(), log_scale_switch()),
         width = 650, height = 400
     )
 }
