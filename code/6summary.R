@@ -69,7 +69,7 @@ cost_percentage <- cost$cost %>%
     
 cat(
     "Comparison of 2020 prices under national versus global markets scenarios",    
-    ":\n\n", cost_percentage$costs, "\n"
+    ":\n\n", cost_percentage$costs, "\n", sep = ""
 )
 
 # Savings in each country
@@ -82,7 +82,7 @@ savings <- cost$savings %>%
         scales::dollar(round(cum_savings_bil_ub)), ")\n"))
 cat(
     "Historical savings from global over national learning\n",
-    "(2008 - 2020, Billions 2020 $USD):\n", savings$savings, "\n"
+    "(2008 - 2020, Billions 2020 $USD):\n\n", savings$savings, "\n"
 )
 
 # Future cost projections -----
