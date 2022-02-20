@@ -12,6 +12,12 @@ df_us <- data$hist_us
 df_china <- data$hist_china
 df_germany <- data$hist_germany
 
+# Merge together true historical cost per kW
+cost_historical_true <- rbind(
+    data$hist_us %>% mutate(country = "U.S."),
+    data$hist_china %>% mutate(country = "China"),
+    data$hist_germany %>% mutate(country = "Germany"))
+
 # Load data frames of params from estimated models
 params_us <- lr$params_us
 params_china <- lr$params_china
@@ -88,8 +94,8 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-            h3("Historical cost"),
-            plotOutput("cost_historical")
+            plotOutput("cost_historical"),
+            plotOutput("savings_historical")
         )
     )
 )
@@ -166,7 +172,7 @@ server <- function(input, output) {
         return(cost)
     })
 
-    get_costs_diffs_hist <- reactive({
+    get_savings_hist <- reactive({
         
         lambda <- lambda_nat_hist()
         
@@ -195,13 +201,20 @@ server <- function(input, output) {
             year_min = year_savings_min, 
             year_max = year_savings_max)
         
-        return(cost_diffs)
+        savings <- compute_savings(cost_diffs, cost_historical_true)
+        
+        return(savings)
     })
-    
+
     # Outputs
     
     output$cost_historical <- renderPlot(
         make_historical_plot(get_costs_hist(), log_scale_switch()),
+        width = 650, height = 400
+    )
+    
+    output$savings_historical <- renderPlot(
+        make_ann_savings_plot(get_savings_hist()),
         width = 650, height = 400
     )
 }

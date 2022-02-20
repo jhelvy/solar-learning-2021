@@ -184,7 +184,8 @@ compute_savings <- function(cost_diffs, cost_historical_true) {
             cum_savings_bil = cumsum(ann_savings_bil),
             cum_savings_bil_lb = cumsum(ann_savings_bil_lb),
             cum_savings_bil_ub = cumsum(ann_savings_bil_ub)) %>%
-        ungroup()    
+        ungroup()
+    print(savings)
     return(savings)
 }
 
@@ -330,11 +331,7 @@ make_ann_savings_plot <- function(savings) {
         scale_x_continuous(breaks = seq(year_savings_min, year_savings_max, 2)) +
         scale_y_continuous(
             labels = scales::dollar, 
-            expand = expansion(mult = c(0, 0.05)),
-            limits = c(
-                plyr::round_any(min(savings$ann_savings_bil_lb), 5),
-                plyr::round_any(max(savings$ann_savings_bil_ub), 5)
-            )
+            expand = expansion(mult = c(0, 0.05))
         ) +
         scale_fill_manual(
             values = c(
@@ -511,9 +508,9 @@ combine <- function(
 
 combine_cost_diffs <- function(us, china, germany, year_min, year_max) {
     cost_diffs <- rbind(
-        mutate(cost_diff_us, country = "U.S."), 
-        mutate(cost_diff_china, country = "China"), 
-        mutate(cost_diff_germany, country = "Germany")) %>% 
+        mutate(us, country = "U.S."), 
+        mutate(china, country = "China"), 
+        mutate(germany, country = "Germany")) %>% 
         filter(year >= year_min, year <= year_max)
     return(cost_diffs)
 }
