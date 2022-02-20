@@ -154,6 +154,9 @@ sus_dev <- combine(
     national_germany = proj_sus_dev_national_germany) %>%
     mutate(scenario = "sus_dev")
 
+make_projection_plot(nat_trends, sus_dev)
+make_projection_plot(nat_trends, sus_dev, log_scale = TRUE)
+
 # Save results --------
 
 saveRDS(list(

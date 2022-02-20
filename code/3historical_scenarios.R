@@ -96,6 +96,7 @@ cost <- combine(
 )
 
 make_historical_plot(cost)
+make_historical_plot(cost, log_scale = TRUE)
 
 # ggsave("cost_historical.png", width = 15, height = 5)
 

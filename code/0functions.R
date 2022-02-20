@@ -243,7 +243,7 @@ make_historical_plot <- function(cost, log_scale = FALSE) {
             colors_learning["Global"], 
             ";'>Global</span> vs. <span style = 'color: ", 
             colors_learning["National"], 
-            ";'>National</span> Market Scenarios"),
+            ";'>National</span> Markets Scenarios"),
             y = paste0("Cost per kW (", year_inflation, " $USD)"),
             x = "Year"
         ) + 
@@ -268,7 +268,7 @@ make_historical_plot <- function(cost, log_scale = FALSE) {
 }
 
 make_projection_plot <- function(nat_trends, sus_dev, log_scale = FALSE) {
-    rbind(proj$nat_trends, proj$sus_dev) %>% 
+    plot <- rbind(proj$nat_trends, proj$sus_dev) %>% 
       mutate(
         learning = str_to_title(learning),
         learning = fct_relevel(learning, c("National", "Global")),
@@ -311,7 +311,15 @@ make_projection_plot <- function(nat_trends, sus_dev, log_scale = FALSE) {
           colors_learning["Global"], 
           ";'>Global</span> vs. <span style = 'color: ", 
           colors_learning["National"], 
-          ";'>National</span> Market Scenarios (2020 - 2030)"))
+          ";'>National</span> Markets Scenarios (2020 - 2030)"))
+    if (log_scale) {
+        plot <- plot + 
+            scale_y_log10(
+                labels = function(x) scales::dollar(x, accuracy = 1)
+            ) + 
+            labs(y = paste0("log(Cost per kW), ", year_inflation, " $USD"))
+    }
+    return(plot)
 }
 
 

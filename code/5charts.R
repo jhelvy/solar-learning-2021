@@ -208,50 +208,7 @@ ggsave(
 
 # 2030 Projections -----
 
-cost_proj <- rbind(proj$nat_trends, proj$sus_dev) %>% 
-  mutate(
-    learning = str_to_title(learning),
-    learning = fct_relevel(learning, c("National", "Global")),
-    scenario = fct_recode(scenario, 
-      "National Trends" = "nat_trends", 
-      "Sustainable Development" = "sus_dev"),
-    year = lubridate::ymd(paste0(year, "-01-01"))) %>%
-  ggplot() +
-  facet_grid(scenario ~ country) +
-  geom_ribbon(
-    aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
-        fill = learning), alpha = 0.25) +
-  geom_line(
-    aes(x = year, y = cost_per_kw, color = learning),
-    alpha = 0.6, size = 1) +
-  scale_x_date(
-    limits = lubridate::ymd(c("2019-07-01", "2030-07-01")),
-    date_labels = "'%y",
-    date_breaks = "2 years") +
-  scale_y_continuous(labels = scales::dollar) +
-  # expand_limits(y = 0) +
-  scale_color_manual("Scenario", values = colors_learning) +
-  scale_fill_manual("Scenario", values = colors_learning) +
-  theme_minimal_grid(
-    font_size = 16,
-    font_family = font_main) +
-  panel_border() +
-  theme(
-    plot.title.position = "plot",
-    plot.title = element_markdown(),
-    legend.position = "none",
-    strip.background = element_rect(fill = "grey80"),
-    panel.grid.major = element_line(size = 0.5, colour = "grey90")
-  ) +
-  labs(
-    y = paste0("Cost per kW (", year_inflation, " $USD)"),
-    x = "Year",
-    title = paste0(
-      "Projected Module Cost Under <span style = 'color: ",
-      colors_learning["Global"], 
-      ";'>Global</span> vs. <span style = 'color: ", 
-      colors_learning["National"], 
-      ";'>National</span> Market Scenarios (2020 - 2030)"))
+cost_proj <- make_projection_plot(proj$nat_trends, proj$sus_dev)
 
 ggsave(
   file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
