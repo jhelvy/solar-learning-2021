@@ -40,14 +40,11 @@ cat(
 # Learning rates -----
 
 lr <- readRDS(dir$lr_models)
-b_us <- coef(lr$model_us)["log(cumCapacityKw)"]
-b_china <- coef(lr$model_china)["log(cumCapacityKw)"]
-b_germany <- coef(lr$model_germany)["log(cumCapacityKw)"]
 cat(
     "Learning rates:\n",
-    "U.S.: ", scales::percent(round(1 - 2^b_us, 3)), "\n",
-    "China: ", scales::percent(round(1 - 2^b_china, 2)), "\n",
-    "Germany: ", scales::percent(round(1 - 2^b_germany, 2)), "\n\n"
+    "U.S.: ", scales::percent(lr$lr_us), "\n",
+    "China: ", scales::percent(lr$lr_china), "\n",
+    "Germany: ", scales::percent(lr$lr_germany), "\n\n"
 )
 
 # Historical cost implications -----
@@ -58,18 +55,21 @@ cost <- readRDS(dir$scenarios_hist)
 cost_percentage <- cost$cost %>% 
     filter(year == 2020) %>% 
     select(country, learning, cost_per_kw) %>% 
-    spread(learning, cost_per_kw) %>% 
+    pivot_wider(
+        names_from = learning,
+        values_from = cost_per_kw) %>% 
     mutate(
         diff = national - global,
         p = scales::percent(diff / global),
         global = scales::dollar(round(global)),
         national = scales::dollar(round(national)),
         costs = paste0(
-            country, ": ", p, " (", national, " versus ", global, ")\n"))
+            country, ": ", national, " versus ", global, ", or ", p, " higher\n")
+    )
     
 cat(
-    "Prices in 2020 would be this much higher under national learning",    
-    "compared to actual 2020 costs:\n\n", cost_percentage$costs, "\n"
+    "Comparison of 2020 prices under national versus global markets scenarios",    
+    ":\n\n", cost_percentage$costs, "\n"
 )
 
 # Savings in each country
@@ -85,36 +85,43 @@ cat(
     "(2008 - 2020, Billions 2020 $USD):\n", savings$savings, "\n"
 )
 
-
-
 # Future cost projections -----
 
 proj <- readRDS(dir$scenarios_proj)
-proj_summary <- proj$base %>% 
+proj_summary <- rbind(proj$nat_trends, proj$sus_dev) %>% 
+    mutate(
+        learning = str_to_title(learning),
+        learning = fct_relevel(learning, c("National", "Global")),
+        scenario = fct_recode(scenario, 
+        "National Trends" = "nat_trends", 
+        "Sustainable Development" = "sus_dev")
+    ) %>% 
     filter(year == year_proj_max) %>% 
-    select(-cost_per_kw_lb, -cost_per_kw_ub) %>% 
-    spread(key = learning, value = cost_per_kw) %>% 
+    select(year, learning, country, scenario, cost_per_kw) %>% 
+    pivot_wider(
+        names_from = learning, 
+        values_from = cost_per_kw) %>% 
     arrange(scenario) %>% 
     group_by(scenario) %>% 
     mutate(
-        diff = national - global, 
-        pDiff = scales::percent(diff / global), 
-        cost_summary = paste0(country, ": ", 
-            scales::dollar(round(global)), " (global) vs. ",
-            scales::dollar(round(national)), " (national)\n"), 
-        p_summary = paste0(country, ": ", pDiff, "\n")
+        diff = National - Global, 
+        pDiff = scales::percent(round(diff / Global, 2)), 
+        cost_summary = paste0("\t", country, ": ", 
+            scales::dollar(round(Global)), " (Global) vs. ",
+            scales::dollar(round(National)), " (National)\n"), 
+        p_summary = paste0("\t", country, ": ", pDiff, "\n")
     )
 
 cat(
     '"NATIONAL TRENDS" scenario:\n\n',
     'Projected 2030 module costs:\n',
-    proj_summary$cost_summary[proj_summary$scenario == "nat_trends"], "\n",
-    "% premium under national vs. global learning:\n",
-    proj_summary$p_summary[proj_summary$scenario == "nat_trends"], "\n",
+    proj_summary$cost_summary[proj_summary$scenario == "National Trends"], "\n",
+    "% premium under national vs. global markets:\n",
+    proj_summary$p_summary[proj_summary$scenario == "National Trends"], "\n",
     
     '"SUSTAINABLE DEVELOPMENT" scenario:\n\n',
     'Projected 2030 module costs:\n',
-    proj_summary$cost_summary[proj_summary$scenario == "sus_dev"], "\n",
-    "% premium under national vs. global learning:\n",
-    proj_summary$p_summary[proj_summary$scenario == "sus_dev"], "\n\n"
+    proj_summary$cost_summary[proj_summary$scenario == "Sustainable Development"], "\n",
+    "% premium under national vs. global markets:\n",
+    proj_summary$p_summary[proj_summary$scenario == "Sustainable Development"], "\n\n"
 )
