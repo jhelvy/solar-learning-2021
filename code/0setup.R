@@ -11,7 +11,8 @@
 #    "priceR",
 #    "ggtext",
 #    "gtsummary",
-#    "flextable"
+#    "flextable",
+#    "shiny"
 # ))
 
 # Load libraries
@@ -28,6 +29,7 @@ library(priceR)
 library(ggtext)
 library(gtsummary)
 library(flextable)
+library(shiny)
 
 # Set options
 options(dplyr.width = Inf)

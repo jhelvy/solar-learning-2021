@@ -37,9 +37,12 @@ params_china <- lr$params_china
 params_germany <- lr$params_germany
 
 # Set lambda values for national markets scenario
-lambda_nat_us <- make_lambda_national(lambda_start, lambda_end, df_us)
-lambda_nat_china <- make_lambda_national(lambda_start, lambda_end, df_china)
-lambda_nat_germany <- make_lambda_national(lambda_start, lambda_end, df_germany)
+lambda_nat_us <- make_lambda_national(
+    lambda_start, lambda_end, delay, df_us)
+lambda_nat_china <- make_lambda_national(
+    lambda_start, lambda_end, delay, df_china)
+lambda_nat_germany <- make_lambda_national(
+    lambda_start, lambda_end, delay, df_germany)
 
 # Set exchange rates
 er_us <- 1

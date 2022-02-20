@@ -95,7 +95,7 @@ run_model <- function(df, lambda) {
 
 # Scenarios ----
 
-make_lambda_national <- function(lambda_start, lambda_end, df) {
+make_lambda_national <- function(lambda_start, lambda_end, delay, df) {
   temp <- seq(lambda_start, lambda_end, length.out = delay + 1)
   lambda_nat <- c(temp, rep(lambda_end, nrow(df) - length(temp)))
   return(lambda_nat)
@@ -225,11 +225,7 @@ make_historical_plot <- function(cost, log_scale = FALSE) {
             ),
             date_labels = "'%y",
             date_breaks = "2 years") +
-        scale_y_continuous(
-          limits = c(0, 6000),
-          breaks = seq(0, 6000, 1000),
-          labels = scales::dollar
-        ) +
+        scale_y_continuous(labels = scales::dollar) +
         scale_color_manual("Learning", values = colors_learning) +
         scale_fill_manual("Learning", values = colors_learning) +
         theme_minimal_grid(

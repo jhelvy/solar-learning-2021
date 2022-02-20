@@ -65,6 +65,11 @@ ggsave(
 
 cost_historical_plot <- 
     make_historical_plot(cost$cost) +
+    scale_y_continuous(
+        limits = c(0, 6000),
+        breaks = seq(0, 6000, 1000),
+        labels = scales::dollar
+    ) +
     # Add "historical" labels
     geom_text(
         data = data.frame(
