@@ -86,7 +86,7 @@ cost_national_germany <- predict_cost(
 
 # Preview results
 
-make_historical_plot(
+cost <- combine(
     global_us        = cost_global_us,
     national_us      = cost_national_us,
     global_china     = cost_global_china,
@@ -94,6 +94,8 @@ make_historical_plot(
     global_germany   = cost_global_germany,
     national_germany = cost_national_germany
 )
+
+make_historical_plot(cost)
 
 # ggsave("cost_historical.png", width = 15, height = 5)
 
@@ -124,39 +126,14 @@ cost_diff_germany <- compute_cost_diff(
 cost_diffs <- rbind(cost_diff_us, cost_diff_china, cost_diff_germany) %>% 
     filter(year >= year_savings_min, year <= year_savings_max)
 
-# Compute the additional capacity in each country in each year
-cap_additions <- cost_historical_true %>% 
-    select(year, country, annCapKw_nation) %>%
-    filter(year >= year_savings_min, year <= year_savings_max)
-
 # Compute savings
-savings <- cost_diffs %>%
-    left_join(cap_additions, by = c("year", "country")) %>%
-    mutate(
-        ann_savings_bil = (annCapKw_nation * cost_per_kw) / 10^9,
-        ann_savings_bil_lb = (annCapKw_nation * cost_per_kw_lb) / 10^9,
-        ann_savings_bil_ub = (annCapKw_nation * cost_per_kw_ub) / 10^9
-    ) %>%
-    select(
-        year, country, ann_savings_bil, ann_savings_bil_lb,
-        ann_savings_bil_ub) %>%
-    group_by(country) %>%
-    mutate(
-        cum_savings_bil = cumsum(ann_savings_bil),
-        cum_savings_bil_lb = cumsum(ann_savings_bil_lb),
-        cum_savings_bil_ub = cumsum(ann_savings_bil_ub)) %>%
-    ungroup()
+
+savings <- compute_savings(cost_diffs, cost_historical_true)
 
 # Save outputs ----
 
 saveRDS(list(
-    global_us        = cost_global_us,
-    national_us      = cost_national_us,
-    global_china     = cost_global_china,
-    national_china   = cost_national_china,
-    global_germany   = cost_global_germany,
-    national_germany = cost_national_germany,
-    historical_true  = cost_historical_true,
-    savings          = savings),
+    cost    = cost,
+    savings = savings),
     dir$scenarios_hist
 )

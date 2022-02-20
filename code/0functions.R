@@ -161,90 +161,102 @@ compute_cost_diff <- function(
     return(cost_diff)
 }
 
+compute_savings <- function(cost_diffs, cost_historical_true) {
+    
+    # Compute the additional capacity in each country in each year
+    cap_additions <- cost_historical_true %>% 
+        select(year, country, annCapKw_nation) %>%
+        filter(year >= year_savings_min, year <= year_savings_max)
+    
+    # Now compute savings
+    savings <- cost_diffs %>%
+        left_join(cap_additions, by = c("year", "country")) %>%
+        mutate(
+            ann_savings_bil = (annCapKw_nation * cost_per_kw) / 10^9,
+            ann_savings_bil_lb = (annCapKw_nation * cost_per_kw_lb) / 10^9,
+            ann_savings_bil_ub = (annCapKw_nation * cost_per_kw_ub) / 10^9
+        ) %>%
+        select(
+            year, country, ann_savings_bil, ann_savings_bil_lb,
+            ann_savings_bil_ub) %>%
+        group_by(country) %>%
+        mutate(
+            cum_savings_bil = cumsum(ann_savings_bil),
+            cum_savings_bil_lb = cumsum(ann_savings_bil_lb),
+            cum_savings_bil_ub = cumsum(ann_savings_bil_ub)) %>%
+        ungroup()    
+    return(savings)
+}
 
 
 
 # Plotting ----
 
-make_historical_plot <- function(
-    global_us,
-    national_us,
-    global_china,
-    national_china,
-    global_germany,
-    national_germany,
-    log_scale = FALSE
-) {
-    plot <- combine(
-        global_us,
-        national_us,
-        global_china,
-        national_china,
-        global_germany,
-        national_germany) %>%
-    mutate(
-        learning = str_to_title(learning),
-        learning = fct_relevel(learning, c("National", "Global")),
-        year = lubridate::ymd(paste0(year, "-01-01"))) %>% 
-    ggplot() +
-    facet_wrap(vars(country), nrow = 1) +
-    geom_point(aes(x = year, y = cost_per_kw_hist), size = 1) +
-    geom_line(
-        aes(
-            x = year, 
-            y = cost_per_kw, 
-            color = learning
-        ),
-        alpha = 0.6, size = 1
-    ) +
-    geom_ribbon(
-        aes(
-            x = year, 
-            ymin = cost_per_kw_lb, 
-            ymax = cost_per_kw_ub,
-            fill = learning
-        ), 
-        alpha = 0.22
-    ) +
-    scale_x_date(
-        limits = lubridate::ymd(c(
-            paste0(plot_min_year - 1, "-07-01"),
-            paste0(plot_max_year, "-07-01"))
-        ),
-        date_labels = "'%y",
-        date_breaks = "2 years") +
-    scale_y_continuous(
-      limits = c(0, 6000),
-      breaks = seq(0, 6000, 1000),
-      labels = scales::dollar
-    ) +
-    scale_color_manual("Learning", values = colors_learning) +
-    scale_fill_manual("Learning", values = colors_learning) +
-    theme_minimal_grid(
-        font_size = 16,
-        font_family = font_main
-    ) +
-    panel_border() +
-    labs(
-      title = paste0(
-        "Estimated Module Cost Under <span style = 'color: ",
-        colors_learning["Global"], 
-        ";'>Global</span> vs. <span style = 'color: ", 
-        colors_learning["National"], 
-        ";'>National</span> Market Scenarios"),
-        y = paste0("Cost per kW (", year_inflation, " $USD)"),
-        x = "Year"
-    ) + 
-    theme(
-        plot.title.position = "plot",
-        strip.background = element_rect(fill = "grey80"), 
-        panel.grid.major = element_line(size = 0.3, colour = "grey90"),
-        axis.line.x = element_blank(),
-        plot.caption.position = "plot",
-        plot.caption = element_text(hjust = 1, size = 11, face = "italic"),
-        plot.title = element_markdown(),
-        legend.position = "none"
-    ) 
+make_historical_plot <- function(cost, log_scale = FALSE) {
+    plot <- cost %>%
+        mutate(
+            learning = str_to_title(learning),
+            learning = fct_relevel(learning, c("National", "Global")),
+            year = lubridate::ymd(paste0(year, "-01-01"))) %>% 
+        ggplot() +
+        facet_wrap(vars(country), nrow = 1) +
+        geom_point(aes(x = year, y = cost_per_kw_hist), size = 1) +
+        geom_line(
+            aes(
+                x = year, 
+                y = cost_per_kw, 
+                color = learning
+            ),
+            alpha = 0.6, size = 1
+        ) +
+        geom_ribbon(
+            aes(
+                x = year, 
+                ymin = cost_per_kw_lb, 
+                ymax = cost_per_kw_ub,
+                fill = learning
+            ), 
+            alpha = 0.22
+        ) +
+        scale_x_date(
+            limits = lubridate::ymd(c(
+                paste0(plot_min_year - 1, "-07-01"),
+                paste0(plot_max_year, "-07-01"))
+            ),
+            date_labels = "'%y",
+            date_breaks = "2 years") +
+        scale_y_continuous(
+          limits = c(0, 6000),
+          breaks = seq(0, 6000, 1000),
+          labels = scales::dollar
+        ) +
+        scale_color_manual("Learning", values = colors_learning) +
+        scale_fill_manual("Learning", values = colors_learning) +
+        theme_minimal_grid(
+            font_size = 16,
+            font_family = font_main
+        ) +
+        panel_border() +
+        labs(
+          title = paste0(
+            "Estimated Module Cost Under <span style = 'color: ",
+            colors_learning["Global"], 
+            ";'>Global</span> vs. <span style = 'color: ", 
+            colors_learning["National"], 
+            ";'>National</span> Market Scenarios"),
+            y = paste0("Cost per kW (", year_inflation, " $USD)"),
+            x = "Year"
+        ) + 
+        theme(
+            plot.title.position = "plot",
+            strip.background = element_rect(fill = "grey80"), 
+            panel.grid.major = element_line(size = 0.3, colour = "grey90"),
+            axis.line.x = element_blank(),
+            plot.caption.position = "plot",
+            plot.caption = element_text(hjust = 1, size = 11, face = "italic"),
+            plot.title = element_markdown(),
+            legend.position = "none"
+        ) 
     if (log_scale) {
         plot <- plot + 
             scale_y_log10(
@@ -256,7 +268,50 @@ make_historical_plot <- function(
 }
 
 make_projection_plot <- function(nat_trends, sus_dev, log_scale = FALSE) {
-    
+    rbind(proj$nat_trends, proj$sus_dev) %>% 
+      mutate(
+        learning = str_to_title(learning),
+        learning = fct_relevel(learning, c("National", "Global")),
+        scenario = fct_recode(scenario, 
+          "National Trends" = "nat_trends", 
+          "Sustainable Development" = "sus_dev"),
+        year = lubridate::ymd(paste0(year, "-01-01"))) %>%
+      ggplot() +
+      facet_grid(scenario ~ country) +
+      geom_ribbon(
+        aes(x = year, ymin = cost_per_kw_lb, ymax = cost_per_kw_ub,
+            fill = learning), alpha = 0.25) +
+      geom_line(
+        aes(x = year, y = cost_per_kw, color = learning),
+        alpha = 0.6, size = 1) +
+      scale_x_date(
+        limits = lubridate::ymd(c("2019-07-01", "2030-07-01")),
+        date_labels = "'%y",
+        date_breaks = "2 years") +
+      scale_y_continuous(labels = scales::dollar) +
+      # expand_limits(y = 0) +
+      scale_color_manual("Scenario", values = colors_learning) +
+      scale_fill_manual("Scenario", values = colors_learning) +
+      theme_minimal_grid(
+        font_size = 16,
+        font_family = font_main) +
+      panel_border() +
+      theme(
+        plot.title.position = "plot",
+        plot.title = element_markdown(),
+        legend.position = "none",
+        strip.background = element_rect(fill = "grey80"),
+        panel.grid.major = element_line(size = 0.5, colour = "grey90")
+      ) +
+      labs(
+        y = paste0("Cost per kW (", year_inflation, " $USD)"),
+        x = "Year",
+        title = paste0(
+          "Projected Module Cost Under <span style = 'color: ",
+          colors_learning["Global"], 
+          ";'>Global</span> vs. <span style = 'color: ", 
+          colors_learning["National"], 
+          ";'>National</span> Market Scenarios (2020 - 2030)"))
 }
 
 

@@ -64,14 +64,7 @@ ggsave(
 # Cost per kw for global vs. national learning ------
 
 cost_historical_plot <- 
-    make_historical_plot(
-        cost$global_us,
-        cost$national_us,
-        cost$global_china,
-        cost$national_china,
-        cost$global_germany,
-        cost$national_germany
-    ) +
+    make_historical_plot(cost$cost) +
     # Add "historical" labels
     geom_text(
         data = data.frame(
@@ -215,7 +208,7 @@ ggsave(
 
 # 2030 Projections -----
 
-cost_proj <- proj$base %>% 
+cost_proj <- rbind(proj$nat_trends, proj$sus_dev) %>% 
   mutate(
     learning = str_to_title(learning),
     learning = fct_relevel(learning, c("National", "Global")),
