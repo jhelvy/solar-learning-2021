@@ -107,25 +107,26 @@ cost_diff_us <- compute_cost_diff(
     params     = params_us,
     df         = df_us,
     lambda_nat = lambda_nat_us,
-    exchange_rate = er_us) %>%
-    mutate(country = "U.S.")
+    exchange_rate = er_us)
 
 cost_diff_china <- compute_cost_diff(
     params     = params_china,
     df         = df_china,
     lambda_nat = lambda_nat_china,
-    exchange_rate = er_china) %>%
-    mutate(country = "China") 
+    exchange_rate = er_china)
 
 cost_diff_germany <- compute_cost_diff(
     params     = params_germany,
     df         = df_germany,
     lambda_nat = lambda_nat_germany,
-    exchange_rate = er_germany) %>% 
-    mutate(country = "Germany")
+    exchange_rate = er_germany)
 
-cost_diffs <- rbind(cost_diff_us, cost_diff_china, cost_diff_germany) %>% 
-    filter(year >= year_savings_min, year <= year_savings_max)
+cost_diffs <- combine_cost_diffs(
+    us = cost_diff_us, 
+    china = cost_diff_china, 
+    germany = cost_diff_germany, 
+    year_min = year_savings_min, 
+    year_max = year_savings_max)
 
 # Compute savings
 

@@ -97,56 +97,21 @@ ggsave(
 
 # Cumulative savings historical ----
 
-savings_cum_historical_plot <- cost$savings %>%
-    mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
-    ggplot() +
-    geom_area(aes(x = year, y = cum_savings_bil, fill = country)) +
-    scale_fill_manual(values = colors_country) +
-    scale_x_continuous(
-      breaks = seq(year_savings_min, year_savings_max, 2),
-      limits = c(year_savings_min, year_savings_max)) +
-    scale_y_continuous(
-      labels = dollar,
-      breaks = seq(0, 80, 20),
-      limits = c(0, 80),
-      expand = expansion(mult = c(0, 0.05))) +
-    theme_minimal_hgrid(font_family = font_main) +
-    scale_color_manual(values = c("white", "black", "white")) +
-    labs(
-        title = "Cumulative Module Savings Under Global vs. National Market Scenarios (2008 - 2020)",
-        x = "Year",
-        y = paste0("Cumulative Savings (Billion ", year_inflation, " $USD)"),
-        fill = "Country") +
-    theme(
-        plot.title.position = "plot",
-        legend.position = "none"
-    ) +
-    # Add country labels
-    geom_text(
-        data = data.frame(
-            x = c(2018, 2018, 2017), 
-            y = c(20, 44, 64), 
-            label = c("China", "U.S.", "Germany")), 
-        aes(x = x, y = y, label = label, color = label), 
-        size = 6, family = font_main
-    ) +
-    annotate(
-        "segment", x = 2018, xend = 2018.5, y = 63, yend = 59,
-        colour = "black"
-    )
+savings_cum_historical_plot <- make_cum_savings_plot(cost$savings)
 
 ggsave(
     file.path(dir$figs, 'pdf', 'savings_cum_historical_plot.pdf'),
-    savings_cum_historical_plot, height = 4, width = 6.5, 
+    savings_cum_historical_plot, height = 5, width = 6, 
     device = cairo_pdf
 )
 ggsave(
     file.path(dir$figs, 'png', 'savings_cum_historical_plot.png'),
-    savings_cum_historical_plot, height = 4, width = 6.5
+    savings_cum_historical_plot, height = 5, width = 6
 )
 
 # Annual savings historical ----
 
+# First make label data
 cum_savings_labels <- cost$savings %>% 
     filter(year == max(year)) %>%
     mutate(
@@ -154,47 +119,25 @@ cum_savings_labels <- cost$savings %>%
         lb = round(cum_savings_bil_lb),
         ub = round(cum_savings_bil_ub),
         x = 2008, 
-        y = 12.5,
+        y = 9, 
         label = paste0(
-            "Cumulative savings:\nB $ ", mean, " (", lb, " - ", ub, ")"))
-savings_ann_historical_plot <- cost$savings %>% 
-    mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
-    ggplot() + 
-    facet_wrap(vars(country), nrow = 1) +
-    geom_col(aes(x = year, y = ann_savings_bil, fill = country)) + 
-    geom_errorbar(
-        aes(x = year, ymin = ann_savings_bil_lb, ymax = ann_savings_bil_ub), 
-        color = "grey42", width = 0.5) + 
-    scale_x_continuous(breaks = seq(year_savings_min, year_savings_max, 2)) +
+            "Cumulative savings:\nB $ ", mean, " (", lb, " - ", ub, ")")
+    )
+
+# Now make the plot
+savings_ann_historical_plot <- make_ann_savings_plot(cost$savings) +
     scale_y_continuous(
         labels = scales::dollar, 
-        breaks = seq(-5, 20, 5),
-        limits = c(-5, 20),
-        expand = expansion(mult = c(0, 0.05))) +
-    scale_fill_manual(values = colors_country) +
-    theme_minimal_hgrid(
-        font_size = 16,
-        font_family = font_main) +
-    panel_border() +
-    theme(
-        plot.title.position = "plot",
-        legend.position = "none",
-        axis.line.x = element_blank(),
-        strip.background = element_rect(fill = "grey80"), 
-        panel.grid.major = element_line(
-            size = 0.5, colour = "grey90")
+        breaks = seq(0, 10, 2),
+        limits = c(0, 10),
+        expand = expansion(mult = c(0, 0.05))
     ) +
-     labs(
-        title = "Annual Module Savings Under Global vs. National Market Scenarios (2008 - 2020)",
-        x = NULL,
-        y = paste0("Annual Savings (Billion ", year_inflation, " $USD)"),
-        fill = "Country") + 
-    # Add totals
+    # Add totals labels
     geom_text(
         data = cum_savings_labels,
-        aes(x = x, y = y, label = label), 
+        aes(x = x, y = y, label = label),
         size = 4.5, family = "Roboto Condensed", hjust = 0
-    ) 
+    )
 
 ggsave(
     file.path(dir$figs, 'pdf', 'savings_ann_historical_plot.pdf'),
@@ -218,70 +161,6 @@ ggsave(
   file.path(dir$figs, 'png', 'cost_proj.png'),
   cost_proj, height = 6.5, width = 11
 )
-
-# Compare predicted 2030 costs based on different starting costs --------
-
-# Get the main cost_per_kw in each scenario
-sens_cost_proj <- rbind(
-  mutate(proj$base, bound = "main"), 
-  mutate(proj$lb, bound = "lb"), 
-  mutate(proj$ub, bound = "ub")
-) %>% 
-  select(-c("cost_per_kw_lb", "cost_per_kw_ub")) %>% 
-  spread(key = bound, value = cost_per_kw) %>% 
-  mutate(
-    learning = str_to_title(learning),
-    learning = fct_relevel(learning, c("National", "Global")),
-    scenario = fct_recode(scenario, 
-      "National Trends" = "nat_trends", 
-      "Sustainable Development" = "sus_dev"),
-    year = lubridate::ymd(paste0(year, "-01-01"))) %>%
-  ggplot() +
-  facet_grid(scenario ~ country) +
-  geom_ribbon(
-    aes(x = year, ymin = lb, ymax = ub,
-        fill = learning), alpha = 0.25) +
-  geom_line(
-    aes(x = year, y = main, color = learning),
-    alpha = 0.6, size = 1) +
-  scale_x_date(
-    limits = lubridate::ymd(c("2019-07-01", "2030-07-01")),
-    date_labels = "'%y",
-    date_breaks = "2 years") +
-  scale_y_continuous(labels = scales::dollar) +
-  # expand_limits(y = 0) +
-  scale_color_manual("Scenario", values = colors_learning) +
-  scale_fill_manual("Scenario", values = colors_learning) +
-  theme_minimal_grid(
-    font_size = 16,
-    font_family = font_main) +
-  panel_border() +
-  theme(
-    plot.title.position = "plot",
-    plot.title = element_markdown(),
-    legend.position = "none",
-    strip.background = element_rect(fill = "grey80"),
-    panel.grid.major = element_line(size = 0.5, colour = "grey90"),
-    plot.caption.position = "plot",
-    plot.caption = element_text(hjust = 1, size = 11, face = "italic")
-  ) +
-  labs(
-    y = paste0("Cost per kW (", year_inflation, " $USD)"),
-    x = "Year",
-    title = paste0(
-      "Projected Module Cost Under <span style = 'color: ",
-      colors_learning["Global"], 
-      ";'>Global</span> vs. <span style = 'color: ", 
-      colors_learning["National"], 
-      ";'>National</span> Market Scenarios (2020 - 2030)"),
-    subtitle = "Bands reflect a 25% range around the 2020 starting cost")
-
-ggsave(
-  file.path(dir$figs, 'pdf', 'sens_cost_proj.pdf'),
-  sens_cost_proj, height = 6.5, width = 11, device = cairo_pdf)
-ggsave(
-  file.path(dir$figs, 'png', 'sens_cost_proj.png'),
-  sens_cost_proj, height = 6.5, width = 11)
 
 # Compare capacity data from NREL, SEIA, and IRENA ----------------------------
 
@@ -314,10 +193,14 @@ sens_compare_capacity_type <- nrelSeia %>%
     color = "Data source",
     title = "Comparison of installed capacity by type and data source")
 
-ggsave(here::here(dir$figs, 'pdf', "sens_compare_capacity_type.pdf"),
-       sens_compare_capacity_type, width = 9, height = 3, device = cairo_pdf)
-ggsave(here::here(dir$figs, 'png', "sens_compare_capacity_type.png"),
-       sens_compare_capacity_type, width = 9, height = 3, dpi = 300)
+ggsave(
+    here::here(dir$figs, 'pdf', "sens_compare_capacity_type.pdf"),
+    sens_compare_capacity_type, width = 9, height = 3, device = cairo_pdf
+)
+ggsave(
+    here::here(dir$figs, 'png', "sens_compare_capacity_type.png"),
+    sens_compare_capacity_type, width = 9, height = 3, dpi = 300
+)
 
 # During the overlapping period, NREL and SEIA data match quite closely
 # Only deviation is that NREL Commercial installations are slightly lower
@@ -348,12 +231,16 @@ sens_compare_capacity_cumulative <- nrelSeia %>%
     color = "Data source",
     title = "Comparison of cumulative installed data")
 
-ggsave(here::here(dir$figs, 'pdf', "sens_compare_capacity_cumulative.pdf"),
-       sens_compare_capacity_cumulative, 
-       width = 5, height = 3, device = cairo_pdf)
-ggsave(here::here(dir$figs, 'png', "sens_compare_capacity_cumulative.png"),
-       sens_compare_capacity_cumulative, 
-       width = 5, height = 3, dpi = 300)
+ggsave(
+    here::here(dir$figs, 'pdf', "sens_compare_capacity_cumulative.pdf"),
+    sens_compare_capacity_cumulative, 
+    width = 5, height = 3, device = cairo_pdf
+)
+ggsave(
+    here::here(dir$figs, 'png', "sens_compare_capacity_cumulative.png"),
+    sens_compare_capacity_cumulative, 
+    width = 5, height = 3, dpi = 300
+)
 
 # IRENA data track differently from NREL and SEIA. 
 # They're slightly higher in the period before 2014 and lower afterwards
@@ -388,10 +275,14 @@ sens_compare_cost <- cost_compare %>%
        color = "Data source",
        title = "Comparison of cost per kW by data source")
 
-ggsave(here::here(dir$figs, 'pdf', "sens_compare_cost.pdf"),
-       sens_compare_cost, width = 5, height = 3, device = cairo_pdf)
-ggsave(here::here(dir$figs, 'png', "sens_compare_cost.png"),
-       sens_compare_cost, width = 5, height = 3, dpi = 300)
+ggsave(
+    here::here(dir$figs, 'pdf', "sens_compare_cost.pdf"),
+    sens_compare_cost, width = 5, height = 3, device = cairo_pdf
+)
+ggsave(
+    here::here(dir$figs, 'png', "sens_compare_cost.png"),
+    sens_compare_cost, width = 5, height = 3, dpi = 300
+)
 
 # NREL and LBNL cost data are relatively similar for modules, with 
 # the biggest disagreement in the earlier years. We decided to use LBNL cost

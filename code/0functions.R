@@ -267,6 +267,104 @@ make_historical_plot <- function(cost, log_scale = FALSE) {
     return(plot)
 }
 
+make_cum_savings_plot <- function(savings) { 
+    
+    # First compute label locations
+    china <- savings %>% 
+        filter(country == "China", year == 2018) %>% 
+        pull(cum_savings_bil)
+    us <- savings %>% 
+        filter(country == "U.S.", year == 2018) %>% 
+        pull(cum_savings_bil)
+    germany <- savings %>% 
+        filter(year == 2019) %>% 
+        select(country, cum_savings_bil)
+    y_china <- china / 2
+    y_us <- (us / 2) + china
+    y_germany <- sum(germany$cum_savings_bil)
+    label_data <- data.frame(
+        x = c(2018, 2018, 2017), 
+        y = c(y_china, y_us, y_germany), 
+        label = c("China", "U.S.", "Germany")
+    )
+    
+    # Now make the plot
+    plot <- savings %>%
+        mutate(country = fct_relevel(country, c("Germany", "U.S.", "China"))) %>%
+        ggplot() +
+        geom_area(aes(x = year, y = cum_savings_bil, fill = country)) +
+        scale_fill_manual(values = colors_country) +
+        scale_x_continuous(
+          breaks = seq(year_savings_min, year_savings_max, 2),
+          limits = c(year_savings_min, year_savings_max)) +
+        scale_y_continuous(
+          labels = dollar,
+          breaks = seq(0, 80, 20),
+          limits = c(0, 80),
+          expand = expansion(mult = c(0, 0.05))) +
+        theme_minimal_hgrid(font_family = font_main) +
+        scale_color_manual(values = c("white", "black", "white")) +
+        labs(
+            title = "Cumulative Module Savings",
+            subtitle = "Difference Between Global and National Market Scenarios (2008 - 2020)",
+            x = "Year",
+            y = paste0("Cumulative Savings (Billion ", year_inflation, " $USD)"),
+            fill = "Country") +
+        theme(
+            plot.title.position = "plot",
+            legend.position = "none"
+        ) +
+        # Add country labels
+        geom_text(
+            data = label_data, 
+            aes(x = x, y = y, label = label, color = label), 
+            size = 6, family = font_main
+        )
+    return(plot)
+}
+
+make_ann_savings_plot <- function(savings) { 
+    plot <- savings %>% 
+        ggplot() + 
+        facet_wrap(vars(country), nrow = 1) +
+        geom_col(aes(x = year, y = ann_savings_bil, fill = country)) + 
+        geom_errorbar(
+            aes(x = year, ymin = ann_savings_bil_lb, ymax = ann_savings_bil_ub), 
+            color = "grey42", width = 0.5) + 
+        scale_x_continuous(breaks = seq(year_savings_min, year_savings_max, 2)) +
+        scale_y_continuous(
+            labels = scales::dollar, 
+            expand = expansion(mult = c(0, 0.05)),
+            limits = c(
+                plyr::round_any(min(savings$ann_savings_bil_lb), 5),
+                plyr::round_any(max(savings$ann_savings_bil_ub), 5)
+            )
+        ) +
+        scale_fill_manual(
+            values = c(
+                colors_country[3], colors_country[1], colors_country[2]
+            )
+        ) +
+        theme_minimal_hgrid(
+            font_size = 16,
+            font_family = font_main) +
+        panel_border() +
+        theme(
+            plot.title.position = "plot",
+            legend.position = "none",
+            axis.line.x = element_blank(),
+            strip.background = element_rect(fill = "grey80"), 
+            panel.grid.major = element_line(
+                size = 0.5, colour = "grey90")
+        ) +
+         labs(
+            title = "Annual Module Savings Under Global vs. National Market Scenarios (2008 - 2020)",
+            x = "Year",
+            y = paste0("Annual Savings (Billion ", year_inflation, " $USD)"),
+            fill = "Country") 
+    return(plot)
+}
+    
 make_projection_plot <- function(nat_trends, sus_dev, log_scale = FALSE) {
     plot <- rbind(proj$nat_trends, proj$sus_dev) %>% 
       mutate(
@@ -413,4 +511,13 @@ combine <- function(
         mutate(national_germany, learning = "national", country = "Germany")
     )
     return(result)
+}
+
+combine_cost_diffs <- function(us, china, germany, year_min, year_max) {
+    cost_diffs <- rbind(
+        mutate(cost_diff_us, country = "U.S."), 
+        mutate(cost_diff_china, country = "China"), 
+        mutate(cost_diff_germany, country = "Germany")) %>% 
+        filter(year >= year_min, year <= year_max)
+    return(cost_diffs)
 }
