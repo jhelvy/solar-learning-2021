@@ -255,41 +255,46 @@ make_historical_plot <- function(
     return(plot)
 }
 
-make_projection_plot <- function(
-    proj_national_nt, proj_global_nt, proj_national_sd, proj_global_sd
-) {
-    plot <- rbind(
-        proj_global_nt %>%
-            mutate(learning = "global", scenario = "National Trends"),
-        proj_national_nt %>%
-            mutate(learning = "national", scenario = "National Trends"),
-        proj_global_sd %>%
-            mutate(learning = "global", scenario = "Sustainable Development"),
-        proj_national_sd %>%
-            mutate(learning = "national", scenario = "Sustainable Development")
-        ) %>%
-        mutate(
-            learning = fct_relevel(learning, c("national", "global"))
-        ) %>%
-        ggplot() +
-        geom_line(
-            mapping = aes(x = year, y = mean, color = learning),
-        ) +
-        geom_ribbon(
-            mapping = aes(
-                x = year, ymin = lower, ymax = upper, fill = learning),
-            alpha = 0.2
-        ) +
-        scale_x_continuous(breaks = proj_global_nt$year) +
-        facet_wrap(vars(scenario), nrow = 1) +
-        theme_bw() +
-        labs(
-            title = "Estimated Module Cost Under Global vs. National Markets",
-            x = "log(Cumulative Global Installed Capacity, kW)",
-            y = "log(Cost per kW, $USD)"
-        )
-    return(plot)
+make_projection_plot <- function(nat_trends, sus_dev, log_scale = FALSE) {
+    
 }
+
+
+# make_projection_plot <- function(
+#     proj_national_nt, proj_global_nt, proj_national_sd, proj_global_sd
+# ) {
+#     plot <- rbind(
+#         proj_global_nt %>%
+#             mutate(learning = "global", scenario = "National Trends"),
+#         proj_national_nt %>%
+#             mutate(learning = "national", scenario = "National Trends"),
+#         proj_global_sd %>%
+#             mutate(learning = "global", scenario = "Sustainable Development"),
+#         proj_national_sd %>%
+#             mutate(learning = "national", scenario = "Sustainable Development")
+#         ) %>%
+#         mutate(
+#             learning = fct_relevel(learning, c("national", "global"))
+#         ) %>%
+#         ggplot() +
+#         geom_line(
+#             mapping = aes(x = year, y = mean, color = learning),
+#         ) +
+#         geom_ribbon(
+#             mapping = aes(
+#                 x = year, ymin = lower, ymax = upper, fill = learning),
+#             alpha = 0.2
+#         ) +
+#         scale_x_continuous(breaks = proj_global_nt$year) +
+#         facet_wrap(vars(scenario), nrow = 1) +
+#         theme_bw() +
+#         labs(
+#             title = "Estimated Module Cost Under Global vs. National Markets",
+#             x = "log(Cumulative Global Installed Capacity, kW)",
+#             y = "log(Cost per kW, $USD)"
+#         )
+#     return(plot)
+# }
 
 
 

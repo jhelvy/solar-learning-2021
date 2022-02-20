@@ -15,7 +15,7 @@ lr <- readRDS(dir$lr_models)
 # Load historical cost scenario data
 cost <- readRDS(dir$scenarios_hist)
 
-# Set global baseline "delay" variable
+# Set baseline "delay" variable
 # Controls how many years until 100% of national capacity is
 # domestically-supplied
 delay <- 10
@@ -49,10 +49,12 @@ lambda_nat_germany <- make_lambda_national(
 )
 
 # Set exchange rates
-exchangeRateRMB <- data$exchangeRatesRMB %>%
+# Set exchange rates
+er_us <- 1
+er_china <- data$exchangeRatesRMB %>%
     filter(year == year_proj_min) %>%
     pull(average_of_rate)
-exchangeRateEUR <- data$exchangeRatesEUR %>%
+er_germany <- data$exchangeRatesEUR %>%
     filter(year == year_proj_min) %>%
     pull(average_of_rate)
 
@@ -61,115 +63,101 @@ exchangeRateEUR <- data$exchangeRatesEUR %>%
 proj_nat_trends_global_us <- predict_cost(
     params = params_us,
     df     = df_nat_trends_us,
-    lambda = 0)
+    lambda = 0,
+    exchange_rate = er_us)
 
 proj_sus_dev_global_us <- predict_cost(
     params = params_us,
     df     = df_sus_dev_us,
-    lambda = 0)
+    lambda = 0,
+    exchange_rate = er_us)
 
 proj_nat_trends_global_china <- predict_cost(
     params = params_china,
     df     = df_nat_trends_china,
-    lambda = 0) %>% 
-    convertToUsd(exchangeRateRMB) # Currency conversion
+    lambda = 0,
+    exchange_rate = er_china)
 
 proj_sus_dev_global_china <- predict_cost(
     params = params_china,
     df     = df_sus_dev_china,
-    lambda = 0) %>% 
-    convertToUsd(exchangeRateRMB) # Currency conversion
+    lambda = 0,
+    exchange_rate = er_china)
 
 proj_nat_trends_global_germany <- predict_cost(
     params = params_germany,
     df     = df_nat_trends_germany,
-    lambda = 0) %>% 
-    convertToUsd(exchangeRateEUR) # Currency conversion
+    lambda = 0,
+    exchange_rate = er_germany)
 
 proj_sus_dev_global_germany <- predict_cost(
     params = params_germany,
     df     = df_sus_dev_germany,
-    lambda = 0) %>% 
-    convertToUsd(exchangeRateEUR) # Currency conversion
+    lambda = 0,
+    exchange_rate = er_germany)
 
 # Compute NATIONAL cost scenarios by country & scenario ----
 
 proj_nat_trends_national_us <- predict_cost(
     params = params_us,
     df     = df_nat_trends_us,
-    lambda = lambda_nat_us)
+    lambda = lambda_nat_us,
+    exchange_rate = er_us)
 
 proj_sus_dev_national_us <- predict_cost(
     params = params_us,
     df     = df_sus_dev_us,
-    lambda = lambda_nat_us)
+    lambda = lambda_nat_us,
+    exchange_rate = er_us)
 
 proj_nat_trends_national_china <- predict_cost(
     params = params_china,
     df     = df_nat_trends_china,
-    lambda = lambda_nat_china) %>% 
-    convertToUsd(exchangeRateRMB) # Currency conversion
+    lambda = lambda_nat_china,
+    exchange_rate = er_china)
 
 proj_sus_dev_national_china <- predict_cost(
     params = params_china,
     df     = df_sus_dev_china,
-    lambda = lambda_nat_china) %>% 
-    convertToUsd(exchangeRateRMB) # Currency conversion
+    lambda = lambda_nat_china,
+    exchange_rate = er_china)
 
 proj_nat_trends_national_germany <- predict_cost(
     params = params_germany,
     df     = df_nat_trends_germany,
-    lambda = lambda_nat_germany) %>% 
-    convertToUsd(exchangeRateEUR) # Currency conversion
+    lambda = lambda_nat_germany,
+    exchange_rate = er_germany)
 
 proj_sus_dev_national_germany <- predict_cost(
     params = params_germany,
     df     = df_sus_dev_germany,
-    lambda = lambda_nat_germany) %>% 
-    convertToUsd(exchangeRateEUR) # Currency conversion
+    lambda = lambda_nat_germany,
+    exchange_rate = er_germany)
 
-# Combine Results -----
+# Preview results
 
-projections <- rbind(
-  proj_nat_trends_global_us %>% 
-    mutate(
-      country = "U.S.", learning = "global", scenario = "nat_trends"),
-  proj_sus_dev_global_us %>%
-    mutate(
-      country = "U.S.", learning = "global", scenario = "sus_dev"),
-  proj_nat_trends_national_us %>%
-    mutate(
-      country = "U.S.", learning = "national", scenario = "nat_trends"),
-  proj_sus_dev_national_us %>%
-    mutate(
-      country = "U.S.", learning = "national", scenario = "sus_dev"),
-  proj_nat_trends_global_china %>%
-    mutate(
-      country = "China", learning = "global", scenario = "nat_trends"),
-  proj_sus_dev_global_china %>%
-    mutate(
-      country = "China", learning = "global", scenario = "sus_dev"),
-  proj_nat_trends_national_china %>%
-    mutate(
-      country = "China", learning = "national", scenario = "nat_trends"),
-  proj_sus_dev_national_china %>%
-    mutate(
-      country = "China", learning = "national", scenario = "sus_dev"),
-  proj_nat_trends_global_germany %>%
-    mutate(
-      country = "Germany", learning = "global", scenario = "nat_trends"),
-  proj_sus_dev_global_germany %>%
-    mutate(
-      country = "Germany", learning = "global", scenario = "sus_dev"),
-  proj_nat_trends_national_germany %>%
-    mutate(
-      country = "Germany", learning = "national", scenario = "nat_trends"),
-  proj_sus_dev_national_germany %>%
-    mutate(
-      country = "Germany", learning = "national", scenario = "sus_dev"))
+nat_trends <- combine(
+    global_us = proj_nat_trends_global_us,
+    national_us = proj_nat_trends_national_us,
+    global_china = proj_nat_trends_global_china,
+    national_china = proj_nat_trends_national_china,
+    global_germany = proj_nat_trends_global_germany,
+    national_germany = proj_nat_trends_national_germany) %>%
+    mutate(scenario = "nat_trends")
+
+sus_dev <- combine(
+    global_us = proj_sus_dev_global_us,
+    national_us = proj_sus_dev_national_us,
+    global_china = proj_sus_dev_global_china,
+    national_china = proj_sus_dev_national_china,
+    global_germany = proj_sus_dev_global_germany,
+    national_germany = proj_sus_dev_national_germany) %>%
+    mutate(scenario = "sus_dev")
 
 # Save results --------
-saveRDS(
-    list(projections = projections),
+
+saveRDS(list(
+    nat_trends = nat_trends,
+    sus_dev    = sus_dev),
     dir$scenarios_proj
 )
