@@ -112,11 +112,11 @@ ui <- navbarPage(
   theme = shinytheme("united"),
   tabPanel(
     title = "About",
-    icon = icon(name = "question-circle", lib = "font-awesome")
+    icon = icon(name = "question-circle", lib = "font-awesome", verify_fa = FALSE)
   ),
   tabPanel(
     title = "Historical",
-    icon = icon(name = "rotate-left", lib = "font-awesome"),
+    icon = icon(name = "rotate-left", lib = "font-awesome", verify_fa = FALSE),
     sidebarLayout(
       sidebarPanel(
         width = 3,
@@ -165,7 +165,7 @@ ui <- navbarPage(
   ),
   tabPanel(
     HTML('Projections</a></li><li><a href="https://github.com/jhelvy/solar-learning-2021" target="_blank"><i class="fa fa-github fa-fw"></i>'),
-    icon = icon(name = "rotate-right", lib = "font-awesome"),
+    icon = icon(name = "rotate-right", lib = "font-awesome", verify_fa = FALSE),
     sidebarLayout(
       sidebarPanel(
         width = 3,

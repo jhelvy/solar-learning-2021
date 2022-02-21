@@ -24,4 +24,5 @@ source(here::here('code', '6summary.R'))
 # Render summary tables
 rmarkdown::render(
     here::here('code', '7tables.Rmd'), 
-    output_file = here::here('output', 'tables.docx'))
+    output_file = here::here('output', 'tables.docx')
+)
