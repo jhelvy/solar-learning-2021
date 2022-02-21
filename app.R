@@ -112,7 +112,8 @@ ui <- navbarPage(
   theme = shinytheme("united"),
   tabPanel(
     title = "About",
-    icon = icon(name = "question-circle", lib = "font-awesome", verify_fa = FALSE)
+    icon = icon(name = "question-circle", lib = "font-awesome", verify_fa = FALSE),
+    h2("About page")
   ),
   tabPanel(
     title = "Historical",
@@ -437,10 +438,18 @@ server <- function(input, output) {
   
   get_savings_summary_hist <- reactive({
     savings_summary <- get_savings_summary_df(get_savings_hist())
-    result <- paste(paste0("- ", savings_summary$savings), collapse = "")
+    total <- savings_summary %>% 
+      summarise(
+        mean = scales::dollar(round(sum(cum_savings_bil))), 
+        lb = scales::dollar(round(sum(cum_savings_bil_lb))), 
+        ub = scales::dollar(round(sum(cum_savings_bil_ub)))
+    )
+    total <- paste0(total$mean, " (", total$lb, ", ", total$ub, ")")
+    
+    oresult <- paste(paste0("- ", savings_summary$savings), collapse = "")
     result <- paste0(
       "Cumulative savings from global over national markets scenarios, 2008 - 2020 ",
-      "(Billions 2020 $USD):\n\n", result
+      "(Billions 2020 $USD):\n\n", result, "\n\nTotal: ", total
     )
     return(result)
   })
