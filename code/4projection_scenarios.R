@@ -12,9 +12,6 @@ data <- readRDS(dir$data_formatted)
 # Load estimated LR models
 lr <- readRDS(dir$lr_models)
 
-# Load historical cost scenario data
-cost <- readRDS(dir$scenarios_hist)
-
 # Set baseline "delay" variable
 # Controls how many years until 100% of national capacity is
 # domestically-supplied

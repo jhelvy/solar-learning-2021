@@ -66,52 +66,105 @@ ui <- navbarPage(
   title = "",
   theme = shinytheme("united"),
   tabPanel(
+    title = "About",
+    icon = icon(name = "question-circle", lib = "font-awesome")
+  ),
+  tabPanel(
     title = "Historical",
+    icon = icon(name = "rotate-left", lib = "font-awesome"),
     sidebarLayout(
       sidebarPanel(
+        width = 3,
         sliderInput(
-          inputId = "lambda_start",
+          inputId = "lambda_start_hist",
           label = "lambda (start)",
           min = 0,
           max = 1,
           value = 0
         ),
         sliderInput(
-          inputId = "lambda_end",
+          inputId = "lambda_end_hist",
           label = "lambda (end)",
           min = 0,
           max = 1,
           value = 1
         ),
         sliderInput(
-          inputId = "delay",
+          inputId = "delay_hist",
           label = "Years delay",
           min = 1,
           max = 10,
           value = 10
         ),
         radioButtons(
-          inputId = "log_scale",
+          inputId = "log_scale_hist",
           label = "Log scale on Y axis?",
           choices = c("Yes", "No"),
           selected = "No"
         )
       ),
       mainPanel(
-        plotOutput("cost_historical"),
-        plotOutput("savings_historical")
+        tabsetPanel(
+          type = "tabs",
+          tabPanel(
+            title = "Cost Curve", 
+            plotOutput("cost_hist")
+          ),
+          tabPanel(
+            title = "Savings", 
+            plotOutput("savings_hist")
+          )
+        )
       )
     )
   ),
   tabPanel(
-    title = "Projections"
-  ),
-  tabPanel(
-    HTML('About</a></li><li><a href="https://github.com/jhelvy/solar-learning-2021" target="_blank"><i class="fa fa-github fa-fw"></i>'),
-    icon = icon(name = "question-circle", lib = "font-awesome"),
-    mainPanel(
-      width = 6,
-      includeMarkdown("README.md")
+    HTML('Projections</a></li><li><a href="https://github.com/jhelvy/solar-learning-2021" target="_blank"><i class="fa fa-github fa-fw"></i>'),
+    icon = icon(name = "rotate-right", lib = "font-awesome"),
+    sidebarLayout(
+      sidebarPanel(
+        width = 3,
+        sliderInput(
+          inputId = "lambda_start_proj",
+          label = "lambda (start)",
+          min = 0,
+          max = 1,
+          value = 0
+        ),
+        sliderInput(
+          inputId = "lambda_end_proj",
+          label = "lambda (end)",
+          min = 0,
+          max = 1,
+          value = 1
+        ),
+        sliderInput(
+          inputId = "delay_proj",
+          label = "Years delay",
+          min = 1,
+          max = 10,
+          value = 10
+        ),
+        radioButtons(
+          inputId = "log_scale_proj",
+          label = "Log scale on Y axis?",
+          choices = c("Yes", "No"),
+          selected = "No"
+        )
+      ),
+      mainPanel(
+        tabsetPanel(
+          type = "tabs",
+          tabPanel(
+            title = "Cost Curve", 
+            plotOutput("cost_proj")
+          ),
+          tabPanel(
+            title = "Savings", 
+            plotOutput("savings_proj")
+          )
+        )
+      )
     )
   )
 )
@@ -123,8 +176,8 @@ server <- function(input, output) {
 
   # Get variables based on inputs
 
-  log_scale_switch <- reactive({
-    if (input$log_scale == "Yes") {
+  log_scale_hist <- reactive({
+    if (input$log_scale_hist == "Yes") {
       return(TRUE)
     }
     return(FALSE)
@@ -132,26 +185,31 @@ server <- function(input, output) {
 
   lambda_nat_hist <- reactive({
     us <- make_lambda_national(
-      input$lambda_start, input$lambda_end, input$delay, df_us
+      input$lambda_start_hist, input$lambda_end_hist, input$delay_hist, 
+      df_us
     )
     china <- make_lambda_national(
-      input$lambda_start, input$lambda_end, input$delay, df_china
+      input$lambda_start_hist, input$lambda_end_hist, input$delay_hist, 
+      df_china
     )
     germany <- make_lambda_national(
-      input$lambda_start, input$lambda_end, input$delay, df_germany
+      input$lambda_start_hist, input$lambda_end_hist, input$delay_hist, 
+      df_germany
     )
     return(list(us = us, china = china, germany = germany))
   })
 
   lambda_nat_proj <- reactive({
     us <- make_lambda_national(
-      input$lambda_start, input$lambda_end, input$delay, df_nat_trends_us
+      input$lambda_start_proj, input$lambda_end_proj, input$delay_proj,
+      df_nat_trends_us
     )
     china <- make_lambda_national(
-      input$lambda_start, input$lambda_end, input$delay, df_nat_trends_china
+      input$lambda_start_proj, input$lambda_end_proj, input$delay_proj,
+      df_nat_trends_china
     )
     germany <- make_lambda_national(
-      input$lambda_start, input$lambda_end, input$delay,
+      input$lambda_start_proj, input$lambda_end_proj, input$delay_proj,
       df_nat_trends_germany
     )
     return(list(us = us, china = china, germany = germany))
@@ -161,6 +219,7 @@ server <- function(input, output) {
 
   # Compute NATIONAL cost scenarios by country
   get_costs_hist <- reactive({
+    
     lambda <- lambda_nat_hist()
 
     cost_national_us <- predict_cost(
@@ -197,6 +256,7 @@ server <- function(input, output) {
   })
 
   get_savings_hist <- reactive({
+    
     lambda <- lambda_nat_hist()
 
     cost_diff_us <- compute_cost_diff(
@@ -235,14 +295,14 @@ server <- function(input, output) {
 
   # Outputs
 
-  output$cost_historical <- renderPlot(
-    make_historical_plot(get_costs_hist(), log_scale_switch()),
-    width = 650, height = 400
+  output$cost_hist <- renderPlot(
+    make_historical_plot(get_costs_hist(), log_scale_hist()),
+    width = 700, height = 300
   )
 
-  output$savings_historical <- renderPlot(
+  output$savings_hist <- renderPlot(
     make_ann_savings_plot(get_savings_hist()),
-    width = 650, height = 400
+    width = 700, height = 300
   )
 }
 
