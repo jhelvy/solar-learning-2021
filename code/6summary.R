@@ -52,27 +52,16 @@ cat(
 cost <- readRDS(dir$scenarios_hist)
 
 # Comparison of 2020 costs under global vs national learning 
-cost_percentage <- cost$cost %>% 
-    filter(year == 2020) %>% 
-    select(country, learning, cost_per_kw) %>% 
-    pivot_wider(
-        names_from = learning,
-        values_from = cost_per_kw) %>% 
-    mutate(
-        diff = national - global,
-        p = scales::percent(diff / global),
-        global = scales::dollar(round(global)),
-        national = scales::dollar(round(national)),
-        costs = paste0(
-            country, ": ", national, " versus ", global, ", or ", p, " higher\n")
-    )
+
+cost_summary <- get_cost_compare_df(cost$cost)
     
 cat(
-    "Comparison of 2020 prices under national versus global markets scenarios",    
-    ":\n\n", cost_percentage$costs, "\n", sep = ""
+    "2020 solar PV module prices under national versus global markets scenarios",    
+    ":\n\n", cost_summary$costs, "\n", sep = ""
 )
 
 # Savings in each country
+
 savings <- cost$savings %>% 
     filter(year == max(year)) %>% 
     mutate(savings = paste0(

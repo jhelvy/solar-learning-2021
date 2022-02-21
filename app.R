@@ -153,6 +153,8 @@ ui <- navbarPage(
           type = "tabs",
           tabPanel(
             title = "Cost Curve", 
+            br(),
+            uiOutput("cost_summary_hist"),
             plotOutput("cost_hist")
           ),
           tabPanel(
@@ -233,7 +235,7 @@ server <- function(input, output) {
     }
     return(FALSE)
   })
-  
+
   lambda_nat_hist <- reactive({
     us <- make_lambda_national(
       input$lambda_start_hist, input$lambda_end_hist, input$delay_hist, 
@@ -419,7 +421,19 @@ server <- function(input, output) {
 
   })
   
+  get_cost_summary_hist <- reactive({
+    cost_summary <- get_cost_compare_df(get_costs_hist())
+    result <- paste(paste0("- ", cost_summary$costs), collapse = "")
+    result <- paste0(
+      "\n2020 solar PV module prices under national versus global markets scenarios:\n\n",
+      result
+    )
+    return(result)
+  })
+  
   # Outputs ----
+  
+  output$cost_summary_hist <- renderUI(HTML(markdown::renderMarkdown(text = get_cost_summary_hist())))
 
   output$cost_hist <- renderPlot(
     make_historical_plot(get_costs_hist(), log_scale_hist()),

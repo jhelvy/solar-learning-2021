@@ -413,6 +413,26 @@ make_projection_plot <- function(nat_trends, sus_dev, log_scale = FALSE) {
 }
 
 
+# Summarizing results
+
+get_cost_compare_df <- function(cost) {
+    result <- cost %>% 
+        filter(year == 2020) %>% 
+        select(country, learning, cost_per_kw) %>% 
+        pivot_wider(
+            names_from = learning,
+            values_from = cost_per_kw) %>% 
+        mutate(
+            diff = national - global,
+            p = scales::percent(diff / global),
+            global = scales::dollar(round(global)),
+            national = scales::dollar(round(national)),
+            costs = paste0(
+                country, ": ", national, " versus ", global, ", or ", p, " higher\n")
+        ) 
+    return(result)
+}
+
 # General utility ----
 
 get_ci <- function(x, ci = 0.95) {
