@@ -37,8 +37,15 @@ df_sus_dev_germany <- data$proj_sus_dev_germany
 er_us <- 1
 er_china <- data$exchangeRatesRMB
 er_germany <- data$exchangeRatesEUR
+er_china_proj <- data$exchangeRatesRMB %>%
+    filter(year == year_proj_min) %>%
+    pull(average_of_rate)
+er_germany_proj <- data$exchangeRatesEUR %>%
+    filter(year == year_proj_min) %>%
+    pull(average_of_rate)
 
-# Compute GLOBAL cost scenarios by country
+# Compute GLOBAL historical cost scenarios by country
+
 cost_global_us <- predict_cost(
   params = params_us,
   df = df_us,
@@ -59,6 +66,44 @@ cost_global_germany <- predict_cost(
   lambda = 0,
   exchange_rate = er_germany
 )
+
+# Compute GLOBAL projection scenarios by country & scenario ----
+
+proj_nat_trends_global_us <- predict_cost(
+    params = params_us,
+    df     = df_nat_trends_us,
+    lambda = 0,
+    exchange_rate = er_us)
+
+proj_sus_dev_global_us <- predict_cost(
+    params = params_us,
+    df     = df_sus_dev_us,
+    lambda = 0,
+    exchange_rate = er_us)
+
+proj_nat_trends_global_china <- predict_cost(
+    params = params_china,
+    df     = df_nat_trends_china,
+    lambda = 0,
+    exchange_rate = er_china_proj)
+
+proj_sus_dev_global_china <- predict_cost(
+    params = params_china,
+    df     = df_sus_dev_china,
+    lambda = 0,
+    exchange_rate = er_china_proj)
+
+proj_nat_trends_global_germany <- predict_cost(
+    params = params_germany,
+    df     = df_nat_trends_germany,
+    lambda = 0,
+    exchange_rate = er_germany_proj)
+
+proj_sus_dev_global_germany <- predict_cost(
+    params = params_germany,
+    df     = df_sus_dev_germany,
+    lambda = 0,
+    exchange_rate = er_germany_proj)
 
 # ui ----
 
@@ -171,10 +216,9 @@ ui <- navbarPage(
 
 # server ----
 
-# Define server logic required to draw a histogram
 server <- function(input, output) {
 
-  # Get variables based on inputs
+  # Get variables based on inputs ----
 
   log_scale_hist <- reactive({
     if (input$log_scale_hist == "Yes") {
@@ -183,6 +227,13 @@ server <- function(input, output) {
     return(FALSE)
   })
 
+  log_scale_proj <- reactive({
+    if (input$log_scale_proj == "Yes") {
+      return(TRUE)
+    }
+    return(FALSE)
+  })
+  
   lambda_nat_hist <- reactive({
     us <- make_lambda_national(
       input$lambda_start_hist, input$lambda_end_hist, input$delay_hist, 
@@ -215,9 +266,8 @@ server <- function(input, output) {
     return(list(us = us, china = china, germany = germany))
   })
 
-  # Compute outcomes
-
-  # Compute NATIONAL cost scenarios by country
+  # Compute NATIONAL historical cost scenarios by country ----
+  
   get_costs_hist <- reactive({
     
     lambda <- lambda_nat_hist()
@@ -254,6 +304,8 @@ server <- function(input, output) {
 
     return(cost)
   })
+  
+  # Compute historical savings ----
 
   get_savings_hist <- reactive({
     
@@ -293,7 +345,81 @@ server <- function(input, output) {
     return(savings)
   })
 
-  # Outputs
+  # Compute NATIONAL projection scenarios for national trends scenario ----
+  
+  get_nat_trends_proj <- reactive({
+    
+    lambda <- lambda_nat_proj()
+    
+    proj_nat_trends_national_us <- predict_cost(
+        params = params_us,
+        df     = df_nat_trends_us,
+        lambda = lambda$us,
+        exchange_rate = er_us)
+
+    proj_nat_trends_national_china <- predict_cost(
+        params = params_china,
+        df     = df_nat_trends_china,
+        lambda = lambda$china,
+        exchange_rate = er_china_proj)
+    
+    proj_nat_trends_national_germany <- predict_cost(
+        params = params_germany,
+        df     = df_nat_trends_germany,
+        lambda = lambda$germany,
+        exchange_rate = er_germany_proj)
+    
+    nat_trends <- combine(
+      global_us = proj_nat_trends_global_us,
+      national_us = proj_nat_trends_national_us,
+      global_china = proj_nat_trends_global_china,
+      national_china = proj_nat_trends_national_china,
+      global_germany = proj_nat_trends_global_germany,
+      national_germany = proj_nat_trends_national_germany) %>%
+      mutate(scenario = "nat_trends")
+    
+    return(nat_trends)
+
+  })
+  
+  # Compute NATIONAL projection scenarios for sustainable dev scenario ----
+  
+  get_sus_dev_proj <- reactive({
+    
+    lambda <- lambda_nat_proj()
+
+    proj_sus_dev_national_us <- predict_cost(
+        params = params_us,
+        df     = df_sus_dev_us,
+        lambda = lambda$us,
+        exchange_rate = er_us)
+
+    proj_sus_dev_national_china <- predict_cost(
+        params = params_china,
+        df     = df_sus_dev_china,
+        lambda = lambda$china,
+        exchange_rate = er_china_proj)
+    
+    proj_sus_dev_national_germany <- predict_cost(
+        params = params_germany,
+        df     = df_sus_dev_germany,
+        lambda = lambda$germany,
+        exchange_rate = er_germany_proj)
+    
+    sus_dev <- combine(
+        global_us = proj_sus_dev_global_us,
+        national_us = proj_sus_dev_national_us,
+        global_china = proj_sus_dev_global_china,
+        national_china = proj_sus_dev_national_china,
+        global_germany = proj_sus_dev_global_germany,
+        national_germany = proj_sus_dev_national_germany) %>%
+        mutate(scenario = "sus_dev")
+    
+    return(sus_dev)
+
+  })
+  
+  # Outputs ----
 
   output$cost_hist <- renderPlot(
     make_historical_plot(get_costs_hist(), log_scale_hist()),
@@ -304,6 +430,14 @@ server <- function(input, output) {
     make_ann_savings_plot(get_savings_hist()),
     width = 700, height = 300
   )
+  
+  output$cost_proj <- renderPlot(
+    make_projection_plot(
+      get_nat_trends_proj(), get_sus_dev_proj(), log_scale_proj()
+    ),
+    width = 700, height = 500
+  )
+  
 }
 
 # Run the application

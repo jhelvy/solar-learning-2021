@@ -43,7 +43,6 @@ lambda_nat_germany <- make_lambda_national(
     lambda_start, lambda_end, delay, df_nat_trends_germany)
 
 # Set exchange rates
-# Set exchange rates
 er_us <- 1
 er_china <- data$exchangeRatesRMB %>%
     filter(year == year_proj_min) %>%
