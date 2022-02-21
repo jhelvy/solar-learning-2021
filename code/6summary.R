@@ -53,59 +53,32 @@ cost <- readRDS(dir$scenarios_hist)
 
 # Comparison of 2020 costs under global vs national learning 
 
-cost_summary <- get_cost_compare_df(cost$cost)
+cost_summary <- get_cost_compare_df_hist(cost$cost)
     
 cat(
     "2020 solar PV module prices under national versus global markets scenarios",    
-    ":\n\n", cost_summary$costs, "\n", sep = ""
+    ":\n\n", cost_summary$summary, "\n", sep = ""
 )
 
 # Savings in each country
 
-savings_summary <- get_savings_summary_df(cost$savings)
+savings_summary <- get_savings_summary_df_hist(cost$savings)
 
 cat(
     "Historical savings from global over national learning\n",
-    "(2008 - 2020, Billions 2020 $USD):\n\n", savings_summary$savings, "\n"
+    "(2008 - 2020, Billions 2020 $USD):\n\n", savings_summary$summary, "\n"
 )
 
 # Future cost projections -----
 
 proj <- readRDS(dir$scenarios_proj)
-proj_summary <- rbind(proj$nat_trends, proj$sus_dev) %>% 
-    mutate(
-        learning = str_to_title(learning),
-        learning = fct_relevel(learning, c("National", "Global")),
-        scenario = fct_recode(scenario, 
-        "National Trends" = "nat_trends", 
-        "Sustainable Development" = "sus_dev")
-    ) %>% 
-    filter(year == year_proj_max) %>% 
-    select(year, learning, country, scenario, cost_per_kw) %>% 
-    pivot_wider(
-        names_from = learning, 
-        values_from = cost_per_kw) %>% 
-    arrange(scenario) %>% 
-    group_by(scenario) %>% 
-    mutate(
-        diff = National - Global, 
-        pDiff = scales::percent(round(diff / Global, 2)), 
-        cost_summary = paste0("\t", country, ": ", 
-            scales::dollar(round(Global)), " (Global) vs. ",
-            scales::dollar(round(National)), " (National)\n"), 
-        p_summary = paste0("\t", country, ": ", pDiff, "\n")
-    )
+proj_summary <- get_cost_compare_df_proj(proj$nat_trends, proj$sus_dev)
 
 cat(
+    "2030 solar PV module prices under national versus global markets scenarios\n\n",
     '"NATIONAL TRENDS" scenario:\n\n',
-    'Projected 2030 module costs:\n',
-    proj_summary$cost_summary[proj_summary$scenario == "National Trends"], "\n",
-    "% premium under national vs. global markets:\n",
-    proj_summary$p_summary[proj_summary$scenario == "National Trends"], "\n",
-    
+    proj_summary$summary[proj_summary$scenario == "National Trends"], "\n",
     '"SUSTAINABLE DEVELOPMENT" scenario:\n\n',
-    'Projected 2030 module costs:\n',
-    proj_summary$cost_summary[proj_summary$scenario == "Sustainable Development"], "\n",
-    "% premium under national vs. global markets:\n",
-    proj_summary$p_summary[proj_summary$scenario == "Sustainable Development"], "\n\n"
+    proj_summary$summary[proj_summary$scenario == "Sustainable Development"], "\n",
+    sep = ""
 )

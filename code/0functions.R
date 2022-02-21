@@ -415,7 +415,7 @@ make_projection_plot <- function(nat_trends, sus_dev, log_scale = FALSE) {
 
 # Summarizing results
 
-get_cost_compare_df <- function(cost) {
+get_cost_compare_df_hist <- function(cost) {
     result <- cost %>% 
         filter(year == 2020) %>% 
         select(country, learning, cost_per_kw) %>% 
@@ -427,21 +427,52 @@ get_cost_compare_df <- function(cost) {
             p = scales::percent(diff / global),
             global = scales::dollar(round(global)),
             national = scales::dollar(round(national)),
-            costs = paste0(
-                country, ": ", national, " versus ", global, ", or ", p, " higher\n")
+            summary = paste0(
+                country, ": ", national, " versus ", global, ", or ", 
+                p, " higher\n")
         ) 
     return(result)
 }
 
-get_savings_summary_df <- function(savings) {
+get_savings_summary_df_hist <- function(savings) {
     savings <- savings %>% 
         filter(year == max(year)) %>% 
-        mutate(savings = paste0(
+        mutate(
+          summary = paste0(
             country, ": ",
             scales::dollar(round(cum_savings_bil)), " (", 
             scales::dollar(round(cum_savings_bil_lb)), ", ",
             scales::dollar(round(cum_savings_bil_ub)), ")\n"))    
     return(savings)
+}
+
+get_cost_compare_df_proj <- function(nat_trends, sus_dev) {
+    result <- rbind(nat_trends, sus_dev) %>% 
+        mutate(
+            learning = str_to_title(learning),
+            learning = fct_relevel(learning, c("National", "Global")),
+            scenario = fct_recode(scenario, 
+            "National Trends" = "nat_trends", 
+            "Sustainable Development" = "sus_dev")
+        ) %>% 
+        filter(year == year_proj_max) %>% 
+        select(year, learning, country, scenario, cost_per_kw) %>% 
+        pivot_wider(
+            names_from = learning, 
+            values_from = cost_per_kw) %>% 
+        arrange(scenario) %>% 
+        group_by(scenario) %>% 
+        mutate(
+            diff = National - Global, 
+            p = scales::percent(round(diff / Global, 2)), 
+            
+            global = scales::dollar(round(Global)),
+            national = scales::dollar(round(National)),
+            summary = paste0(
+                country, ": ", national, " versus ", global, ", or ", 
+                p, " higher\n")
+        )
+    return(result)
 }
 
 # General utility ----

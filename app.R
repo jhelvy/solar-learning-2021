@@ -113,7 +113,8 @@ ui <- navbarPage(
   tabPanel(
     title = "About",
     icon = icon(name = "question-circle", lib = "font-awesome", verify_fa = FALSE),
-    h2("About page")
+    h2("About page"),
+    p("On this page we will include a detailed description of the model and logic that produces the results on the other tabs.")
   ),
   tabPanel(
     title = "Historical",
@@ -207,11 +208,15 @@ ui <- navbarPage(
           type = "tabs",
           tabPanel(
             title = "Cost Curve", 
+            br(),
+            uiOutput("cost_summary_proj"),
             plotOutput("cost_proj")
           ),
           tabPanel(
             title = "Savings", 
-            plotOutput("savings_proj")
+            br(), 
+            p("To be added"),
+            plotOutput("savings_proj"),
           )
         )
       )
@@ -427,8 +432,8 @@ server <- function(input, output) {
   # Text summaries ----
   
   get_cost_summary_hist <- reactive({
-    cost_summary <- get_cost_compare_df(get_costs_hist())
-    result <- paste(paste0("- ", cost_summary$costs), collapse = "")
+    cost_summary <- get_cost_compare_df_hist(get_costs_hist())
+    result <- paste(paste0("- ", cost_summary$summary), collapse = "")
     result <- paste0(
       "\n2020 solar PV module prices under national versus global markets scenarios:\n\n",
       result
@@ -437,7 +442,7 @@ server <- function(input, output) {
   })
   
   get_savings_summary_hist <- reactive({
-    savings_summary <- get_savings_summary_df(get_savings_hist())
+    savings_summary <- get_savings_summary_df_hist(get_savings_hist())
     total <- savings_summary %>% 
       summarise(
         mean = scales::dollar(round(sum(cum_savings_bil))), 
@@ -445,11 +450,32 @@ server <- function(input, output) {
         ub = scales::dollar(round(sum(cum_savings_bil_ub)))
     )
     total <- paste0(total$mean, " (", total$lb, ", ", total$ub, ")")
-    
-    oresult <- paste(paste0("- ", savings_summary$savings), collapse = "")
+    result <- paste(paste0("- ", savings_summary$summary), collapse = "")
     result <- paste0(
       "Cumulative savings from global over national markets scenarios, 2008 - 2020 ",
       "(Billions 2020 $USD):\n\n", result, "\n\nTotal: ", total
+    )
+    return(result)
+  })
+  
+  get_cost_summary_proj <- reactive({
+    proj_summary <- get_cost_compare_df_proj(
+      get_nat_trends_proj(), get_sus_dev_proj())
+    nat_trends_summary <- proj_summary %>% 
+      filter(scenario == "National Trends")
+    sus_dev_summary <- proj_summary %>% 
+      filter(scenario == "Sustainable Development")
+    nat_trends_summary <- paste(
+      paste0("- ", nat_trends_summary$summary), collapse = "")
+    sus_dev_summary <- paste(
+      paste0("- ", sus_dev_summary$summary), collapse = "")
+    
+    result <- paste0(
+      "2030 solar PV module prices under national versus global markets scenarios",
+      '\n\n"NATIONAL TRENDS" scenario:\n\n',
+      nat_trends_summary,
+      '\n\n"SUSTAINABLE DEVELOPMENT" scenario:\n\n',
+      sus_dev_summary, "\n\n", sep = ""
     )
     return(result)
   })
@@ -462,6 +488,10 @@ server <- function(input, output) {
   
   output$saving_summary_hist <- renderUI(
     HTML(markdown::renderMarkdown(text = get_savings_summary_hist()))
+  )
+  
+  output$cost_summary_proj <- renderUI(
+    HTML(markdown::renderMarkdown(text = get_cost_summary_proj()))
   )
 
   output$cost_hist <- renderPlot(
