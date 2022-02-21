@@ -10,10 +10,10 @@ source(here::here('code', '1format_data.R'))
 source(here::here('code', '2learning_curves.R'))
 
 # Compute historical cost scenarios
-source(here::here('code', '3historical_scenarios.R'))
+source(here::here('code', '3scenarios_hist.R'))
  
 # Compute future cost scenarios
-source(here::here('code', '4projection_scenarios.R'))
+source(here::here('code', '4scenarios_proj.R'))
 
 # Make all charts
 source(here::here('code', '5charts.R'))
@@ -24,4 +24,5 @@ source(here::here('code', '6summary.R'))
 # Render summary tables
 rmarkdown::render(
     here::here('code', '7tables.Rmd'), 
-    output_file = here::here('output', 'tables.docx'))
+    output_file = here::here('output', 'tables.docx')
+)

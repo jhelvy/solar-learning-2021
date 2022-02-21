@@ -4,102 +4,40 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
-# Notes -----------------------------------------------------------------------
+# Run historical models
+model_us <- run_model(data$hist_us, lambda = 0)
+model_china <- run_model(data$hist_china, lambda = 0)
+model_germany <- run_model(data$hist_germany, lambda = 0)
 
-# Basic learning curve model: Y_x = A*x^b
-# where
-#   Y = the cost of unit x (dependent variable)
-#   A = the theoretical cost of unit 1 (a.k.a. T1)
-#   x = the unit number (independent variable)
-#   b = a constant representing the slope (slope = 2^b)
+# Compute learning rates
+lr_us <- 1 - 2^coef(model_us)["log_q"]
+lr_china <- 1 - 2^coef(model_china)["log_q"]
+lr_germany <- 1 - 2^coef(model_germany)["log_q"]
 
-# Log transformation: ln(Y) = ln(A) + b*ln(x)
-#           Re-write: Y'    = int   + b*x'
+# Get draws of the parameters for each model
+params_us <- as.data.frame(
+    MASS::mvrnorm(10^4, coef(model_us), vcov(model_us))
+)
+params_china <- as.data.frame(
+    MASS::mvrnorm(10^4, coef(model_china), vcov(model_china))
+)
+params_germany <- as.data.frame(
+    MASS::mvrnorm(10^4, coef(model_germany), vcov(model_germany))
+)
+names(params_us) <- c("alpha", "beta", "gamma")
+names(params_china) <- c("alpha", "beta", "gamma")
+names(params_germany) <- c("alpha", "beta", "gamma")
 
-# To convert log-space estimated coefficients back to original model:
-# A = exp(int)
-# b = b
-# Learning curve slope = 2^b
-# Learning Rate        = 1 - slope
-
-# Approximation of the cumulative total cost of producing N units:
-# C = (A*N^(b + 1)) / (b + 1)
-
-# Two factor learning curve model: Y = A * x^b * p^c
-# where
-#   Y = the cost of unit x at silicon price p (dependent variable)
-#   A = the theoretical cost of unit 1 (a.k.a. T1)
-#   x = the unit number (independent variable)
-#   p = silicon price
-#   b = lnCap_estimate = learning coefficient on capacity
-#   c = lnSi_estimate = coefficient on silicon price
-
-# U.S. ----------------------------------------------------------------------
-# World capacity data: IRENA
-# US cost data: LBNL
-
-# Prep data
-data_us <- data$us %>%
-    filter(
-        year >= year_model_us_min,
-        year <= year_model_us_max
-    ) %>%
-    select(year, costPerKw) %>%
-    left_join(
-        data$world %>%
-            select(year, price_si, cumCapacityKw),
-        by = "year") %>% 
-    filter(!is.na(price_si), !is.na(cumCapacityKw))
-
-# Run model
-model_us <- run_model(data_us)
-summary(model_us)
-
-# China ----------------------------------------------------------------------
-
-# Prep data
-data_china <- data$china %>%
-    filter(
-        year >= year_model_china_min,
-        year <= year_model_china_max,
-        component == 'Module'
-    ) %>%
-    select(year, costPerKw) %>%
-    left_join(
-        data$world %>%
-            select(year, price_si, cumCapacityKw),
-        by = "year")
-
-# Run model
-model_china <- run_model(data_china)
-summary(model_china)
-
-# Germany ---------------------------------------------------------------------
-
-# Prep data
-data_germany <- data$germany %>%
-    filter(
-        year >= year_model_germany_min,
-        year <= year_model_germany_max
-    ) %>% 
-    select(year, costPerKw) %>%
-    left_join(
-        data$world %>%
-            select(year, price_si, cumCapacityKw),
-        by = "year")
-
-# Run model
-model_germany <- run_model(data_germany)
-summary(model_germany)
-
-# Output ----------------------------------------------------------------------
-
+# Save output 
 saveRDS(list(
-    model_us      = model_us,
-    data_us       = data_us,
-    model_china   = model_china,
-    data_china    = data_china,
-    model_germany = model_germany,
-    data_germany  = data_germany),
+    model_us       = model_us,
+    model_china    = model_china,
+    model_germany  = model_germany,
+    lr_us          = lr_us,
+    lr_china       = lr_china,
+    lr_germany     = lr_germany,
+    params_us      = params_us,
+    params_china   = params_china,
+    params_germany = params_germany),
     dir$lr_models
 )
