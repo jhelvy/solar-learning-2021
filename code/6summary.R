@@ -62,16 +62,11 @@ cat(
 
 # Savings in each country
 
-savings <- cost$savings %>% 
-    filter(year == max(year)) %>% 
-    mutate(savings = paste0(
-        country, ": ",
-        scales::dollar(round(cum_savings_bil)), " (", 
-        scales::dollar(round(cum_savings_bil_lb)), ", ",
-        scales::dollar(round(cum_savings_bil_ub)), ")\n"))
+savings_summary <- get_savings_summary_df(cost$savings)
+
 cat(
     "Historical savings from global over national learning\n",
-    "(2008 - 2020, Billions 2020 $USD):\n\n", savings$savings, "\n"
+    "(2008 - 2020, Billions 2020 $USD):\n\n", savings_summary$savings, "\n"
 )
 
 # Future cost projections -----

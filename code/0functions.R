@@ -433,6 +433,17 @@ get_cost_compare_df <- function(cost) {
     return(result)
 }
 
+get_savings_summary_df <- function(savings) {
+    savings <- savings %>% 
+        filter(year == max(year)) %>% 
+        mutate(savings = paste0(
+            country, ": ",
+            scales::dollar(round(cum_savings_bil)), " (", 
+            scales::dollar(round(cum_savings_bil_lb)), ", ",
+            scales::dollar(round(cum_savings_bil_ub)), ")\n"))    
+    return(savings)
+}
+
 # General utility ----
 
 get_ci <- function(x, ci = 0.95) {

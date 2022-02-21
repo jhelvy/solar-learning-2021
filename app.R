@@ -159,6 +159,8 @@ ui <- navbarPage(
           ),
           tabPanel(
             title = "Savings", 
+            br(),
+            uiOutput("saving_summary_hist"),
             plotOutput("savings_hist")
           )
         )
@@ -421,6 +423,8 @@ server <- function(input, output) {
 
   })
   
+  # Text summaries ----
+  
   get_cost_summary_hist <- reactive({
     cost_summary <- get_cost_compare_df(get_costs_hist())
     result <- paste(paste0("- ", cost_summary$costs), collapse = "")
@@ -431,9 +435,25 @@ server <- function(input, output) {
     return(result)
   })
   
+  get_savings_summary_hist <- reactive({
+    savings_summary <- get_savings_summary_df(get_savings_hist())
+    result <- paste(paste0("- ", savings_summary$savings), collapse = "")
+    result <- paste0(
+      "Cumulative savings from global over national markets scenarios, 2008 - 2020 ",
+      "(Billions 2020 $USD):\n\n", result
+    )
+    return(result)
+  })
+  
   # Outputs ----
   
-  output$cost_summary_hist <- renderUI(HTML(markdown::renderMarkdown(text = get_cost_summary_hist())))
+  output$cost_summary_hist <- renderUI(
+    HTML(markdown::renderMarkdown(text = get_cost_summary_hist()))
+  )
+  
+  output$saving_summary_hist <- renderUI(
+    HTML(markdown::renderMarkdown(text = get_savings_summary_hist()))
+  )
 
   output$cost_hist <- renderPlot(
     make_historical_plot(get_costs_hist(), log_scale_hist()),
