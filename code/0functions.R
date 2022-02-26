@@ -357,7 +357,9 @@ make_ann_savings_plot <- function(savings, size = 12) {
     return(plot)
 }
     
-make_projection_plot <- function(nat_trends, sus_dev, log_scale = FALSE) {
+make_projection_plot <- function(
+  nat_trends, sus_dev, log_scale = FALSE, size = 12
+) {
     plot <- rbind(nat_trends, sus_dev) %>% 
       mutate(
         learning = str_to_title(learning),
@@ -383,7 +385,7 @@ make_projection_plot <- function(nat_trends, sus_dev, log_scale = FALSE) {
       scale_color_manual("Scenario", values = colors_learning) +
       scale_fill_manual("Scenario", values = colors_learning) +
       theme_minimal_grid(
-        font_size = 16,
+        font_size = size,
         font_family = font_main) +
       panel_border() +
       theme(

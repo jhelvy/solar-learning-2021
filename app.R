@@ -457,14 +457,14 @@ server <- function(input, output) {
 
   output$savings_hist <- renderPlot(
     make_ann_savings_plot(get_savings_hist()),
-    width = 700, height = 300, res = 96
+    width = 700, height = 280, res = 96
   )
   
   output$cost_proj <- renderPlot(
     make_projection_plot(
       get_nat_trends_proj(), get_sus_dev_proj(), log_scale_proj()
     ),
-    width = 700, height = 500, res = 96
+    width = 700, height = 415, res = 96
   )
   
 }

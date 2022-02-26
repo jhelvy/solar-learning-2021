@@ -156,7 +156,7 @@ ggsave(
 
 # 2030 Projections -----
 
-cost_proj <- make_projection_plot(proj$nat_trends, proj$sus_dev)
+cost_proj <- make_projection_plot(proj$nat_trends, proj$sus_dev, size = 16)
 
 ggsave(
   file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
