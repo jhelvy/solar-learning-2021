@@ -1,0 +1,66 @@
+---
+title: ""
+output:
+  html_document:
+    toc: no
+    toc_float: no
+    theme: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  fig.path = "figs/",
+  fig.width = 7.252,
+  fig.height = 4,
+  comment = "#>",
+  fig.retina = 3
+)
+
+# Load libraries, functions, and dir paths
+source(here::here('code', '0setup.R'))
+
+# Load formatted data
+data <- readRDS(dir$data_formatted)
+
+# Select data
+df_us <- data$hist_us
+df_china <- data$hist_china
+df_germany <- data$hist_germany
+```
+
+## Two-factor learning model
+
+A two-factor learning model relating the unit cost, $c_{it}$, in year $t$ and country $i$ of solar PV modules to the cumulative installed PV capacity in year $t$, $q_t$, and globally-averaged polysilicon prices in year $t$, $s_t$, (the primary input material to PV modules) is given by:
+
+$$
+c_{it} = 
+\alpha_i q_t^{\beta_i} s_t^{\gamma_i}
+$$
+
+Here, $\alpha_i$ is a constant related to the starting year conditions in country $i$, $\gamma_i$ measures the sensitivity to polysilicon prices, and $\beta_i$ is the learning coefficient in country $i$. A log transformation produces the typical log-log formulation of the model that can be estimated via ordinary linear regression:
+
+$$
+\ln c_{it} = 
+\ln \alpha_i + 
+\beta_i \ln q_t + 
+\gamma_i \ln s_t 
+$$
+
+For each country, $i$, we estimate learning coefficients $\beta_i$ under historical "global" market conditions using linear least-squares regression on (2). These "global" learning models are based on the assumptions that 1) learning was _global_ during the historical period of scaling up PV module production, and 2) variations in country-level module pricing were due to transportation, administrative, and other non-learning costs.
+
+We then construct counterfactual "national" market scenarios by assuming that the learning-related cost improvements in country $i$ from the starting year, $t_0$, are derived from incrementally more nationally-installed PV capacity:
+
+$$
+q_t - q_{t-1} = (q_{it} - q_{it-1}) + (1 - \lambda_i) (q_{jt} - q_{jt-1}),
+$$
+
+\noindent
+where $q_{it}$ is the cumulative installed capacity in country $i$ in year $t$, $q_{jt}$ is the cumulative installed capacity in all other countries in year $t$, and $\lambda_i$ is a value ranging from 0 to 1. This defines a scenario whereby incremental capacity installed in each year increasingly comes from national as opposed to global installations as $\lambda_t$ shifts from 0 to 1. In our baseline simulations, $\lambda_t$ ranges from 0.1 to 1.0 in increments of 0.1 as $t$ goes from 1 to 10, simulating a gradual transition to a scenario where all new national PV capacity is domestically-supplied. At the starting year of both the historical and projection scenarios, $\lambda_t = 0$ and the cumulative capacity is set to the globally installed capacity in that year. Units costs under national market conditions thus evolve more slowly according to how rapidly $\lambda_t$ approaches 1.
+
+The national markets specification proposes that national-specific learning is  proportionally derived from national versus global cumulative installed capacities. That is, if $\lambda_t = 1$, then 100% of learning in country $i$ in year $t$ is derived from the cumulative installed capacity in that country. However, if $\lambda_t = 0$, the proportion of national learning is $p_{it} = q_{it} / q_t$, which will always be greater than 0. The figure below illustrates the relationship between $\lambda_{it}$ and the median value of $p_{it}$ over all years for each country. Note that the same value of $i$ does not translate to the same proportion of national learning for each country. For example, if $\lambda_i = 0.4$, then the proportion of national learning is 15% in the U.S., 44% in China, and 40% in Germany.
+
+```{r, echo=FALSE}
+knitr::include_graphics(here::here('figs', 'png', 'lambda_compare.png'))
+```

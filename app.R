@@ -114,7 +114,7 @@ ui <- navbarPage(
     title = "About",
     icon = icon(name = "question-circle", lib = "font-awesome", verify_fa = FALSE),
     h2("About page"),
-    p("On this page we will include a detailed description of the model and logic that produces the results on the other tabs.")
+    includeHTML("about/about.html"),
   ),
   tabPanel(
     title = "Historical",
