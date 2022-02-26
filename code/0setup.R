@@ -12,7 +12,9 @@
 #    "ggtext",
 #    "gtsummary",
 #    "flextable",
-#    "shiny"
+#    "shiny",
+#l   "shinythemes",
+#    "Cairo"
 # ))
 
 # Load libraries
@@ -30,9 +32,12 @@ library(ggtext)
 library(gtsummary)
 library(flextable)
 library(shiny)
+library(Cairo)
+library(shinythemes)
 
 # Set options
 options(dplyr.width = Inf)
+options(shiny.usecairo = TRUE)
 
 # Load custom functions
 source(here::here('code', '0functions.R'))

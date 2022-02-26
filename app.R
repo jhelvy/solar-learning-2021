@@ -1,6 +1,5 @@
 # Load libraries, functions, and dir paths
 source(here::here("code", "0setup.R"))
-library(shinythemes)
 
 # Load formatted data
 data <- readRDS(dir$data_formatted)
