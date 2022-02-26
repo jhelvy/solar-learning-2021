@@ -192,6 +192,26 @@ compute_savings <- function(cost_diffs, cost_historical_true) {
 
 # Plotting ----
 
+prep_lambda_df <- function(df) {
+    lambda <- seq(0, 1, 0.2)
+    q0 <- df$cumCapKw_world[1]
+    results <- list()
+    for (i in 1:length(lambda)) {
+        results[[i]] <- df %>% 
+            mutate(
+                q = q0 + cumsum(annCapKw_nation + (1 - lambda[i]) * annCapKw_other),
+                q_i = q0 + cumsum(annCapKw_nation), 
+                p = q_i / q, 
+                median_p = round(median(p), 2)
+            )
+    }
+    result <- do.call(rbind, results)
+    result$lambda <- rep(lambda, each = nrow(df))
+    result <- result %>% 
+        mutate(label = paste0("λ = ", lambda, ", p = ", percent(median_p, accuracy = 1)))
+    return(result)
+}
+
 make_historical_plot <- function(cost, log_scale = FALSE, size = 12) {
     plot <- cost %>%
         mutate(

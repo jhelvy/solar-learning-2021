@@ -16,7 +16,7 @@ proj <- readRDS(dir$scenarios_proj)
 # Check any plot for color blindness
 # colorblindr::cvd_grid(plot)
 
-# Global PV production ------------
+# Global PV production ----
 
 # Read in and format data
 pvProduction <- data$pvProduction %>% 
@@ -61,7 +61,7 @@ ggsave(
     pvProduction, width = 8, height = 6, dpi = 300
 )
 
-# Cost per kw for global vs. national learning ------
+# Cost per kw for global vs. national learning ----
 
 cost_historical_plot <- 
     make_historical_plot(cost$cost, size = 16) +
@@ -154,7 +154,7 @@ ggsave(
     savings_ann_historical_plot, height = 4.25, width = 11
 )
 
-# 2030 Projections -----
+# 2030 Projections ----
 
 cost_proj <- make_projection_plot(proj$nat_trends, proj$sus_dev, size = 16)
 
@@ -167,7 +167,7 @@ ggsave(
   cost_proj, height = 6.5, width = 11
 )
 
-# Compare capacity data from NREL, SEIA, and IRENA ----------------------------
+# Compare capacity data from NREL, SEIA, and IRENA ----
 
 # Merge NREL and SEIA capacity data
 nrelSeia <- data$nrelCapacity %>%
@@ -253,7 +253,7 @@ ggsave(
 # Based on these comparisons, we use SEIA data for installed capacity as
 # it tracks with NREL and covers a longer time period
 
-# Compare NREL, LBNL, and SPV Cost data --------------------------------------
+# Compare NREL, LBNL, and SPV Cost data ----
 
 cost_compare <- data$nrelCost %>%
   filter(installType == "Utility") %>% 
@@ -293,3 +293,58 @@ ggsave(
 # the biggest disagreement in the earlier years. We decided to use LBNL cost
 # data for the earlier period (2000 - 2018) and NREL for 2019 & 2020 as 
 # the two appear to converge in the later years.
+
+# Interpreting lambda ----
+
+
+plotData <- rbind(
+    prep_lambda_df(data$hist_us) %>% mutate(country = "U.S."),
+    prep_lambda_df(data$hist_china) %>% mutate(country = "China"),
+    prep_lambda_df(data$hist_germany) %>% mutate(country = "Germany")) %>%
+    mutate(
+      q = q / 10^6,
+      date = lubridate::ymd(paste0(year, "-07-01"))
+    )
+  
+lambda_compare <- ggplot(plotData) + 
+    geom_line(
+        aes(x = date, y = q, group = lambda)
+    ) + 
+    geom_text(
+        data = plotData %>% 
+            group_by(country, lambda) %>% 
+            filter(year == max(year)),
+        aes(x = date, y = q, label = label),
+        hjust = 0, nudge_x = 150
+    ) +
+    facet_wrap(vars(country)) +
+    expand_limits(x = lubridate::ymd(paste0(c(2005, 2030), "-07-01"))) +
+    scale_x_date(
+        breaks = lubridate::ymd(paste0(seq(2005, 2030, 5), "-07-01")),
+        date_labels = "'%y") +
+    theme_minimal_grid(
+        font_size = 16,
+        font_family = font_main
+    ) +
+    panel_border() +
+    theme(
+        plot.title.position = "plot",
+        strip.background = element_rect(fill = "grey80"), 
+        panel.grid.major = element_line(size = 0.3, colour = "grey90"),
+        axis.line.x = element_blank(),
+        plot.title = element_markdown(),
+        legend.position = "none"
+    ) +
+    labs(
+        x = "Year", 
+        y = "Cumulative installed capacity (GW)"
+    )
+
+ggsave(
+    file.path(dir$figs, 'pdf', 'lambda_compare.pdf'),
+    lambda_compare, height = 3.75, width = 11, device = cairo_pdf
+)
+ggsave(
+    file.path(dir$figs, 'png', 'lambda_compare.png'),
+    lambda_compare, height = 3.75, width = 11
+)
