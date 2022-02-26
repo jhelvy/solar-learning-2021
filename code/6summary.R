@@ -53,32 +53,13 @@ cost <- readRDS(dir$scenarios_hist)
 
 # Comparison of 2020 costs under global vs national learning 
 
-cost_summary <- get_cost_compare_df_hist(cost$cost)
+cat(get_cost_summary_hist(cost$cost))
     
-cat(
-    "2020 solar PV module prices under national versus global markets scenarios",    
-    ":\n\n", cost_summary$summary, "\n", sep = ""
-)
-
 # Savings in each country
 
-savings_summary <- get_savings_summary_df_hist(cost$savings)
-
-cat(
-    "Historical savings from global over national learning\n",
-    "(2008 - 2020, Billions 2020 $USD):\n\n", savings_summary$summary, "\n"
-)
+cat(get_savings_summary_hist(cost$savings))
 
 # Future cost projections -----
 
 proj <- readRDS(dir$scenarios_proj)
-proj_summary <- get_cost_compare_df_proj(proj$nat_trends, proj$sus_dev)
-
-cat(
-    "2030 solar PV module prices under national versus global markets scenarios\n\n",
-    '"NATIONAL TRENDS" scenario:\n\n',
-    proj_summary$summary[proj_summary$scenario == "National Trends"], "\n",
-    '"SUSTAINABLE DEVELOPMENT" scenario:\n\n',
-    proj_summary$summary[proj_summary$scenario == "Sustainable Development"], "\n",
-    sep = ""
-)
+cat(get_cost_summary_proj(proj$nat_trends, proj$sus_dev))

@@ -415,7 +415,7 @@ make_projection_plot <- function(nat_trends, sus_dev, log_scale = FALSE) {
 
 # Summarizing results
 
-get_cost_compare_df_hist <- function(cost) {
+get_cost_summary_hist <- function(cost) {
     result <- cost %>% 
         filter(year == 2020) %>% 
         select(country, learning, cost_per_kw) %>% 
@@ -431,10 +431,15 @@ get_cost_compare_df_hist <- function(cost) {
                 country, ": ", national, " versus ", global, ", or ", 
                 p, " higher\n")
         ) 
+    result <- paste(paste0("- ", result$summary), collapse = "")
+    result <- paste0(
+      "\n2020 solar PV module prices under national versus global markets scenarios:\n\n",
+      result
+    )
     return(result)
 }
 
-get_savings_summary_df_hist <- function(savings) {
+get_savings_summary_hist <- function(savings) {
     savings <- savings %>% 
         filter(year == max(year)) %>% 
         mutate(
@@ -443,10 +448,21 @@ get_savings_summary_df_hist <- function(savings) {
             scales::dollar(round(cum_savings_bil)), " (", 
             scales::dollar(round(cum_savings_bil_lb)), ", ",
             scales::dollar(round(cum_savings_bil_ub)), ")\n"))    
-    return(savings)
+    total <- savings %>% 
+      summarise(
+        mean = scales::dollar(round(sum(cum_savings_bil))), 
+        lb = scales::dollar(round(sum(cum_savings_bil_lb))), 
+        ub = scales::dollar(round(sum(cum_savings_bil_ub))))
+    total <- paste0(total$mean, " (", total$lb, ", ", total$ub, ")")
+    result <- paste(paste0("- ", savings$summary), collapse = "")
+    result <- paste0(
+      "Cumulative savings from global over national markets scenarios, 2008 - 2020 ",
+      "(Billions 2020 $USD):\n\n", result, "\n\nTotal: ", total
+    )
+    return(result)
 }
 
-get_cost_compare_df_proj <- function(nat_trends, sus_dev) {
+get_cost_summary_proj <- function(nat_trends, sus_dev) {
     result <- rbind(nat_trends, sus_dev) %>% 
         mutate(
             learning = str_to_title(learning),
@@ -472,6 +488,21 @@ get_cost_compare_df_proj <- function(nat_trends, sus_dev) {
                 country, ": ", national, " versus ", global, ", or ", 
                 p, " higher\n")
         )
+    nat_trends_summary <- result %>% 
+      filter(scenario == "National Trends")
+    sus_dev_summary <- result %>% 
+      filter(scenario == "Sustainable Development")
+    nat_trends_summary <- paste(
+      paste0("- ", nat_trends_summary$summary), collapse = "")
+    sus_dev_summary <- paste(
+      paste0("- ", sus_dev_summary$summary), collapse = "")
+    result <- paste0(
+      "2030 solar PV module prices under national versus global markets scenarios",
+      '\n\nNATIONAL TRENDS scenario:\n\n',
+      nat_trends_summary,
+      '\n\nSUSTAINABLE DEVELOPMENT scenario:\n\n',
+      sus_dev_summary, "\n\n", sep = ""
+    )
     return(result)
 }
 
