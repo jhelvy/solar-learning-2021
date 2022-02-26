@@ -157,7 +157,7 @@ ui <- navbarPage(
             title = "Cost Curve", 
             br(),
             uiOutput("cost_summary_hist"),
-            plotOutput("cost_hist")
+            plotOutput(outputId = "cost_hist")
           ),
           tabPanel(
             title = "Savings", 
@@ -452,19 +452,19 @@ server <- function(input, output) {
 
   output$cost_hist <- renderPlot(
     make_historical_plot(get_costs_hist(), log_scale_hist()),
-    width = 700, height = 300
+    width = 700, height = 300, res = 96
   )
 
   output$savings_hist <- renderPlot(
     make_ann_savings_plot(get_savings_hist()),
-    width = 700, height = 300
+    width = 700, height = 300, res = 96
   )
   
   output$cost_proj <- renderPlot(
     make_projection_plot(
       get_nat_trends_proj(), get_sus_dev_proj(), log_scale_proj()
     ),
-    width = 700, height = 500
+    width = 700, height = 500, res = 96
   )
   
 }

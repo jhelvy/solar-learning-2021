@@ -64,7 +64,7 @@ ggsave(
 # Cost per kw for global vs. national learning ------
 
 cost_historical_plot <- 
-    make_historical_plot(cost$cost) +
+    make_historical_plot(cost$cost, size = 16) +
     scale_y_continuous(
         limits = c(0, 6000),
         breaks = seq(0, 6000, 1000),
@@ -130,7 +130,7 @@ cum_savings_labels <- cost$savings %>%
     )
 
 # Now make the plot
-savings_ann_historical_plot <- make_ann_savings_plot(cost$savings) +
+savings_ann_historical_plot <- make_ann_savings_plot(cost$savings, size = 16) +
     scale_y_continuous(
         labels = scales::dollar, 
         breaks = seq(0, 10, 2),
@@ -146,12 +146,12 @@ savings_ann_historical_plot <- make_ann_savings_plot(cost$savings) +
 
 ggsave(
     file.path(dir$figs, 'pdf', 'savings_ann_historical_plot.pdf'),
-    savings_ann_historical_plot, height = 4, width = 12, 
+    savings_ann_historical_plot, height = 4.25, width = 11, 
     device = cairo_pdf
 )
 ggsave(
     file.path(dir$figs, 'png', 'savings_ann_historical_plot.png'),
-    savings_ann_historical_plot, height = 4, width = 12
+    savings_ann_historical_plot, height = 4.25, width = 11
 )
 
 # 2030 Projections -----

@@ -192,7 +192,7 @@ compute_savings <- function(cost_diffs, cost_historical_true) {
 
 # Plotting ----
 
-make_historical_plot <- function(cost, log_scale = FALSE) {
+make_historical_plot <- function(cost, log_scale = FALSE, size = 12) {
     plot <- cost %>%
         mutate(
             learning = str_to_title(learning),
@@ -228,11 +228,6 @@ make_historical_plot <- function(cost, log_scale = FALSE) {
         scale_y_continuous(labels = scales::dollar) +
         scale_color_manual("Learning", values = colors_learning) +
         scale_fill_manual("Learning", values = colors_learning) +
-        theme_minimal_grid(
-            font_size = 16,
-            font_family = font_main
-        ) +
-        panel_border() +
         labs(
           title = paste0(
             "Estimated Module Cost Under <span style = 'color: ",
@@ -243,6 +238,11 @@ make_historical_plot <- function(cost, log_scale = FALSE) {
             y = paste0("Cost per kW (", year_inflation, " $USD)"),
             x = "Year"
         ) + 
+        theme_minimal_grid(
+            font_size = size,
+            font_family = font_main
+        ) +
+        panel_border() +
         theme(
             plot.title.position = "plot",
             strip.background = element_rect(fill = "grey80"), 
@@ -263,7 +263,7 @@ make_historical_plot <- function(cost, log_scale = FALSE) {
     return(plot)
 }
 
-make_cum_savings_plot <- function(savings) { 
+make_cum_savings_plot <- function(savings, size = 12) { 
     
     # First compute label locations
     china <- savings %>% 
@@ -298,7 +298,7 @@ make_cum_savings_plot <- function(savings) {
           breaks = seq(0, 80, 20),
           limits = c(0, 80),
           expand = expansion(mult = c(0, 0.05))) +
-        theme_minimal_hgrid(font_family = font_main) +
+        theme_minimal_hgrid(font_family = font_main, font_size = size) +
         scale_color_manual(values = c("white", "black", "white")) +
         labs(
             title = "Cumulative Module Savings",
@@ -319,7 +319,7 @@ make_cum_savings_plot <- function(savings) {
     return(plot)
 }
 
-make_ann_savings_plot <- function(savings) { 
+make_ann_savings_plot <- function(savings, size = 12) { 
     plot <- savings %>% 
         ggplot() + 
         facet_wrap(vars(country), nrow = 1) +
@@ -338,7 +338,7 @@ make_ann_savings_plot <- function(savings) {
             )
         ) +
         theme_minimal_hgrid(
-            font_size = 16,
+            font_size = size,
             font_family = font_main) +
         panel_border() +
         theme(
