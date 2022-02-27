@@ -5,7 +5,7 @@ account: jhelvy
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 5624542
-bundleId: 5621150
+bundleId: 5621728
 url: https://jhelvy.shinyapps.io/solar-learning-2021/
-when: 1645901794.19123
-lastSyncTime: 1645901794.19124
+when: 1645927757.55539
+lastSyncTime: 1645927757.5554

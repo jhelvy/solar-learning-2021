@@ -156,13 +156,19 @@ ui <- navbarPage(
             title = "Cost Curve", 
             br(),
             uiOutput("cost_summary_hist"),
-            plotOutput(outputId = "cost_hist")
+            plotOutput(
+              outputId = "cost_hist", 
+              width = "700px", height = "300px"
+            )
           ),
           tabPanel(
             title = "Savings", 
             br(),
             uiOutput("saving_summary_hist"),
-            plotOutput("savings_hist")
+            plotOutput(
+              outputId = "savings_hist", 
+              width = "700px", height = "280px"
+            )
           )
         )
       )
@@ -209,7 +215,10 @@ ui <- navbarPage(
             title = "Cost Curve", 
             br(),
             uiOutput("cost_summary_proj"),
-            plotOutput("cost_proj")
+            plotOutput(
+              outputId = "cost_proj",
+              width = "700px", height = "415px"
+            )
           ),
           tabPanel(
             title = "Savings", 
@@ -450,20 +459,18 @@ server <- function(input, output) {
   )
 
   output$cost_hist <- renderPlot(
-    make_historical_plot(get_costs_hist(), log_scale_hist()),
-    width = 700, height = 300, res = 96
+    make_historical_plot(get_costs_hist(), log_scale_hist(), size = 16)
   )
 
   output$savings_hist <- renderPlot(
-    make_ann_savings_plot(get_savings_hist()),
-    width = 700, height = 280, res = 96
+    make_ann_savings_plot(get_savings_hist(), size = 14)
   )
   
   output$cost_proj <- renderPlot(
     make_projection_plot(
-      get_nat_trends_proj(), get_sus_dev_proj(), log_scale_proj()
-    ),
-    width = 700, height = 415, res = 96
+      get_nat_trends_proj(), get_sus_dev_proj(), log_scale_proj(),
+      size = 16
+    )
   )
   
 }
