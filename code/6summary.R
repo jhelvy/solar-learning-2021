@@ -61,5 +61,10 @@ cat(get_savings_summary_hist(cost$savings))
 
 # Future cost projections -----
 
+# Projection groth rates (CAGR)
+
+data$rates %>% 
+    mutate(rate = scales::percent(rate, accuracy = 1))
+
 proj <- readRDS(dir$scenarios_proj)
 cat(get_cost_summary_proj(proj$nat_trends, proj$sus_dev))
