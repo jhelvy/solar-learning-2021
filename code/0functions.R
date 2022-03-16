@@ -250,12 +250,12 @@ make_historical_plot <- function(cost, log_scale = FALSE, size = 12) {
         scale_fill_manual("Learning", values = colors_learning) +
         labs(
           title = paste0(
-            "Estimated Module Cost Under <span style = 'color: ",
+            "Estimated Module Prices Under <span style = 'color: ",
             colors_learning["Global"], 
             ";'>Global</span> vs. <span style = 'color: ", 
             colors_learning["National"], 
             ";'>National</span> Markets Scenarios"),
-            y = paste0("Cost per kW (", year_inflation, " $USD)"),
+            y = paste0("Price per kW (", year_inflation, " $USD)"),
             x = "Year"
         ) + 
         theme_minimal_grid(
@@ -278,7 +278,7 @@ make_historical_plot <- function(cost, log_scale = FALSE, size = 12) {
             scale_y_log10(
                 labels = function(x) scales::dollar(x, accuracy = 1)
             ) + 
-            labs(y = paste0("log(Cost per kW), ", year_inflation, " $USD"))
+            labs(y = paste0("log(Price per kW), ", year_inflation, " $USD"))
     }
     return(plot)
 }
@@ -416,10 +416,10 @@ make_projection_plot <- function(
         panel.grid.major = element_line(size = 0.5, colour = "grey90")
       ) +
       labs(
-        y = paste0("Cost per kW (", year_inflation, " $USD)"),
+        y = paste0("Price per kW (", year_inflation, " $USD)"),
         x = "Year",
         title = paste0(
-          "Projected Module Cost Under <span style = 'color: ",
+          "Projected Module Prices Under <span style = 'color: ",
           colors_learning["Global"], 
           ";'>Global</span> vs. <span style = 'color: ", 
           colors_learning["National"], 
@@ -429,7 +429,7 @@ make_projection_plot <- function(
             scale_y_log10(
                 labels = function(x) scales::dollar(x, accuracy = 1)
             ) + 
-            labs(y = paste0("log(Cost per kW), ", year_inflation, " $USD"))
+            labs(y = paste0("log(Price per kW), ", year_inflation, " $USD"))
     }
     return(plot)
 }

@@ -276,9 +276,9 @@ sens_compare_cost <- cost_compare %>%
     breaks = c("NREL", "LBNL", "SPV")) +
   theme_bw() +
   labs(x = NULL,
-       y = "Cost per kW ($USD)",
+       y = "Price per kW ($USD)",
        color = "Data source",
-       title = "Comparison of cost per kW by data source")
+       title = "Comparison of price per kW by data source")
 
 ggsave(
     here::here(dir$figs, 'pdf', "sens_compare_cost.pdf"),

@@ -153,7 +153,7 @@ ui <- navbarPage(
         tabsetPanel(
           type = "tabs",
           tabPanel(
-            title = "Cost Curve", 
+            title = "Price Curve", 
             br(),
             uiOutput("cost_summary_hist"),
             plotOutput(
@@ -212,7 +212,7 @@ ui <- navbarPage(
         tabsetPanel(
           type = "tabs",
           tabPanel(
-            title = "Cost Curve", 
+            title = "Price Curve", 
             br(),
             uiOutput("cost_summary_proj"),
             plotOutput(
