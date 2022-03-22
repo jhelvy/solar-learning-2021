@@ -11,7 +11,13 @@ lr <- readRDS(dir$lr_models)
 cost_historical_true <- rbind(
     data$hist_us %>% mutate(country = "U.S."),
     data$hist_china %>% mutate(country = "China"),
-    data$hist_germany %>% mutate(country = "Germany"))
+    data$hist_germany %>% mutate(country = "Germany")
+)
+
+# Compute the additional capacity in each country in each year
+cap_additions_hist <- cost_historical_true %>% 
+    select(year, country, annCapKw_nation) %>%
+    filter(year >= year_savings_min, year <= year_savings_max)
 
 # Learning rates based on local cumulative capacity and local installed costs
 # Note: Since world data does not break down installation type
@@ -132,8 +138,7 @@ cost_diffs <- combine_cost_diffs(
     year_max = year_savings_max)
 
 # Compute savings
-
-savings <- compute_savings(cost_diffs, cost_historical_true)
+savings <- compute_savings(cost_diffs, cap_additions_hist)
 
 # Save outputs ----
 

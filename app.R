@@ -32,6 +32,31 @@ df_sus_dev_china <- data$proj_sus_dev_china
 df_nat_trends_germany <- data$proj_nat_trends_germany
 df_sus_dev_germany <- data$proj_sus_dev_germany
 
+# Merge together for each projection scenario
+df_nat_trends <- rbind(
+  df_nat_trends_us %>% mutate(country = "U.S."),
+  df_nat_trends_china %>% mutate(country = "China"),
+  df_nat_trends_germany %>% mutate(country = "Germany")
+)
+df_sus_dev <- rbind(
+  df_sus_dev_us %>% mutate(country = "U.S."),
+  df_sus_dev_china %>% mutate(country = "China"),
+  df_sus_dev_germany %>% mutate(country = "Germany")
+)
+
+# Compute the additional capacity in each country in each year
+cap_additions_hist <- cost_historical_true %>% 
+    select(year, country, annCapKw_nation) %>%
+    filter(year >= year_savings_min, year <= year_savings_max)
+
+cap_additions_nat_trends <- df_nat_trends %>% 
+    select(year, country, annCapKw_nation) %>%
+    filter(year >= year_proj_min, year <= year_proj_max)
+
+cap_additions_sus_dev <- df_sus_dev %>% 
+    select(year, country, annCapKw_nation) %>%
+    filter(year >= year_proj_min, year <= year_proj_max)
+
 # Set exchange rates
 er_us <- 1
 er_china <- data$exchangeRatesRMB
@@ -357,8 +382,8 @@ server <- function(input, output) {
       year_min = year_savings_min,
       year_max = year_savings_max
     )
-
-    savings <- compute_savings(cost_diffs, cost_historical_true)
+    
+    savings <- compute_savings(cost_diffs, cap_additions_hist)
 
     return(savings)
   })

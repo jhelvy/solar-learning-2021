@@ -161,13 +161,8 @@ compute_cost_diff <- function(
     return(cost_diff)
 }
 
-compute_savings <- function(cost_diffs, cost_historical_true) {
-    
-    # Compute the additional capacity in each country in each year
-    cap_additions <- cost_historical_true %>% 
-        select(year, country, annCapKw_nation) %>%
-        filter(year >= year_savings_min, year <= year_savings_max)
-    
+compute_savings <- function(cost_diffs, cap_additions) {
+
     # Now compute savings
     savings <- cost_diffs %>%
         left_join(cap_additions, by = c("year", "country")) %>%

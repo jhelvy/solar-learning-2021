@@ -34,6 +34,27 @@ df_sus_dev_china <- data$proj_sus_dev_china
 df_nat_trends_germany <- data$proj_nat_trends_germany
 df_sus_dev_germany <- data$proj_sus_dev_germany
 
+# Merge together for each projection scenario
+df_nat_trends <- rbind(
+  df_nat_trends_us %>% mutate(country = "U.S."),
+  df_nat_trends_china %>% mutate(country = "China"),
+  df_nat_trends_germany %>% mutate(country = "Germany")
+)
+df_sus_dev <- rbind(
+  df_sus_dev_us %>% mutate(country = "U.S."),
+  df_sus_dev_china %>% mutate(country = "China"),
+  df_sus_dev_germany %>% mutate(country = "Germany")
+)
+
+# Compute the additional capacity in each country in each year
+cap_additions_nat_trends <- df_nat_trends %>%
+    select(year, country, annCapKw_nation) %>%
+    filter(year >= year_proj_min, year <= year_proj_max)
+
+cap_additions_sus_dev <- df_sus_dev %>%
+    select(year, country, annCapKw_nation) %>%
+    filter(year >= year_proj_min, year <= year_proj_max)
+
 # Set lambda values for national markets scenario
 lambda_nat_us <- make_lambda_national(
     lambda_start, lambda_end, delay, df_nat_trends_us)
@@ -150,10 +171,78 @@ sus_dev <- combine(
 make_projection_plot(nat_trends, sus_dev)
 make_projection_plot(nat_trends, sus_dev, log_scale = TRUE)
 
+# Calculate savings between national and global markets
+
+# First, compute the cost difference CIs for each country & scenario
+
+# National Trends
+
+cost_diff_nat_trends_us <- compute_cost_diff(
+    params     = params_us,
+    df         = df_nat_trends_us,
+    lambda_nat = lambda_nat_us,
+    exchange_rate = er_us)
+
+cost_diff_nat_trends_china <- compute_cost_diff(
+    params     = params_china,
+    df         = df_nat_trends_china,
+    lambda_nat = lambda_nat_china,
+    exchange_rate = er_china)
+
+cost_diff_nat_trends_germany <- compute_cost_diff(
+    params     = params_germany,
+    df         = df_nat_trends_germany,
+    lambda_nat = lambda_nat_germany,
+    exchange_rate = er_germany)
+
+cost_diffs_nat_trends <- combine_cost_diffs(
+    us = cost_diff_nat_trends_us,
+    china = cost_diff_nat_trends_china,
+    germany = cost_diff_nat_trends_germany,
+    year_min = year_proj_min,
+    year_max = year_proj_max)
+
+# Sustainable Development
+
+cost_diff_sus_dev_us <- compute_cost_diff(
+    params     = params_us,
+    df         = df_sus_dev_us,
+    lambda_nat = lambda_nat_us,
+    exchange_rate = er_us)
+
+cost_diff_sus_dev_china <- compute_cost_diff(
+    params     = params_china,
+    df         = df_sus_dev_china,
+    lambda_nat = lambda_nat_china,
+    exchange_rate = er_china)
+
+cost_diff_sus_dev_germany <- compute_cost_diff(
+    params     = params_germany,
+    df         = df_sus_dev_germany,
+    lambda_nat = lambda_nat_germany,
+    exchange_rate = er_germany)
+
+cost_diffs_sus_dev <- combine_cost_diffs(
+    us = cost_diff_sus_dev_us,
+    china = cost_diff_sus_dev_china,
+    germany = cost_diff_sus_dev_germany,
+    year_min = year_proj_min,
+    year_max = year_proj_max)
+
+# Then compute savings
+
+savings_nat_trends <- compute_savings(
+    cost_diffs_nat_trends, cap_additions_nat_trends)
+
+savings_sus_dev <- compute_savings(
+    cost_diffs_sus_dev, cap_additions_sus_dev)
+
 # Save results --------
 
 saveRDS(list(
     nat_trends = nat_trends,
-    sus_dev    = sus_dev),
+    sus_dev    = sus_dev, 
+    savings_nat_trends = savings_nat_trends, 
+    savings_sus_dev = savings_sus_dev),
     dir$scenarios_proj
 )
