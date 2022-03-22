@@ -565,6 +565,55 @@ get_cost_summary_proj <- function(nat_trends, sus_dev) {
     return(result)
 }
 
+get_savings_summary_proj <- function(nat_trends, sus_dev) {
+    savings <- rbind(nat_trends, sus_dev) %>% 
+        mutate(
+            scenario = fct_recode(scenario, 
+            "National Trends" = "nat_trends", 
+            "Sustainable Development" = "sus_dev")) %>% 
+        filter(year == year_proj_max) %>% 
+        mutate(
+          summary = paste0(
+            country, ": ",
+            scales::dollar(round(cum_savings_bil)), " (", 
+            scales::dollar(round(cum_savings_bil_lb)), ", ",
+            scales::dollar(round(cum_savings_bil_ub)), ")\n"))    
+    nat_trends_summary <- savings %>% 
+      filter(scenario == "National Trends")
+    sus_dev_summary <- savings %>% 
+      filter(scenario == "Sustainable Development")
+    nat_trends_summary <- paste(
+      paste0("- ", nat_trends_summary$summary), collapse = "")
+    sus_dev_summary <- paste(
+      paste0("- ", sus_dev_summary$summary), collapse = "")
+    # Compute totals
+     total <- savings %>% 
+      group_by(scenario) %>% 
+      summarise(
+        mean = scales::dollar(round(sum(cum_savings_bil))), 
+        lb = scales::dollar(round(sum(cum_savings_bil_lb))), 
+        ub = scales::dollar(round(sum(cum_savings_bil_ub)))) %>% 
+      mutate(total = paste0(mean, " (", lb, ", ", ub, ")"))
+    nat_trends_total <- total %>% 
+      filter(scenario == "National Trends") %>% 
+      pull(total)
+    sus_dev_total <- total %>% 
+      filter(scenario == "Sustainable Development") %>% 
+      pull(total)
+    result <- paste0(
+      "Cumulative projected savings from global over national markets scenarios, 2020 - 2030 (Billions 2020 $USD):\n\n",
+      'NATIONAL TRENDS scenario:\n\n',
+      nat_trends_summary,
+      "\n\nTotal: ", nat_trends_total,
+      '\n\nSUSTAINABLE DEVELOPMENT scenario:\n\n',
+      sus_dev_summary,
+      "\n\nTotal: ", sus_dev_total,
+      sep = ""
+    )
+    return(result)
+}
+
+
 # General utility ----
 
 get_ci <- function(x, ci = 0.95) {

@@ -68,3 +68,7 @@ data$rates %>%
 
 proj <- readRDS(dir$scenarios_proj)
 cat(get_cost_summary_proj(proj$nat_trends, proj$sus_dev))
+
+# Savings in each country
+
+cat(get_savings_summary_proj(proj$savings_nat_trends, proj$savings_sus_dev))
