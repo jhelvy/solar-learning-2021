@@ -200,7 +200,8 @@ cost_diffs_nat_trends <- combine_cost_diffs(
     china = cost_diff_nat_trends_china,
     germany = cost_diff_nat_trends_germany,
     year_min = year_proj_min,
-    year_max = year_proj_max)
+    year_max = year_proj_max) %>% 
+    mutate(scenario = "nat_trends")
 
 # Sustainable Development
 
@@ -227,15 +228,18 @@ cost_diffs_sus_dev <- combine_cost_diffs(
     china = cost_diff_sus_dev_china,
     germany = cost_diff_sus_dev_germany,
     year_min = year_proj_min,
-    year_max = year_proj_max)
+    year_max = year_proj_max) %>%
+    mutate(scenario = "sus_dev")
 
 # Then compute savings
 
 savings_nat_trends <- compute_savings(
-    cost_diffs_nat_trends, cap_additions_nat_trends)
+    cost_diffs_nat_trends, cap_additions_nat_trends) %>% 
+    mutate(scenario = "nat_trends")
 
 savings_sus_dev <- compute_savings(
-    cost_diffs_sus_dev, cap_additions_sus_dev)
+    cost_diffs_sus_dev, cap_additions_sus_dev) %>% 
+    mutate(scenario = "sus_dev")
 
 # Save results --------
 

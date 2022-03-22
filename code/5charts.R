@@ -167,6 +167,67 @@ ggsave(
   cost_proj, height = 6.5, width = 11
 )
 
+# Annual savings projection ----
+
+# First make label data
+cum_savings_labels_nat_trends <- proj$savings_nat_trends %>% 
+    filter(year == max(year)) %>%
+    mutate(
+        mean = round(cum_savings_bil), 
+        lb = round(cum_savings_bil_lb),
+        ub = round(cum_savings_bil_ub),
+        x = 2020, 
+        y = 5, 
+        label = paste0(
+            "Cumulative savings:\nB $ ", mean, " (", lb, " - ", ub, ")")
+    )
+cum_savings_labels_sus_dev <- proj$savings_sus_dev %>% 
+    filter(year == max(year)) %>%
+    mutate(
+        mean = round(cum_savings_bil), 
+        lb = round(cum_savings_bil_lb),
+        ub = round(cum_savings_bil_ub),
+        x = 2020, 
+        y = 5, 
+        label = paste0(
+            "Cumulative savings:\nB $ ", mean, " (", lb, " - ", ub, ")")
+    )
+cum_savings_labels_proj <- rbind(
+  cum_savings_labels_nat_trends, 
+  cum_savings_labels_sus_dev) %>% 
+  mutate(
+    scenario = fct_recode(scenario, 
+      "National Trends" = "nat_trends", 
+      "Sustainable Development" = "sus_dev"))
+
+# Now make the plot
+savings_ann_proj_plot <- make_ann_savings_proj_plot(
+  proj$savings_nat_trends, proj$savings_sus_dev, size = 16) +
+    scale_y_continuous(
+        labels = scales::dollar, 
+        breaks = seq(0, 6, 2),
+        limits = c(0, 6),
+        expand = expansion(mult = c(0, 0.05))
+    ) +
+    # Add totals labels
+    geom_text(
+        data = cum_savings_labels_proj,
+        aes(x = x, y = y, label = label),
+        size = 4.5, family = "Roboto Condensed", hjust = 0
+    )
+
+ggsave(
+    file.path(dir$figs, 'pdf', 'savings_ann_proj_plot.pdf'),
+    savings_ann_proj_plot, height = 6.5, width = 11, 
+    device = cairo_pdf
+)
+ggsave(
+    file.path(dir$figs, 'png', 'savings_ann_proj_plot.png'),
+    savings_ann_proj_plot, height = 6.5, width = 11
+)
+
+
+
 # Compare capacity data from NREL, SEIA, and IRENA ----
 
 # Merge NREL and SEIA capacity data

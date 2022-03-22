@@ -429,6 +429,48 @@ make_projection_plot <- function(
     return(plot)
 }
 
+make_ann_savings_proj_plot <- function(nat_trends, sus_dev, size = 12) {
+  
+    plot <- rbind(nat_trends, sus_dev) %>% 
+        mutate(
+          scenario = fct_recode(scenario, 
+            "National Trends" = "nat_trends", 
+            "Sustainable Development" = "sus_dev")) %>% 
+        ggplot() + 
+        facet_grid(scenario ~ country) +
+        geom_col(aes(x = year, y = ann_savings_bil, fill = country)) + 
+        geom_errorbar(
+            aes(x = year, ymin = ann_savings_bil_lb, ymax = ann_savings_bil_ub), 
+            color = "grey42", width = 0.5) + 
+        scale_x_continuous(breaks = seq(year_proj_min, year_proj_max, 2)) +
+        scale_y_continuous(
+            labels = scales::dollar, 
+            expand = expansion(mult = c(0, 0.05))
+        ) +
+        scale_fill_manual(
+            values = c(
+                colors_country[3], colors_country[1], colors_country[2]
+            )
+        ) +
+        theme_minimal_hgrid(
+            font_size = size,
+            font_family = font_main) +
+        panel_border() +
+        theme(
+            plot.title.position = "plot",
+            legend.position = "none",
+            axis.line.x = element_blank(),
+            strip.background = element_rect(fill = "grey80"), 
+            panel.grid.major = element_line(
+                size = 0.5, colour = "grey90")
+        ) +
+         labs(
+            title = "Projected Annual Module Savings Under Global vs. National Market Scenarios (2020 - 2030)",
+            x = "Year",
+            y = paste0("Annual Savings (Billion ", year_inflation, " $USD)"),
+            fill = "Country") 
+    return(plot)
+}
 
 # Summarizing results
 
