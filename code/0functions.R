@@ -601,7 +601,7 @@ get_savings_summary_proj <- function(nat_trends, sus_dev) {
       filter(scenario == "Sustainable Development") %>% 
       pull(total)
     result <- paste0(
-      "Cumulative projected savings from global over national markets scenarios, 2020 - 2030 (Billions 2020 $USD):\n\n",
+      "Cumulative projected savings from global over national markets scenarios, 2020 - 2030 (Billions 2020 $USD)\n\n",
       'NATIONAL TRENDS scenario:\n\n',
       nat_trends_summary,
       "\n\nTotal: ", nat_trends_total,

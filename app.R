@@ -248,8 +248,11 @@ ui <- navbarPage(
           tabPanel(
             title = "Savings", 
             br(), 
-            p("To be added"),
-            plotOutput("savings_proj"),
+            uiOutput("saving_summary_proj"),
+            plotOutput(
+              outputId = "savings_proj", 
+              width = "700px", height = "415px"
+            )
           )
         )
       )
@@ -462,6 +465,82 @@ server <- function(input, output) {
 
   })
 
+  # Compute projected savings ----
+
+  get_savings_nat_trends <- reactive({
+    
+    lambda <- lambda_nat_proj()
+
+    cost_diff_nat_trends_us <- compute_cost_diff(
+        params     = params_us,
+        df         = df_nat_trends_us,
+        lambda_nat = lambda$us,
+        exchange_rate = er_us)
+    
+    cost_diff_nat_trends_china <- compute_cost_diff(
+        params     = params_china,
+        df         = df_nat_trends_china,
+        lambda_nat = lambda$china,
+        exchange_rate = er_china_proj)
+    
+    cost_diff_nat_trends_germany <- compute_cost_diff(
+        params     = params_germany,
+        df         = df_nat_trends_germany,
+        lambda_nat = lambda$germany,
+        exchange_rate = er_germany_proj)
+    
+    cost_diffs_nat_trends <- combine_cost_diffs(
+        us = cost_diff_nat_trends_us,
+        china = cost_diff_nat_trends_china,
+        germany = cost_diff_nat_trends_germany,
+        year_min = year_proj_min,
+        year_max = year_proj_max) %>% 
+        mutate(scenario = "nat_trends")
+    
+    savings_nat_trends <- compute_savings(
+        cost_diffs_nat_trends, cap_additions_nat_trends) %>% 
+        mutate(scenario = "nat_trends")
+  
+    return(savings_nat_trends)
+  })
+  
+get_savings_sus_dev <- reactive({
+    
+    lambda <- lambda_nat_proj()
+
+    cost_diff_sus_dev_us <- compute_cost_diff(
+        params     = params_us,
+        df         = df_sus_dev_us,
+        lambda_nat = lambda$us,
+        exchange_rate = er_us)
+    
+    cost_diff_sus_dev_china <- compute_cost_diff(
+        params     = params_china,
+        df         = df_sus_dev_china,
+        lambda_nat = lambda$china,
+        exchange_rate = er_china_proj)
+    
+    cost_diff_sus_dev_germany <- compute_cost_diff(
+        params     = params_germany,
+        df         = df_sus_dev_germany,
+        lambda_nat = lambda$germany,
+        exchange_rate = er_germany_proj)
+    
+    cost_diffs_sus_dev <- combine_cost_diffs(
+        us = cost_diff_sus_dev_us,
+        china = cost_diff_sus_dev_china,
+        germany = cost_diff_sus_dev_germany,
+        year_min = year_proj_min,
+        year_max = year_proj_max) %>%
+        mutate(scenario = "sus_dev")
+    
+    savings_sus_dev <- compute_savings(
+        cost_diffs_sus_dev, cap_additions_sus_dev) %>% 
+        mutate(scenario = "sus_dev")
+
+    return(savings_sus_dev)
+  })
+
   # Outputs ----
   
   output$cost_summary_hist <- renderUI(
@@ -483,6 +562,15 @@ server <- function(input, output) {
     ))
   )
 
+  output$saving_summary_proj <- renderUI(
+    HTML(
+      markdown::renderMarkdown(
+        text = get_savings_summary_proj(
+          get_savings_nat_trends(),
+          get_savings_sus_dev()
+      )))
+  )
+  
   output$cost_hist <- renderPlot(
     make_historical_plot(get_costs_hist(), log_scale_hist(), size = 16)
   )
@@ -498,6 +586,11 @@ server <- function(input, output) {
     )
   )
   
+  output$savings_proj <- renderPlot(
+    make_ann_savings_proj_plot(
+      get_savings_nat_trends(), get_savings_sus_dev(), size = 16)
+  )
+
 }
 
 # Run the application
