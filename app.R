@@ -183,7 +183,7 @@ ui <- navbarPage(
             uiOutput("cost_summary_hist"),
             plotOutput(
               outputId = "cost_hist", 
-              width = "700px", height = "300px"
+              width = "800px", height = "300px"
             )
           ),
           tabPanel(
@@ -192,7 +192,7 @@ ui <- navbarPage(
             uiOutput("saving_summary_hist"),
             plotOutput(
               outputId = "savings_hist", 
-              width = "700px", height = "280px"
+              width = "800px", height = "300px"
             )
           )
         )
@@ -242,7 +242,7 @@ ui <- navbarPage(
             uiOutput("cost_summary_proj"),
             plotOutput(
               outputId = "cost_proj",
-              width = "700px", height = "415px"
+              width = "800px", height = "450px"
             )
           ),
           tabPanel(
@@ -251,7 +251,7 @@ ui <- navbarPage(
             uiOutput("saving_summary_proj"),
             plotOutput(
               outputId = "savings_proj", 
-              width = "700px", height = "415px"
+              width = "900px", height = "510px"
             )
           )
         )

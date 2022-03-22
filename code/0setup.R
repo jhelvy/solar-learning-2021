@@ -34,6 +34,7 @@ library(flextable)
 library(shiny)
 library(Cairo)
 library(shinythemes)
+library(showtext)
 
 # Set options
 options(dplyr.width = Inf)
@@ -109,7 +110,9 @@ target_sus_dev_world      <- 3125*1e6
 # Chart settings
 colors_learning <- c("National" = "#E5601A", "Global" = "#1A9FE5")
 colors_country <- c("#E5C61A", "#1A9FE5", "#E5601A")
-font_main <- "Fira Sans Condensed"
+font_add_google("Fira Sans Condensed", "firasanscondensed")
+showtext_auto() # Automatically use showtext to render text
+font_main <- "firasanscondensed"
 
 # Set boundaries for plots
 plot_min_year <- min(year_model_china_min, year_model_us_min, year_model_germany_min)
