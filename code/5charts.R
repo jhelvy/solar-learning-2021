@@ -243,7 +243,7 @@ nrelSeia <- data$nrelCapacity %>%
     source = fct_relevel(source, c("NREL", "SEIA")))
 
 # Plot NREL vs. SEIA capacity comparison 
-sens_compare_capacity_type <- nrelSeia %>% 
+ex_compare_capacity_type <- nrelSeia %>%
   filter(year <= plot_max_year) %>%
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line(alpha = 0.5) +
@@ -252,7 +252,7 @@ sens_compare_capacity_type <- nrelSeia %>%
     values = c("red", "dodgerblue"),
     breaks = c("NREL", "SEIA")) +
   facet_wrap(vars(installType)) +
-  theme_bw() +
+  theme_bw(base_family = font_main) +
   labs(
     x = NULL,
     y = "Installed Capacity (GW)",
@@ -260,12 +260,12 @@ sens_compare_capacity_type <- nrelSeia %>%
     title = "Comparison of installed capacity by type and data source")
 
 ggsave(
-    here::here(dir$figs, 'pdf', "sens_compare_capacity_type.pdf"),
-    sens_compare_capacity_type, width = 9, height = 3, device = cairo_pdf
+    here::here(dir$figs, 'pdf', "ex_compare_capacity_type.pdf"),
+    ex_compare_capacity_type, width = 9, height = 3, device = cairo_pdf
 )
 ggsave(
-    here::here(dir$figs, 'png', "sens_compare_capacity_type.png"),
-    sens_compare_capacity_type, width = 9, height = 3, dpi = 300
+    here::here(dir$figs, 'png', "ex_compare_capacity_type.png"),
+    ex_compare_capacity_type, width = 9, height = 3, dpi = 300
 )
 
 # During the overlapping period, NREL and SEIA data match quite closely
@@ -273,7 +273,7 @@ ggsave(
 # than those in SEIA
 
 # Merge in IRENA data to compare total capacity across all 3 sources
-sens_compare_capacity_cumulative <- nrelSeia %>% 
+ex_compare_capacity_cumulative <- nrelSeia %>%
   group_by(year, source) %>%
   summarise(cumCapacityGw = sum(cumCapacityKw) / 10^6) %>%
   rbind(
@@ -290,7 +290,7 @@ sens_compare_capacity_cumulative <- nrelSeia %>%
   scale_color_manual(
     values = c("red", "dodgerblue", "black"),
     breaks = c("NREL", "SEIA", "IRENA")) +
-  theme_bw() +
+  theme_bw(base_family = font_main) +
   labs(
     x = NULL,
     y = "Installed Capacity (GW)",
@@ -298,13 +298,13 @@ sens_compare_capacity_cumulative <- nrelSeia %>%
     title = "Comparison of cumulative installed data")
 
 ggsave(
-    here::here(dir$figs, 'pdf', "sens_compare_capacity_cumulative.pdf"),
-    sens_compare_capacity_cumulative, 
+    here::here(dir$figs, 'pdf', "ex_compare_capacity_cumulative.pdf"),
+    ex_compare_capacity_cumulative,
     width = 5, height = 3, device = cairo_pdf
 )
 ggsave(
-    here::here(dir$figs, 'png', "sens_compare_capacity_cumulative.png"),
-    sens_compare_capacity_cumulative, 
+    here::here(dir$figs, 'png', "ex_compare_capacity_cumulative.png"),
+    ex_compare_capacity_cumulative,
     width = 5, height = 3, dpi = 300
 )
 
@@ -328,26 +328,26 @@ cost_compare <- data$nrelCost %>%
       select(year, costPerKw, source)
   ) 
 
-sens_compare_cost <- cost_compare %>%
+ex_compare_cost <- cost_compare %>%
   ggplot(aes(x = year, y = costPerKw, color = source, group = source)) +
   geom_line(alpha = 0.5) +
   geom_point(pch = 21, fill = "white") +
   scale_color_manual(
     values = c("red", "dodgerblue", "black"),
     breaks = c("NREL", "LBNL", "SPV")) +
-  theme_bw() +
+  theme_bw(base_family = font_main) +
   labs(x = NULL,
        y = "Price per kW ($USD)",
        color = "Data source",
        title = "Comparison of price per kW by data source")
 
 ggsave(
-    here::here(dir$figs, 'pdf', "sens_compare_cost.pdf"),
-    sens_compare_cost, width = 5, height = 3, device = cairo_pdf
+    here::here(dir$figs, 'pdf', "ex_compare_cost.pdf"),
+    ex_compare_cost, width = 5, height = 3, device = cairo_pdf
 )
 ggsave(
-    here::here(dir$figs, 'png', "sens_compare_cost.png"),
-    sens_compare_cost, width = 5, height = 3, dpi = 300
+    here::here(dir$figs, 'png', "ex_compare_cost.png"),
+    ex_compare_cost, width = 5, height = 3, dpi = 300
 )
 
 # NREL and LBNL cost data are relatively similar for modules, with 
@@ -356,7 +356,6 @@ ggsave(
 # the two appear to converge in the later years.
 
 # Interpreting lambda ----
-
 
 plotData <- rbind(
     prep_lambda_df(data$hist_us) %>% mutate(country = "U.S."),
@@ -408,4 +407,44 @@ ggsave(
 ggsave(
     file.path(dir$figs, 'png', 'lambda_compare.png'),
     lambda_compare, height = 3.75, width = 11
+)
+
+# Historical Silicon prices -----
+
+silicon_prices <- data$silicon %>%
+  rbind(data.frame(
+    year = c(2019, 2020), 
+    price_si = c(15.4, 15.4))) %>% 
+  ggplot(aes(x = year, y = price_si)) +
+  annotate(
+    geom = "rect", xmin = 2006, xmax = 2020,
+    ymin = 0, ymax = 400, fill = "#8C8C8C",
+    alpha = 0.15
+  ) +
+  geom_line(alpha = 0.5) +
+  geom_point(pch = 21, fill = "white") +
+  scale_color_manual(
+    values = c("red", "dodgerblue", "black"),
+    breaks = c("NREL", "SEIA", "IRENA")) +
+  scale_x_continuous(
+    limits = c(1980, 2020),
+    breaks = seq(1980, 2020, 10)) +
+  theme_bw(base_family = font_main) + 
+  annotate(
+    geom = "text", x = 2010, y = 385, 
+    label = "Period of study", 
+    family = font_main, hjust = 0
+  ) +
+  labs(
+    x = NULL,
+    y = "Price per kg ($USD)",
+    title = "Historical global silicon prices (1980 - 2020)")
+
+ggsave(
+    file.path(dir$figs, 'pdf', 'silicon_prices.pdf'),
+    silicon_prices, height = 3.75, width = 5, device = cairo_pdf
+)
+ggsave(
+    file.path(dir$figs, 'png', 'silicon_prices.png'),
+    silicon_prices, height = 3.75, width = 5
 )

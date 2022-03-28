@@ -249,7 +249,7 @@ make_historical_plot <- function(cost, log_scale = FALSE, size = 12) {
             colors_learning["Global"], 
             ";'>Global</span> vs. <span style = 'color: ", 
             colors_learning["National"], 
-            ";'>National</span> Markets Scenarios"),
+            ";'>National</span> Market Scenarios"),
             y = paste0("Price per kW (", year_inflation, " $USD)"),
             x = "Year"
         ) + 
@@ -418,7 +418,7 @@ make_projection_plot <- function(
           colors_learning["Global"], 
           ";'>Global</span> vs. <span style = 'color: ", 
           colors_learning["National"], 
-          ";'>National</span> Markets Scenarios (2020 - 2030)"))
+          ";'>National</span> Market Scenarios (2020 - 2030)"))
     if (log_scale) {
         plot <- plot + 
             scale_y_log10(
@@ -492,7 +492,7 @@ get_cost_summary_hist <- function(cost) {
         ) 
     result <- paste(paste0("- ", result$summary), collapse = "")
     result <- paste0(
-      "\n2020 solar PV module prices under national versus global markets scenarios:\n\n",
+      "\n2020 solar PV module prices under national versus global market scenarios:\n\n",
       result
     )
     return(result)
@@ -515,7 +515,7 @@ get_savings_summary_hist <- function(savings) {
     total <- paste0(total$mean, " (", total$lb, ", ", total$ub, ")")
     result <- paste(paste0("- ", savings$summary), collapse = "")
     result <- paste0(
-      "Cumulative savings from global over national markets scenarios, 2008 - 2020 ",
+      "Cumulative savings from global over national market scenarios, 2008 - 2020 ",
       "(Billions 2020 $USD):\n\n", result, "\n\nTotal: ", total
     )
     return(result)
@@ -556,7 +556,7 @@ get_cost_summary_proj <- function(nat_trends, sus_dev) {
     sus_dev_summary <- paste(
       paste0("- ", sus_dev_summary$summary), collapse = "")
     result <- paste0(
-      "2030 solar PV module prices under national versus global markets scenarios",
+      "2030 solar PV module prices under national versus global market scenarios",
       '\n\nNATIONAL TRENDS scenario:\n\n',
       nat_trends_summary,
       '\n\nSUSTAINABLE DEVELOPMENT scenario:\n\n',
@@ -601,7 +601,7 @@ get_savings_summary_proj <- function(nat_trends, sus_dev) {
       filter(scenario == "Sustainable Development") %>% 
       pull(total)
     result <- paste0(
-      "Cumulative projected savings from global over national markets scenarios, 2020 - 2030 (Billions 2020 $USD)\n\n",
+      "Cumulative projected savings from global over national market scenarios, 2020 - 2030 (Billions 2020 $USD)\n\n",
       'NATIONAL TRENDS scenario:\n\n',
       nat_trends_summary,
       "\n\nTotal: ", nat_trends_total,

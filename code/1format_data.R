@@ -407,6 +407,7 @@ worldSpvCost <- read_excel(worldSpvFilePath) %>%
 # Source capacity: IRENA
 
 # Note: for silicon prices, extend last observation to missing years
+
 world <- irenaCumCapacityMw %>%
   select(year, capacityCumulativeMw = world) %>% 
   mutate(
@@ -682,6 +683,7 @@ proj_sus_dev_germany <- formatCapData(
 
 saveRDS(list(
     pvProduction            = pvProduction,
+    silicon                 = silicon,
     irenaCumCapacityMw      = irenaCumCapacityMw,
     nrelCapacity            = nrelCapacity,
     nrelCost                = nrelCost,
