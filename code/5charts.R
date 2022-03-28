@@ -407,6 +407,10 @@ silicon_prices <- data$silicon %>%
     limits = c(1980, 2020),
     breaks = seq(1980, 2020, 10)) +
   theme_bw(base_family = font_main) + 
+  theme(
+    plot.caption = element_text(
+      hjust = 0, size = 10, family = font_main, face = "italic"),
+    plot.caption.position = "plot") +
   annotate(
     geom = "text", x = 2010, y = 385, 
     label = "Period of study", 
@@ -415,7 +419,9 @@ silicon_prices <- data$silicon %>%
   labs(
     x = NULL,
     y = "Price per kg ($USD)",
-    title = "Historical global silicon prices (1980 - 2020)")
+    title = "Historical global silicon prices (1980 - 2020)", 
+    caption = "Data from Nemet, G. (2019) https://doi.org/10.4324/9780367136604"
+  )
 
 ggsave(
     file.path(dir$figs, 'pdf', 'silicon_prices.pdf'),
@@ -428,41 +434,51 @@ ggsave(
 
 xaringanBuilder::build_png(
     file.path(dir$figs, 'pdf', "pvProduction.pdf"),
-    file.path(dir$figs, 'png', "pvProduction.png")
+    file.path(dir$figs, 'png', "pvProduction.png"),
+    density = 300
 )
 xaringanBuilder::build_png(
     file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
-    file.path(dir$figs, 'png', 'cost_historical.png')
+    file.path(dir$figs, 'png', 'cost_historical.png'),
+    density = 300
 )
 xaringanBuilder::build_png(
     file.path(dir$figs, 'pdf', 'savings_ann_historical_plot.pdf'),
-    file.path(dir$figs, 'png', 'savings_ann_historical_plot.png')
+    file.path(dir$figs, 'png', 'savings_ann_historical_plot.png'),
+    density = 300
 )
 xaringanBuilder::build_png(
     file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
-    file.path(dir$figs, 'png', 'cost_proj.png')
+    file.path(dir$figs, 'png', 'cost_proj.png'),
+    density = 300
 )
 xaringanBuilder::build_png(
     file.path(dir$figs, 'pdf', 'savings_ann_proj_plot.pdf'),
-    file.path(dir$figs, 'png', 'savings_ann_proj_plot.png')
+    file.path(dir$figs, 'png', 'savings_ann_proj_plot.png'),
+    density = 300
 )
 xaringanBuilder::build_png(
     file.path(dir$figs, 'pdf', "ex_compare_capacity_type.pdf"),
-    file.path(dir$figs, 'png', "ex_compare_capacity_type.png")
+    file.path(dir$figs, 'png', "ex_compare_capacity_type.png"),
+    density = 300
 )
 xaringanBuilder::build_png(
     file.path(dir$figs, 'pdf', "ex_compare_capacity_cumulative.pdf"),
-    file.path(dir$figs, 'png', "ex_compare_capacity_cumulative.png")
+    file.path(dir$figs, 'png', "ex_compare_capacity_cumulative.png"),
+    density = 300
 )
 xaringanBuilder::build_png(
     file.path(dir$figs, 'pdf', "ex_compare_cost.pdf"),
-    file.path(dir$figs, 'png', "ex_compare_cost.png")
+    file.path(dir$figs, 'png', "ex_compare_cost.png"),
+    density = 300
 )
 xaringanBuilder::build_png(
     file.path(dir$figs, 'pdf', 'lambda_compare.pdf'),
-    file.path(dir$figs, 'png', 'lambda_compare.png')
+    file.path(dir$figs, 'png', 'lambda_compare.png'),
+    density = 300
 )
 xaringanBuilder::build_png(
     file.path(dir$figs, 'pdf', 'silicon_prices.pdf'),
-    file.path(dir$figs, 'png', 'silicon_prices.png')
+    file.path(dir$figs, 'png', 'silicon_prices.png'), ,
+    density = 300
 )
