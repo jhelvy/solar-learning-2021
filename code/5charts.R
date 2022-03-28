@@ -53,13 +53,11 @@ pvProduction <- data$pvProduction %>%
        caption = "Data from Jäger-Waldau, A. (2020) https://doi.org/10.3390/en13040930")
 
 ggsave(
-    here::here(dir$figs, 'pdf', "pvProduction.pdf"),
+    file.path(dir$figs, 'pdf', "pvProduction.pdf"),
     pvProduction, width = 8, height = 6, device = cairo_pdf
 )
-ggsave(
-    here::here(dir$figs, 'png', "pvProduction.png"),
-    pvProduction, width = 8, height = 6, dpi = 300
-)
+
+
 
 # Cost per kw for global vs. national learning ----
 
@@ -95,10 +93,8 @@ ggsave(
     file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
     cost_historical_plot, height = 4.25, width = 11, device = cairo_pdf
 )
-ggsave(
-    file.path(dir$figs, 'png', 'cost_historical.png'),
-    cost_historical_plot, height = 4.25, width = 11
-)
+
+
 
 # Cumulative savings historical ----
 
@@ -109,10 +105,8 @@ ggsave(
     savings_cum_historical_plot, height = 5, width = 6, 
     device = cairo_pdf
 )
-ggsave(
-    file.path(dir$figs, 'png', 'savings_cum_historical_plot.png'),
-    savings_cum_historical_plot, height = 5, width = 6
-)
+
+
 
 # Annual savings historical ----
 
@@ -149,10 +143,8 @@ ggsave(
     savings_ann_historical_plot, height = 4.25, width = 11, 
     device = cairo_pdf
 )
-ggsave(
-    file.path(dir$figs, 'png', 'savings_ann_historical_plot.png'),
-    savings_ann_historical_plot, height = 4.25, width = 11
-)
+
+
 
 # 2030 Projections ----
 
@@ -162,10 +154,8 @@ ggsave(
   file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
   cost_proj, height = 6.5, width = 11, device = cairo_pdf
 )
-ggsave(
-  file.path(dir$figs, 'png', 'cost_proj.png'),
-  cost_proj, height = 6.5, width = 11
-)
+
+
 
 # Annual savings projection ----
 
@@ -221,10 +211,6 @@ ggsave(
     savings_ann_proj_plot, height = 6.5, width = 11, 
     device = cairo_pdf
 )
-ggsave(
-    file.path(dir$figs, 'png', 'savings_ann_proj_plot.png'),
-    savings_ann_proj_plot, height = 6.5, width = 11
-)
 
 
 
@@ -260,13 +246,11 @@ ex_compare_capacity_type <- nrelSeia %>%
     title = "Comparison of installed capacity by type and data source")
 
 ggsave(
-    here::here(dir$figs, 'pdf', "ex_compare_capacity_type.pdf"),
+    file.path(dir$figs, 'pdf', "ex_compare_capacity_type.pdf"),
     ex_compare_capacity_type, width = 9, height = 3, device = cairo_pdf
 )
-ggsave(
-    here::here(dir$figs, 'png', "ex_compare_capacity_type.png"),
-    ex_compare_capacity_type, width = 9, height = 3, dpi = 300
-)
+
+
 
 # During the overlapping period, NREL and SEIA data match quite closely
 # Only deviation is that NREL Commercial installations are slightly lower
@@ -298,15 +282,12 @@ ex_compare_capacity_cumulative <- nrelSeia %>%
     title = "Comparison of cumulative installed data")
 
 ggsave(
-    here::here(dir$figs, 'pdf', "ex_compare_capacity_cumulative.pdf"),
+    file.path(dir$figs, 'pdf', "ex_compare_capacity_cumulative.pdf"),
     ex_compare_capacity_cumulative,
     width = 5, height = 3, device = cairo_pdf
 )
-ggsave(
-    here::here(dir$figs, 'png', "ex_compare_capacity_cumulative.png"),
-    ex_compare_capacity_cumulative,
-    width = 5, height = 3, dpi = 300
-)
+
+
 
 # IRENA data track differently from NREL and SEIA. 
 # They're slightly higher in the period before 2014 and lower afterwards
@@ -342,13 +323,11 @@ ex_compare_cost <- cost_compare %>%
        title = "Comparison of price per kW by data source")
 
 ggsave(
-    here::here(dir$figs, 'pdf', "ex_compare_cost.pdf"),
+    file.path(dir$figs, 'pdf', "ex_compare_cost.pdf"),
     ex_compare_cost, width = 5, height = 3, device = cairo_pdf
 )
-ggsave(
-    here::here(dir$figs, 'png', "ex_compare_cost.png"),
-    ex_compare_cost, width = 5, height = 3, dpi = 300
-)
+
+
 
 # NREL and LBNL cost data are relatively similar for modules, with 
 # the biggest disagreement in the earlier years. We decided to use LBNL cost
@@ -404,10 +383,8 @@ ggsave(
     file.path(dir$figs, 'pdf', 'lambda_compare.pdf'),
     lambda_compare, height = 3.75, width = 11, device = cairo_pdf
 )
-ggsave(
-    file.path(dir$figs, 'png', 'lambda_compare.png'),
-    lambda_compare, height = 3.75, width = 11
-)
+
+
 
 # Historical Silicon prices -----
 
@@ -444,7 +421,48 @@ ggsave(
     file.path(dir$figs, 'pdf', 'silicon_prices.pdf'),
     silicon_prices, height = 3.75, width = 5, device = cairo_pdf
 )
-ggsave(
-    file.path(dir$figs, 'png', 'silicon_prices.png'),
-    silicon_prices, height = 3.75, width = 5
+
+
+
+# Convert all PDFs to PNGs
+
+xaringanBuilder::build_png(
+    file.path(dir$figs, 'pdf', "pvProduction.pdf"),
+    file.path(dir$figs, 'png', "pvProduction.png")
+)
+xaringanBuilder::build_png(
+    file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
+    file.path(dir$figs, 'png', 'cost_historical.png')
+)
+xaringanBuilder::build_png(
+    file.path(dir$figs, 'pdf', 'savings_ann_historical_plot.pdf'),
+    file.path(dir$figs, 'png', 'savings_ann_historical_plot.png')
+)
+xaringanBuilder::build_png(
+    file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
+    file.path(dir$figs, 'png', 'cost_proj.png')
+)
+xaringanBuilder::build_png(
+    file.path(dir$figs, 'pdf', 'savings_ann_proj_plot.pdf'),
+    file.path(dir$figs, 'png', 'savings_ann_proj_plot.png')
+)
+xaringanBuilder::build_png(
+    file.path(dir$figs, 'pdf', "ex_compare_capacity_type.pdf"),
+    file.path(dir$figs, 'png', "ex_compare_capacity_type.png")
+)
+xaringanBuilder::build_png(
+    file.path(dir$figs, 'pdf', "ex_compare_capacity_cumulative.pdf"),
+    file.path(dir$figs, 'png', "ex_compare_capacity_cumulative.png")
+)
+xaringanBuilder::build_png(
+    file.path(dir$figs, 'pdf', "ex_compare_cost.pdf"),
+    file.path(dir$figs, 'png', "ex_compare_cost.png")
+)
+xaringanBuilder::build_png(
+    file.path(dir$figs, 'pdf', 'lambda_compare.pdf'),
+    file.path(dir$figs, 'png', 'lambda_compare.png')
+)
+xaringanBuilder::build_png(
+    file.path(dir$figs, 'pdf', 'silicon_prices.pdf'),
+    file.path(dir$figs, 'png', 'silicon_prices.png')
 )
