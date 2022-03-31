@@ -10,7 +10,14 @@ output:
 IS_README <- TRUE
 ```
 
-This repository contains the data and code to reproduce results from our study on global versus national learning rates in the solar PV industry.
+**Description**: This repository contains the data and code to reproduce results from our study.
+
+**Paper Title**: Quantifying the role of globalized solar photovoltaic 
+supply chains in reaching climate targets.
+
+**Authors**: John Paul Helveston, Gang He, & Michael R. Davidson,
+
+**Abstract**: Achieving global carbon neutrality relies on the deployment of renewable energy at unprecedented speed and scale, yet countries sometimes implement policies that increase costs by restricting the free flow of capital, talent, and innovation and localizing benefits in terms of growth, employment, and trade surpluses. This paper contributes to the conversation on this dilemma by quantifying the implications of nationalistic policies for domestically manufacturing solar photovoltaic (PV) modules. Using detailed historical capacity, component, and input material price data of solar photovoltaic (PV) deployment in the U.S., Germany, and China, we develop a two-factor learning model to assess the savings of a globalized solar PV supply chain in terms of the cost of module deployment to achieve ambitious low-carbon goals. We estimate that the globalized PV module market has saved PV installers in the U.S. $24 ($19 - $31) billion, Germany $7 ($5 - $9) billion, and China $36 ($26 - $45) billion from 2008 to 2020 compared to a counterfactual scenario where domestic manufacturers supply an increasing proportion of installed capacities in each country over a 10-year period. In projecting the same scenario forward from 2020, we estimate that 2030 unit solar module prices would be approximately 20-25% higher in each country compared to a future with globalized supply chains. International climate policy benefits from a globalized low-carbon value chain, and these results point to the need for complementary policies to mitigate welfare distribution effects and potential impacts on technological crowding-out.
 
 # Folder descriptions
 
@@ -27,8 +34,8 @@ file or folder | description
 `0setup.R` | Loads libraries, creates `dir` object (a list of paths to folders and objects), and loads `0functions.R`.
 `1format_data.R` | Formats and harmonizes all raw data and saves the result as the list object at `data/formatted.Rds`.
 `2learning_curves.R` | Estimates learning curve models and saves all results as the list object at `output/lr_models.Rds`.
-`3historical_scenarios.R` | Uses the estimates learning curves models to compute differences in historical costs under different scenarios. Results are saved as the list object at `output/historical_scenarios.Rds`.
-`4projection_scenarios.R` | Uses the estimates learning curves models to compute differences in projected future costs under different scenarios. Results are saved as the list object at `output/projection_scenarios.Rds`.
+`3scenarios_hist.R` | Uses the estimates learning curves models to compute differences in historical costs under different scenarios. Results are saved as the list object at `output/historical_scenarios.Rds`.
+`4scenarios_proj.R` | Uses the estimates learning curves models to compute differences in projected future costs under different scenarios. Results are saved as the list object at `output/projection_scenarios.Rds`.
 `5charts.R` | Code to reproduce all charts used in our analyses.
 `6summary.R` | Code to print out a summary of all main results.
 `7tables.Rmd` | Generates all tables in the `output/tables.docx` file.
@@ -90,7 +97,7 @@ All of the historical (2008 - 2018) cost scenario calculations are computed by r
 To load the results of the historical scenarios, run this line:
 
 ```{r}
-cost <- readRDS(dir$historical_scenarios)
+cost <- readRDS(dir$scenarios_hist)
 
 # Names of the scenarios:
 names(cost)
@@ -103,7 +110,7 @@ All of the future projected (2018 - 2030) cost scenario calculations are compute
 To load the results of the projected scenarios, run this line:
 
 ```{r}
-proj <- readRDS(dir$projection_scenarios)
+proj <- readRDS(dir$scenarios_proj)
 
 # Names of the scenarios:
 names(proj)

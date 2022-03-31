@@ -137,7 +137,7 @@ ui <- navbarPage(
   tabPanel(
     title = "About",
     icon = icon(name = "question-circle", lib = "font-awesome", verify_fa = FALSE),
-    h2("About page"),
+    h2("About"),
     includeHTML("about/about.html"),
   ),
   tabPanel(
@@ -146,6 +146,7 @@ ui <- navbarPage(
     sidebarLayout(
       sidebarPanel(
         width = 3,
+        p("λ controls the share of incremental learning from the national market"),
         sliderInput(
           inputId = "lambda_start_hist",
           label = "lambda (start)",
@@ -162,7 +163,7 @@ ui <- navbarPage(
         ),
         sliderInput(
           inputId = "delay_hist",
-          label = "Years delay",
+          label = "Transition time (years)",
           min = 1,
           max = 10,
           value = 10
@@ -184,7 +185,8 @@ ui <- navbarPage(
             plotOutput(
               outputId = "cost_hist", 
               width = "800px", height = "300px"
-            )
+            ),
+            p('*The black points are historical prices.')
           ),
           tabPanel(
             title = "Savings", 
@@ -205,6 +207,7 @@ ui <- navbarPage(
     sidebarLayout(
       sidebarPanel(
         width = 3,
+        p("λ controls the share of incremental learning from the national market"),
         sliderInput(
           inputId = "lambda_start_proj",
           label = "lambda (start)",
@@ -221,7 +224,7 @@ ui <- navbarPage(
         ),
         sliderInput(
           inputId = "delay_proj",
-          label = "Years delay",
+          label = "Transition time (years)",
           min = 1,
           max = 10,
           value = 10
