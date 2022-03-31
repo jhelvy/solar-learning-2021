@@ -7,7 +7,7 @@ results from our study.
 **Paper Title**: Quantifying the role of globalized solar photovoltaic
 supply chains in reaching climate targets.
 
-**Authors**: John Paul Helveston, Gang He, & Michael R. Davidson,
+**Authors**: John Paul Helveston, Gang He, & Michael R. Davidson.
 
 **Abstract**: Achieving global carbon neutrality relies on the
 deployment of renewable energy at unprecedented speed and scale, yet
