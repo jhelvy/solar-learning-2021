@@ -3,29 +3,6 @@ source(here::here('code', '0setup.R'))
 
 data <- readRDS(dir$data_formatted)
 
-# # PV production growth rates by country -----
-# 
-# data$pvProduction %>% 
-#     group_by(country) %>% 
-#     mutate(
-#         growth = production_gw - lag(production_gw, 1),
-#         growth = lead(growth, 1), 
-#         p_growth = growth / production_gw) %>% 
-#     filter(!is.na(p_growth)) %>% 
-#     filter(country %in% c("china", "us"))
-# 
-# # Compute growth rate needed in US to meet domestic demand
-# 
-# year_start <- 2007
-# cap_begin <- data$us %>% 
-#     filter(year == year_start) %>% 
-#     pull(cumCapacityKw)
-# data$us %>% 
-#     filter(year > year_start) %>% 
-#     mutate(
-#         num_years = row_number(),
-#         rate = ((cumCapacityKw / cap_begin)^(1 / (num_years))) - 1)
-        
 # Global installed capacity over period -----
 
 cat(
