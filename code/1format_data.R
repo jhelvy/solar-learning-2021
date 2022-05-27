@@ -594,85 +594,70 @@ rates <- data.frame(
 )
 
 
-
-
 # Final formatting ----
 # Data frames for modeling & scenarios
 
 # Historical - make columns for annual capacity
-data_nation_us <- us %>% 
-    addAnnCap()
-data_nation_china <- china %>% 
-    filter(component == "Module") %>% 
-    addAnnCap() %>% 
-    select(year, costPerKw, cumCapacityKw, annCapacityKw)
-data_nation_germany <- germany %>% 
-    addAnnCap()
-data_world <- world %>% 
-    addAnnCap()
 
-hist_us <- formatCapData(
-    data_nation = data_nation_us,
-    data_world  = data_world,
+hist_us <- formatCapData_hist(
+    data_nation = us,
+    data_world  = world,
     year_beg    = year_model_us_min,
     year_max    = year_model_us_max
-) %>%
-    left_join(select(data_nation_us, year, costPerKw), by = "year")
+)
 
-hist_china <- formatCapData(
-    data_nation = data_nation_china,
-    data_world  = data_world,
+hist_china <- formatCapData_hist(
+    data_nation = china %>% filter(component == "Module"),
+    data_world  = world,
     year_beg    = year_model_china_min,
     year_max    = year_model_china_max
-) %>%
-    left_join(select(data_nation_china, year, costPerKw), by = "year")
+)
 
-hist_germany <- formatCapData(
-    data_nation = data_nation_germany,
-    data_world  = data_world,
+hist_germany <- formatCapData_hist(
+    data_nation = germany,
+    data_world  = world,
     year_beg    = year_model_germany_min,
     year_max    = year_model_germany_max
-) %>%
-    left_join(select(data_nation_germany, year, costPerKw), by = "year")
+)
 
 # Projections
 
-proj_nat_trends_us <- formatCapData(
+proj_nat_trends_us <- formatCapData_proj(
     data_nation = proj_nat_trends_us,
     data_world  = proj_nat_trends_world,
     year_beg    = year_proj_min,
     year_max    = year_proj_max
 )
 
-proj_sus_dev_us <- formatCapData(
+proj_sus_dev_us <- formatCapData_proj(
     data_nation = proj_sus_dev_us,
     data_world  = proj_sus_dev_world,
     year_beg    = year_proj_min,
     year_max    = year_proj_max
 )
 
-proj_nat_trends_china <- formatCapData(
+proj_nat_trends_china <- formatCapData_proj(
     data_nation = proj_nat_trends_china,
     data_world  = proj_nat_trends_world,
     year_beg    = year_proj_min,
     year_max    = year_proj_max
 )
 
-proj_sus_dev_china <- formatCapData(
+proj_sus_dev_china <- formatCapData_proj(
     data_nation = proj_sus_dev_china,
     data_world  = proj_sus_dev_world,
     year_beg    = year_proj_min,
     year_max    = year_proj_max
 )
 
-proj_nat_trends_germany <- formatCapData(
+proj_nat_trends_germany <- formatCapData_proj(
     data_nation = proj_nat_trends_germany,
     data_world  = proj_nat_trends_world,
     year_beg    = year_proj_min,
     year_max    = year_proj_max
 )
 
-proj_sus_dev_germany <- formatCapData(
+proj_sus_dev_germany <- formatCapData_proj(
     data_nation = proj_sus_dev_germany,
     data_world  = proj_sus_dev_world,
     year_beg    = year_proj_min,

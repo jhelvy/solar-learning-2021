@@ -59,11 +59,37 @@ addAnnCap <- function(df) {
     return(result)
 }
 
-formatCapData <- function(data_nation, data_world, year_beg, year_max) {
+formatCapData_hist <- function(data_nation, data_world, year_beg, year_max) {
+    data_nation <- data_nation %>% 
+        filter(year >= year_beg, year <= year_max) %>% 
+        addAnnCap()
+    data_world <- data_world %>% 
+        filter(year >= year_beg, year <= year_max) %>% 
+        addAnnCap()
     result <- data_nation %>%
         select(year, annCapKw_nation = annCapacityKw) %>%
         left_join(
             data_world %>%
+                filter(year >= year_beg) %>% 
+                select(
+                    year, cumCapKw_world = cumCapacityKw, 
+                    annCapKw_world = annCapacityKw
+                ),
+            by = "year"
+        ) %>%
+        mutate(annCapKw_other = annCapKw_world - annCapKw_nation) %>% 
+        # Add price data
+        left_join(select(data_world, year, price_si), by = "year") %>% 
+        left_join(select(data_nation, year, costPerKw), by = "year")
+    return(result)
+}
+
+formatCapData_proj <- function(data_nation, data_world, year_beg, year_max) {
+    result <- data_nation %>%
+        select(year, annCapKw_nation = annCapacityKw) %>%
+        left_join(
+            data_world %>%
+                filter(year >= year_beg) %>% 
                 select(
                     year, cumCapKw_world = cumCapacityKw, 
                     annCapKw_world = annCapacityKw
@@ -79,8 +105,7 @@ formatCapData <- function(data_nation, data_world, year_beg, year_max) {
 
 # Modeling ----
 
-# load custom functions
-run_model <- function(df, lambda) {
+run_model_lambda <- function(df, lambda) {
     # Run the linear model for a given lambda
     q0 <- df$cumCapKw_world[1]
     temp <- df %>%
