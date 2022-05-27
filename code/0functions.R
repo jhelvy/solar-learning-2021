@@ -105,7 +105,7 @@ formatCapData_proj <- function(data_nation, data_world, year_beg, year_max) {
 
 # Modeling ----
 
-run_model_lambda <- function(df, lambda) {
+run_model <- function(df, lambda) {
     # Run the linear model for a given lambda
     q0 <- df$cumCapKw_world[1]
     temp <- df %>%
