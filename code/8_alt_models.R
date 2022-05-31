@@ -4,6 +4,8 @@ source(here::here('code', '0setup.R'))
 # Load formatted data
 data <- readRDS(dir$data_formatted)
 
+# Model with production ----
+
 # Create cumulative production capacity data for each nation
 
 production <- data$pvProduction %>% 
@@ -74,7 +76,7 @@ df <- df %>%
 
 # Run models
 
-run_model2 <- function(df) {
+run_model_prod <- function(df) {
     temp <- df %>%
         mutate(
             log_q = log(cum_cap_kw),
@@ -85,10 +87,44 @@ run_model2 <- function(df) {
     return(lm(formula = log_c ~ log_q + log_p + log_s, data = temp))
 }
 
-model_us <- run_model2(df %>% filter(country == "us"))
-model_china <- run_model2(df %>% filter(country == "china"))
-model_germany <- run_model2(df %>% filter(country == "germany"))
+model_us <- run_model_prod(df %>% filter(country == "us"))
+model_china <- run_model_prod(df %>% filter(country == "china"))
+model_germany <- run_model_prod(df %>% filter(country == "germany"))
 
+# View results
+summary(model_us)
+summary(model_china)
+summary(model_germany)
+
+# Compute learning rates
+lr_us <- 1 - 2^coef(model_us)["log_q"]
+lr_china <- 1 - 2^coef(model_china)["log_q"]
+lr_germany <- 1 - 2^coef(model_germany)["log_q"]
+
+lr_us
+lr_china
+lr_germany
+
+
+# Model with country capacity ----
+
+run_model_qi <- function(df) {
+    q0 <- df$cumCapKw_world[1]
+    temp <- df %>%
+        mutate(
+            log_qi = log(q0 + cumsum(annCapKw_nation)),
+            log_q = log(cumCapKw_world),
+            log_c = log(costPerKw),
+            log_s = log(price_si)
+        )
+    return(lm(formula = log_c ~ log_q + log_qi + log_s, data = temp))
+}
+
+model_us <- run_model_qi(data$hist_us)
+model_china <- run_model_qi(data$hist_china)
+model_germany <- run_model_qi(data$hist_germany)
+
+# View results
 summary(model_us)
 summary(model_china)
 summary(model_germany)
