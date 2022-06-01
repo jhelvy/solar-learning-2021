@@ -137,3 +137,34 @@ lr_germany <- 1 - 2^coef(model_germany)["log_q"]
 lr_us
 lr_china
 lr_germany
+
+
+# Combined model with country capacity ----
+
+run_model_q <- function(df) {
+    q0 <- df$cumCapKw_world[1]
+    temp <- df %>%
+        mutate(
+            log_qi = log(q0 + cumsum(annCapKw_nation)),
+            log_q = log(cumCapKw_world),
+            log_c = log(costPerKw),
+            log_s = log(price_si)
+        )
+    return(lm(formula = log_c ~ log_q + country*log_qi + log_s , data = temp))
+}
+
+data_combined <- rbind(
+    data$hist_us %>% cbind(country='US'),
+    data$hist_china %>% cbind(country='China'),
+    data$hist_germany %>% cbind(country='Germany')
+) %>% mutate(country=factor(country))
+
+model_combined <- run_model_q(data_combined)
+
+# View results
+summary(model_combined)
+
+# Compute learning rates
+lr_combined <- 1 - 2^coef(model_combined)["log_q"]
+
+lr_combined
