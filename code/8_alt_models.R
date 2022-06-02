@@ -150,13 +150,13 @@ run_model_q <- function(df) {
             log_c = log(costPerKw),
             log_s = log(price_si)
         )
-    return(lm(formula = log_c ~ log_q + country*log_qi + log_s , data = temp))
+    return(lm(formula = log_c ~ log_q + country*log_q + log_qi + log_s, data = temp))
 }
 
 data_combined <- rbind(
-    data$hist_us %>% cbind(country='US'),
     data$hist_china %>% cbind(country='China'),
-    data$hist_germany %>% cbind(country='Germany')
+    data$hist_germany %>% cbind(country='Germany'),
+    data$hist_us %>% cbind(country='US')
 ) %>% mutate(country=factor(country))
 
 model_combined <- run_model_q(data_combined)
@@ -165,6 +165,14 @@ model_combined <- run_model_q(data_combined)
 summary(model_combined)
 
 # Compute learning rates
-lr_combined <- 1 - 2^coef(model_combined)["log_q"]
+coefs <- coef(model_combined)
+coef_china <- coefs["log_q"]
+coef_us <- coef_china + coefs["log_q:countryUS"]
+coef_germany <- coef_china + coefs["log_q:countryGermany"]
+lr_china <- 1 - 2^coef_china
+lr_us <- 1 - 2^coef_us
+lr_germany <- 1 - 2^coef_germany
 
-lr_combined
+lr_us
+lr_china
+lr_germany
