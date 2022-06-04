@@ -216,6 +216,6 @@ lr_us <- 1 - 2^coef(model_us)["log_q"]
 lr_china <- 1 - 2^coef(model_china)["log_q"]
 lr_germany <- 1 - 2^coef(model_germany)["log_q"]
 
-lr_us
-lr_china
-lr_germany
+100*round(lr_us, 3)
+100*round(lr_china, 3)
+100*round(lr_germany, 3)
