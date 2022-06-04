@@ -49,7 +49,8 @@ siliconFilePath <- file.path(dir$data, "nemet_silicon.csv")
 exchangeRatesPath <- file.path(dir$data, "exchange-rates.xlsx")
 productionFilePath <- file.path(dir$data, "production", "production.csv")
 inflationPath <- file.path(dir$data, "inflation.Rds")
-  
+shipmentsPath <- file.path(dir$data, "top-manufactuer-shipment.xlsx")
+
 # Load exchange rates --------------------------------------------------
 
 exchangeRatesRMB <- read_excel(
@@ -104,7 +105,11 @@ pvProduction <- read_csv(productionFilePath) %>%
   ungroup() %>% 
   gather(key = "country", value = "production_gw", china:row) 
 
+# Format shipments data 
 
+shipments <- read_excel(shipmentsPath, skip = 1) %>% 
+    clean_names()
+shipments
 
 
 
@@ -669,6 +674,7 @@ proj_sus_dev_germany <- formatCapData_proj(
 saveRDS(list(
     pvProduction            = pvProduction,
     silicon                 = silicon,
+    shipments               = shipments,
     irenaCumCapacityMw      = irenaCumCapacityMw,
     nrelCapacity            = nrelCapacity,
     nrelCost                = nrelCost,

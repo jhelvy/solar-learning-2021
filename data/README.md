@@ -39,6 +39,10 @@ Global cost data are from SPV consulting in `spv/Table 4.2.xlsx`.
 
 Data on the global average price of silicon over time were sourced from Greg Nemet's book: Nemet, G. F. (2019). How solar energy became cheap: A model for low-carbon innovation. Routledge. The price data are in the file `nemet_silicon.csv`. Greg sent us the data directly.
 
+### Manufacturer shipment data
+
+The `top-manufactuer-shipment.xlsx` file contains data on the MW of PV panels shipped by the top manufacturer in the world. This is used as a proxy measure of economies of scale.
+
 ### Exchange rates
 
 The `exchange-rates.xlsx` file contains calculations to get the mean annual conversion factors between the RMB and USD (source: [Federal Reserve](https://www.federalreserve.gov/releases/h10/hist/dat00_ch.htm)) and the Euro and USD (source: [Federal Reserve](https://www.federalreserve.gov/releases/h10/hist/dat00_eu.htm))
