@@ -176,3 +176,46 @@ lr_germany <- 1 - 2^coef_germany
 lr_us
 lr_china
 lr_germany
+
+
+# Model with shipment capacity ----
+
+run_model_ship <- function(df) {
+    q0 <- df$cumCapKw_world[1]
+    temp <- df %>%
+        mutate(
+            log_ship = log(shipment_mw*10^3),
+            log_q = log(cumCapKw_world),
+            log_c = log(costPerKw),
+            log_s = log(price_si)
+        )
+    return(lm(formula = log_c ~ log_q + log_s + log_ship, data = temp))
+}
+
+df_us <- data$hist_us %>% 
+    left_join(data$shipments %>% select(year, shipment_mw), by = "year") %>% 
+    filter(!is.na(shipment_mw))
+df_china <- data$hist_china %>% 
+    left_join(data$shipments %>% select(year, shipment_mw), by = "year") %>% 
+    filter(!is.na(shipment_mw))
+df_germany <- data$hist_germany %>% 
+    left_join(data$shipments %>% select(year, shipment_mw), by = "year") %>% 
+    filter(!is.na(shipment_mw))
+
+model_us <- run_model_ship(df_us)
+model_china <- run_model_ship(df_china)
+model_germany <- run_model_ship(df_germany)
+
+# View results
+summary(model_us)
+summary(model_china)
+summary(model_germany)
+
+# Compute learning rates
+lr_us <- 1 - 2^coef(model_us)["log_q"]
+lr_china <- 1 - 2^coef(model_china)["log_q"]
+lr_germany <- 1 - 2^coef(model_germany)["log_q"]
+
+lr_us
+lr_china
+lr_germany
