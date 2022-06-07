@@ -50,6 +50,7 @@ exchangeRatesPath <- file.path(dir$data, "exchange-rates.xlsx")
 productionFilePath <- file.path(dir$data, "production", "production.csv")
 inflationPath <- file.path(dir$data, "inflation.Rds")
 shipmentsPath <- file.path(dir$data, "top-manufactuer-shipment.xlsx")
+plantsizePath <- file.path(dir$data, "plant-size.xlsx")
 
 # Load exchange rates --------------------------------------------------
 
@@ -109,8 +110,11 @@ pvProduction <- read_csv(productionFilePath) %>%
 
 shipments <- read_excel(shipmentsPath, skip = 1) %>% 
     clean_names()
-shipments
 
+# Format plant size data 
+
+plantsize <- read_excel(plantsizePath, skip = 1) %>% 
+    clean_names()
 
 
 
@@ -675,6 +679,7 @@ saveRDS(list(
     pvProduction            = pvProduction,
     silicon                 = silicon,
     shipments               = shipments,
+    plantsize               = plantsize, 
     irenaCumCapacityMw      = irenaCumCapacityMw,
     nrelCapacity            = nrelCapacity,
     nrelCost                = nrelCost,
