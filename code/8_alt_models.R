@@ -219,3 +219,44 @@ lr_germany <- 1 - 2^coef(model_germany)["log_q"]
 100*round(lr_us, 3)
 100*round(lr_china, 3)
 100*round(lr_germany, 3)
+
+# Model with plant size ----
+
+run_model_plant <- function(df) {
+    temp <- df %>%
+        mutate(
+            log_plantsize = log(weighted_average_gw*10^6),
+            log_q = log(cumCapKw_world),
+            log_c = log(costPerKw),
+            log_s = log(price_si)
+        )
+    return(lm(formula = log_c ~ log_q + log_s + log_plantsize, data = temp))
+}
+
+df_us <- data$hist_us %>% 
+    left_join(data$plantsize, by = "year") %>% 
+    filter(!is.na(average_gw))
+df_china <- data$hist_china %>% 
+    left_join(data$plantsize, by = "year") %>% 
+    filter(!is.na(average_gw))
+df_germany <- data$hist_germany %>% 
+    left_join(data$plantsize, by = "year") %>% 
+    filter(!is.na(average_gw))
+
+model_us <- run_model_plant(df_us)
+model_china <- run_model_plant(df_china)
+model_germany <- run_model_plant(df_germany)
+
+# View results
+summary(model_us)
+summary(model_china)
+summary(model_germany)
+
+# Compute learning rates
+lr_us <- 1 - 2^coef(model_us)["log_q"]
+lr_china <- 1 - 2^coef(model_china)["log_q"]
+lr_germany <- 1 - 2^coef(model_germany)["log_q"]
+
+100*round(lr_us, 3)
+100*round(lr_china, 3)
+100*round(lr_germany, 3)
