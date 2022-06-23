@@ -61,6 +61,85 @@ ggsave(
 
 # Cost per kw for global vs. national learning ----
 
+# First, just plot the global markets scenario
+cost_historical_global_plot <- cost$cost %>%
+    mutate(
+        learning = str_to_title(learning),
+        learning = fct_relevel(learning, c("National", "Global")),
+        year = lubridate::ymd(paste0(year, "-01-01"))) %>%
+    filter(learning == "Global") %>%
+    ggplot() +
+    facet_wrap(vars(country), nrow = 1) +
+    geom_point(aes(x = year, y = cost_per_kw_hist), size = 1) +
+    geom_line(
+        aes(
+            x = year,
+            y = cost_per_kw,
+        ),
+        alpha = 0.6, size = 1
+    ) +
+    geom_ribbon(
+        aes(
+            x = year,
+            ymin = cost_per_kw_lb,
+            ymax = cost_per_kw_ub,
+        ),
+        alpha = 0.22
+    ) +
+    scale_x_date(
+        limits = lubridate::ymd(c(
+            paste0(plot_min_year - 1, "-07-01"),
+            paste0(plot_max_year, "-07-01"))
+        ),
+        date_labels = "'%y",
+        date_breaks = "2 years") +
+    scale_y_continuous(labels = scales::dollar, breaks = seq(0, 6000, 1000)) +
+    labs(
+      title = "Estimated Module Prices",
+        y = paste0("Price per kW (", year_inflation, " $USD)"),
+        x = "Year"
+    ) +
+    theme_minimal_grid(
+        font_size = 16,
+        font_family = font_main
+    ) +
+    panel_border() +
+    theme(
+        plot.title.position = "plot",
+        strip.background = element_rect(fill = "grey80"),
+        panel.grid.major = element_line(size = 0.3, colour = "grey90"),
+        axis.line.x = element_blank(),
+        plot.caption.position = "plot",
+        plot.caption = element_text(hjust = 1, size = 11, face = "italic"),
+        plot.title = element_markdown(),
+        legend.position = "none"
+    ) +
+    # Add "historical" labels
+    geom_text(
+        data = data.frame(
+            x = lubridate::ymd(rep("2009-01-01", 3)),
+            y = rep(400, 3),
+            country = c("China", "Germany", "U.S."),
+            label = rep("Historical", 3)),
+        aes(x = x, y = y, label = label),
+        color = "black", size = 5, family = font_main
+    ) +
+    geom_segment(
+        data = data.frame(
+            x = lubridate::ymd(c("2011-02-01", "2011-02-01", "2011-02-01")),
+            xend = lubridate::ymd(c("2011-10-01", "2011-10-01", "2011-11-01")),
+            y = c(500, 400, 500),
+            yend = c(660, 520, 850),
+            country = c("China", "Germany", "U.S.")),
+        aes(x = x, y = y, xend = xend, yend = yend),
+        color = "black", size = 0.5
+    )
+
+ggsave(
+    file.path(dir$figs, 'pdf', 'cost_historical_global_plot.pdf'),
+    cost_historical_global_plot, height = 4.25, width = 11, device = cairo_pdf
+)
+
 cost_historical_plot <- 
     make_historical_plot(cost$cost, size = 16) +
     scale_y_continuous(
@@ -432,52 +511,57 @@ ggsave(
 
 # Convert all PDFs to PNGs
 
-xaringanBuilder::build_png(
+renderthis::to_png(
     file.path(dir$figs, 'pdf', "pvProduction.pdf"),
     file.path(dir$figs, 'png', "pvProduction.png"),
     density = 300
 )
-xaringanBuilder::build_png(
+renderthis::to_png(
+    file.path(dir$figs, 'pdf', 'cost_historical_global_plot.pdf'),
+    file.path(dir$figs, 'png', 'cost_historical_global_plot.png'),
+    density = 300
+)
+renderthis::to_png(
     file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
     file.path(dir$figs, 'png', 'cost_historical.png'),
     density = 300
 )
-xaringanBuilder::build_png(
+renderthis::to_png(
     file.path(dir$figs, 'pdf', 'savings_ann_historical_plot.pdf'),
     file.path(dir$figs, 'png', 'savings_ann_historical_plot.png'),
     density = 300
 )
-xaringanBuilder::build_png(
+renderthis::to_png(
     file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
     file.path(dir$figs, 'png', 'cost_proj.png'),
     density = 300
 )
-xaringanBuilder::build_png(
+renderthis::to_png(
     file.path(dir$figs, 'pdf', 'savings_ann_proj_plot.pdf'),
     file.path(dir$figs, 'png', 'savings_ann_proj_plot.png'),
     density = 300
 )
-xaringanBuilder::build_png(
+renderthis::to_png(
     file.path(dir$figs, 'pdf', "ex_compare_capacity_type.pdf"),
     file.path(dir$figs, 'png', "ex_compare_capacity_type.png"),
     density = 300
 )
-xaringanBuilder::build_png(
+renderthis::to_png(
     file.path(dir$figs, 'pdf', "ex_compare_capacity_cumulative.pdf"),
     file.path(dir$figs, 'png', "ex_compare_capacity_cumulative.png"),
     density = 300
 )
-xaringanBuilder::build_png(
+renderthis::to_png(
     file.path(dir$figs, 'pdf', "ex_compare_cost.pdf"),
     file.path(dir$figs, 'png', "ex_compare_cost.png"),
     density = 300
 )
-xaringanBuilder::build_png(
+renderthis::to_png(
     file.path(dir$figs, 'pdf', 'lambda_compare.pdf'),
     file.path(dir$figs, 'png', 'lambda_compare.png'),
     density = 300
 )
-xaringanBuilder::build_png(
+renderthis::to_png(
     file.path(dir$figs, 'pdf', 'silicon_prices.pdf'),
     file.path(dir$figs, 'png', 'silicon_prices.png'), ,
     density = 300

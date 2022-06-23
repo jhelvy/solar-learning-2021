@@ -8,14 +8,16 @@
 #    "rjson",
 #    "here",
 #    "cowplot",
+#    "remotes",
 #    "priceR",
 #    "ggtext",
 #    "gtsummary",
 #    "flextable",
 #    "shiny",
-#l   "shinythemes",
+#    "shinythemes",
 #    "Cairo"
 # ))
+# remotes::install_github("jhelvy/renderthis")
 
 # Load libraries
 library(tidyverse)
