@@ -52,12 +52,7 @@ pvProduction <- data$pvProduction %>%
        fill  = 'Origin', 
        caption = "Data from Jäger-Waldau, A. (2020) https://doi.org/10.3390/en13040930")
 
-ggsave(
-    file.path(dir$figs, 'pdf', "pvProduction.pdf"),
-    pvProduction, width = 8, height = 6, device = cairo_pdf
-)
-
-
+save_fig(pvProduction, "pvProduction", width = 8, height = 6)
 
 # Cost per kw for global vs. national learning ----
 
@@ -135,9 +130,9 @@ cost_historical_global_plot <- cost$cost %>%
         color = "black", size = 0.5
     )
 
-ggsave(
-    file.path(dir$figs, 'pdf', 'cost_historical_global_plot.pdf'),
-    cost_historical_global_plot, height = 4.25, width = 11, device = cairo_pdf
+save_fig(
+    cost_historical_global_plot, "cost_historical_global_plot",
+    width = 11, height = 4.25
 )
 
 cost_historical_plot <- 
@@ -168,9 +163,9 @@ cost_historical_plot <-
         color = "black", size = 0.5
     )
 
-ggsave(
-    file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
-    cost_historical_plot, height = 4.25, width = 11, device = cairo_pdf
+save_fig(
+    cost_historical_plot, "cost_historical_plot",
+    width = 11, height = 4.25
 )
 
 
@@ -179,10 +174,9 @@ ggsave(
 
 savings_cum_historical_plot <- make_cum_savings_plot(cost$savings)
 
-ggsave(
-    file.path(dir$figs, 'pdf', 'savings_cum_historical_plot.pdf'),
-    savings_cum_historical_plot, height = 5, width = 6, 
-    device = cairo_pdf
+save_fig(
+    savings_cum_historical_plot, "savings_cum_historical_plot",
+    width = 6, height = 5
 )
 
 
@@ -217,11 +211,11 @@ savings_ann_historical_plot <- make_ann_savings_plot(cost$savings, size = 16) +
         size = 4.5, family = "Roboto Condensed", hjust = 0
     )
 
-ggsave(
-    file.path(dir$figs, 'pdf', 'savings_ann_historical_plot.pdf'),
-    savings_ann_historical_plot, height = 4.25, width = 11, 
-    device = cairo_pdf
+save_fig(
+    savings_ann_historical_plot, "savings_ann_historical_plot",
+    width = 11, height = 4.25
 )
+
 
 
 
@@ -229,10 +223,8 @@ ggsave(
 
 cost_proj <- make_projection_plot(proj$nat_trends, proj$sus_dev, size = 16)
 
-ggsave(
-  file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
-  cost_proj, height = 6.5, width = 11, device = cairo_pdf
-)
+save_fig(cost_proj, "cost_proj", width = 11, height = 6.5)
+
 
 
 
@@ -285,10 +277,9 @@ savings_ann_proj_plot <- make_ann_savings_proj_plot(
         size = 4.5, family = "Roboto Condensed", hjust = 0
     )
 
-ggsave(
-    file.path(dir$figs, 'pdf', 'savings_ann_proj_plot.pdf'),
-    savings_ann_proj_plot, height = 6.5, width = 11, 
-    device = cairo_pdf
+save_fig(
+    savings_ann_proj_plot, "savings_ann_proj_plot",
+    width = 11, height = 6.5
 )
 
 
@@ -324,10 +315,11 @@ ex_compare_capacity_type <- nrelSeia %>%
     color = "Data source",
     title = "Comparison of installed capacity by type and data source")
 
-ggsave(
-    file.path(dir$figs, 'pdf', "ex_compare_capacity_type.pdf"),
-    ex_compare_capacity_type, width = 9, height = 3, device = cairo_pdf
+save_fig(
+    ex_compare_capacity_type, "ex_compare_capacity_type",
+    width = 9, height = 3
 )
+
 
 
 
@@ -360,10 +352,9 @@ ex_compare_capacity_cumulative <- nrelSeia %>%
     color = "Data source",
     title = "Comparison of cumulative installed data")
 
-ggsave(
-    file.path(dir$figs, 'pdf', "ex_compare_capacity_cumulative.pdf"),
-    ex_compare_capacity_cumulative,
-    width = 5, height = 3, device = cairo_pdf
+save_fig(
+    ex_compare_capacity_cumulative, "ex_compare_capacity_cumulative",
+    width = 5, height = 3
 )
 
 
@@ -401,10 +392,7 @@ ex_compare_cost <- cost_compare %>%
        color = "Data source",
        title = "Comparison of price per kW by data source")
 
-ggsave(
-    file.path(dir$figs, 'pdf', "ex_compare_cost.pdf"),
-    ex_compare_cost, width = 5, height = 3, device = cairo_pdf
-)
+save_fig(ex_compare_cost, "ex_compare_cost", width = 5, height = 3)
 
 
 
@@ -458,10 +446,8 @@ lambda_compare <- ggplot(plotData) +
         y = "Cumulative installed capacity (GW)"
     )
 
-ggsave(
-    file.path(dir$figs, 'pdf', 'lambda_compare.pdf'),
-    lambda_compare, height = 3.75, width = 11, device = cairo_pdf
-)
+save_fig(lambda_compare, "lambda_compare", width = 11, height = 3.75)
+
 
 
 
@@ -502,67 +488,4 @@ silicon_prices <- data$silicon %>%
     caption = "Data from Nemet, G. (2019) https://doi.org/10.4324/9780367136604"
   )
 
-ggsave(
-    file.path(dir$figs, 'pdf', 'silicon_prices.pdf'),
-    silicon_prices, height = 3.75, width = 5, device = cairo_pdf
-)
-
-
-
-# Convert all PDFs to PNGs
-
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', "pvProduction.pdf"),
-    file.path(dir$figs, 'png', "pvProduction.png"),
-    density = 300
-)
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', 'cost_historical_global_plot.pdf'),
-    file.path(dir$figs, 'png', 'cost_historical_global_plot.png'),
-    density = 300
-)
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', 'cost_historical.pdf'),
-    file.path(dir$figs, 'png', 'cost_historical.png'),
-    density = 300
-)
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', 'savings_ann_historical_plot.pdf'),
-    file.path(dir$figs, 'png', 'savings_ann_historical_plot.png'),
-    density = 300
-)
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', 'cost_proj.pdf'),
-    file.path(dir$figs, 'png', 'cost_proj.png'),
-    density = 300
-)
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', 'savings_ann_proj_plot.pdf'),
-    file.path(dir$figs, 'png', 'savings_ann_proj_plot.png'),
-    density = 300
-)
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', "ex_compare_capacity_type.pdf"),
-    file.path(dir$figs, 'png', "ex_compare_capacity_type.png"),
-    density = 300
-)
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', "ex_compare_capacity_cumulative.pdf"),
-    file.path(dir$figs, 'png', "ex_compare_capacity_cumulative.png"),
-    density = 300
-)
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', "ex_compare_cost.pdf"),
-    file.path(dir$figs, 'png', "ex_compare_cost.png"),
-    density = 300
-)
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', 'lambda_compare.pdf'),
-    file.path(dir$figs, 'png', 'lambda_compare.png'),
-    density = 300
-)
-renderthis::to_png(
-    file.path(dir$figs, 'pdf', 'silicon_prices.pdf'),
-    file.path(dir$figs, 'png', 'silicon_prices.png'), ,
-    density = 300
-)
+save_fig(silicon_prices, "silicon_prices", width = 5, height = 3.75)

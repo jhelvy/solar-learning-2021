@@ -700,3 +700,24 @@ combine_cost_diffs <- function(us, china, germany, year_min, year_max) {
         filter(year >= year_min, year <= year_max)
     return(cost_diffs)
 }
+
+# Exports figure to pdf, eps, and png in the "figs" folder
+save_fig <- function(fig, name, width, height) {
+    
+    # Create temp vars
+    name_pdf <- paste0(name, ".pdf")
+    name_eps <- paste0(name, ".eps")
+    name_png <- paste0(name, ".png")
+    path_pdf <- file.path(dir$figs, 'pdf', name_pdf)
+    path_eps <- file.path(dir$figs, 'eps', name_eps)
+    path_png <- file.path(dir$figs, 'png', name_png)
+    
+    # PDF
+    ggsave(path_pdf, fig, width = width, height = height, device = cairo_pdf)
+
+    # EPS
+    ggsave(path_eps, fig, width = width, height = height, device = cairo_ps)
+
+    # Convert PDF to PNG
+    renderthis::to_png(path_pdf, path_png, density = 300)
+}

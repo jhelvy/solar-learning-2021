@@ -25,9 +25,7 @@ U.S. data came from three sources: [NREL](https://www.nrel.gov/), [LBNL](https:/
 
 Global PV production data by country are from Arnulf Jäger-Waldau's 2020 paper in Energies:
 
-    Jäger-Waldau, A. (2020). Snapshot of Photovoltaics—February 2020.
-    Energies, 13(4), 930. https://doi.org/10.3390/en13040930
-    https://www.mdpi.com/1996-1073/13/4/930/htm
+    Jäger-Waldau, A. (2022). Snapshot of photovoltaics–February 2022. EPJ Photovoltaics, 13, 9. https://doi.org/10.1051/epjpv/2022010
 
 Since the raw data were not available, we used the [Engauge Digitizer](https://markummitchell.github.io/engauge-digitizer/) tool to digitize the data in Figure 1 from the paper. The paper, figure, and digitized data are available in the `production` folder.
 
