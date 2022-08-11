@@ -161,6 +161,17 @@ cost_historical_plot <-
             country = c("China", "Germany", "U.S.")),
         aes(x = x, y = y, xend = xend, yend = yend), 
         color = "black", size = 0.5
+    ) + 
+    # Add LR rate labels
+    geom_text(
+        data = data.frame(
+            x = lubridate::ymd(rep("2016-04-01", 3)), 
+            y = rep(5500, 3),
+            country = c("China", "Germany", "U.S."),
+            label = paste0('Learning rate: ', scales::percent(c(lr$lr_china, lr$lr_germany, lr$lr_us)))
+        ),
+        aes(x = x, y = y, label = label), 
+        color = "black", size = 5, family = font_main
     )
 
 save_fig(
