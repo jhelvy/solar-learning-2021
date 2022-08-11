@@ -30,7 +30,7 @@ pvProduction <- data$pvProduction %>%
   ggplot(aes(x = year, y = production_gw)) +
   geom_col(aes(fill = country), width = 0.7, alpha = 0.9) +
   scale_y_continuous(
-    limits = c(0, 140), breaks=seq(0, 140, 20), 
+    breaks = seq(0, 200, 50),
     expand = expansion(mult = c(0, 0.05))) +
   scale_fill_manual(values = c(
     "#767676", "#0088cc", "#ff6611", "#ffee55", "#aa6688", "#aacc22",
@@ -38,7 +38,7 @@ pvProduction <- data$pvProduction %>%
   )) +
   theme_minimal_hgrid(font_family = font_main, font_size = 16) +
   theme(
-    legend.position = c(0.01, 0.7),
+    legend.position = c(0.01, 0.706),
     legend.background = element_rect(
       fill = "white", color = "black", size = 0.2),
     legend.margin = margin(6, 8, 8, 6), 
@@ -50,7 +50,7 @@ pvProduction <- data$pvProduction %>%
        y = 'Annual Cell Production (GW)',
        title = 'Annual Solar Photovoltaic Cell Production (GW)',
        fill  = 'Origin', 
-       caption = "Data from Jäger-Waldau, A. (2020) https://doi.org/10.3390/en13040930")
+       caption = "Data from Jäger-Waldau, A. (2022) https://doi.org/10.1051/epjpv/2022010")
 
 save_fig(pvProduction, "pvProduction", width = 8, height = 6)
 
