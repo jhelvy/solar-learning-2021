@@ -10,16 +10,13 @@ output:
 IS_README <- TRUE
 ```
 
-**Description**: This repository contains the data and code to reproduce results from our study.
-
-**Paper Title**: Quantifying the role of globalized solar photovoltaic 
-supply chains in reaching climate targets.
+This repository contains the data and code to reproduce results from our study titled **"Quantifying the cost savings of global solar photovoltaic supply chains"**. All code is written using the [R programming language](https://www.r-project.org/).
 
 **Authors**: John Paul Helveston, Gang He, & Michael R. Davidson.
 
-**Abstract**: Achieving global carbon neutrality relies on the deployment of renewable energy at unprecedented speed and scale, yet countries sometimes implement policies that increase costs by restricting the free flow of capital, talent, and innovation and localizing benefits in terms of growth, employment, and trade surpluses. This paper contributes to the conversation on this dilemma by quantifying the implications of nationalistic policies for domestically manufacturing solar photovoltaic (PV) modules. Using detailed historical capacity, component, and input material price data of solar photovoltaic (PV) deployment in the U.S., Germany, and China, we develop a two-factor learning model to assess the savings of a globalized solar PV supply chain in terms of the cost of module deployment to achieve ambitious low-carbon goals. We estimate that the globalized PV module market has saved PV installers in the U.S. $24 ($19 to $31) billion, Germany $7 ($5 to $9) billion, and China $36 ($26 to $45) billion from 2008 to 2020 compared to a counterfactual scenario where domestic manufacturers supply an increasing proportion of installed capacities in each country over a 10-year period. In projecting the same scenario forward from 2020, we estimate that 2030 unit solar module prices would be approximately 20 to 25% higher in each country compared to a future with globalized supply chains. International climate policy benefits from a globalized low-carbon value chain, and these results point to the need for complementary policies to mitigate welfare distribution effects and potential impacts on technological crowding-out.
+**Abstract**: Achieving carbon neutrality requires deploying renewable energy at unprecedented speed and scale, yet countries sometimes implement policies that increase costs by restricting the free flow of capital, talent, and innovation in favor of localizing benefits such as economic growth, employment, and trade surpluses. Here we assess the cost savings from a globalized solar photovoltaic (PV) module supply chain. We develop a two-factor learning model using historical capacity, component, and input material price data of solar PV deployment in the U.S., Germany, and China. We estimate that the globalized PV module market has saved PV installers in the U.S. $24 ($19 - $31) billion, Germany $7 ($5 - $9) billion, and China $36 ($26 - $45) billion from 2008 to 2020 compared to a counterfactual scenario where domestic manufacturers supply an increasing proportion of installed capacities over a 10-year period. Projecting the same scenario forward from 2020 results in estimated solar module prices that are approximately 20% - 25% higher in 2030 compared to a future with globalized supply chains. International climate policy benefits from a globalized low-carbon value chain, and these results point to the need for complementary policies to mitigate welfare distribution effects and potential impacts on technological crowding-out.
 
-# Folder descriptions
+# File organization
 
 ## data
 
@@ -39,26 +36,58 @@ file or folder | description
 `5charts.R` | Code to reproduce all charts used in our analyses.
 `6summary.R` | Code to print out a summary of all main results.
 `7tables.Rmd` | Generates all tables in the `output/tables.docx` file.
+`8alt_models.R` | Code to reproduce several alternative models that we considered as sensitivity checks. These results are presented in Extended Data Tables 2 - 4.
 
 ## figs
 
-All charts created in the `code/5charts.R` file are saved here as pdfs and pngs.
+All charts created in the `code/5charts.R` file are saved here in 3 formats: eps, pdf, and png.
 
 ## output
 
-All model / scenario analyses outputs (other than charts) are saved here.
+All model / scenario analyses outputs are saved here.
 
 # Reproducing the analyses
 
-To reproduce the analyses, first open the `solar-learning-2021.Rproj` file, which sets the working directory to the root of the files in this repository. The repository root must be set as the working directory otherwise the code will error.
+## Installation setup
+
+Reproducing the analyses requires the follow setup steps:
+
+1. Install [R](https://www.r-project.org/).
+2. Install [RStudio](https://www.rstudio.com/products/rstudio/download/) (optional, though recommended).
+3. Download the files in this repository. 
+4. Open the `solar-learning-2021.Rproj` file, which sets the working directory to the root of the files in this repository. The repository root must be set as the working directory otherwise the code will error.
+5. Install additional required R packages using this code:
+
+```{r, eval=FALSE}
+install.packages(c(
+    "broom",
+    "Cairo",
+    "cowplot",
+    "flextable",
+    "ggrepel",
+    "gtsummary",
+    "ggtext",
+    "here",
+    "janitor",
+    "priceR",
+    "readxl",
+    "remotes",
+    "renderthis",
+    "rjson",
+    "scales",
+    "shiny",
+    "shinythemes",
+    "tidyverse"
+))
+```
 
 ## Full reproduction
 
-The `code/0a_run.R` file contains scripts to fully reproduce the entire set of analyses. This is here purely for convenience.
+The `code/0a_run.R` file contains scripts to fully reproduce the entire set of analyses in sequential order. This is purely for convenience to quickly reproduce everything. Each file can be separately run if desired. 
 
 ## Setup
 
-Most R files in the `/code` folder start with the following line to set up the working environment:
+Most R files in the `/code` folder start with the following line to execute the `/code/0setup.R` file, which loads all required libraries and sets several global variables such as starting and stopping years to bound the analyses:
 
 ```{r, warning=FALSE, message=FALSE}
 source(here::here('code', '0setup.R'))
@@ -118,8 +147,14 @@ names(proj)
 
 ## Charts
 
-All of the charts are generated by running the `/code/5charts.R` file. Results are saved as pngs and pdfs in the `/figs` folder.
+All of the charts are generated by running the `/code/5charts.R` file. Results are saved as pdf, eps, and png files in the `/figs` folder.
 
 ## Summary
 
 A full summary of all results can be seen by running the `/code/6summary.R` file. 
+
+## Other
+
+The `/code/7tables.Rmd` file is a simple template that we used to generate a word-formatted summary table of the regression results. 
+
+The `8alt_models.R` file contains code to reproduce several alternative models that we considered as sensitivity checks. These results are presented in Extended Data Tables 2 - 4.

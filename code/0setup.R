@@ -1,23 +1,23 @@
 # install.packages(c(
-#    "tidyverse",
-#    "scales",
-#    "ggrepel",
-#    "broom",
-#    "readxl",
-#    "janitor",
-#    "rjson",
-#    "here",
-#    "cowplot",
-#    "remotes",
-#    "priceR",
-#    "ggtext",
-#    "gtsummary",
-#    "flextable",
-#    "shiny",
-#    "shinythemes",
-#    "Cairo"
+#     "broom",
+#     "Cairo",
+#     "cowplot",
+#     "flextable",
+#     "ggrepel",
+#     "gtsummary",
+#     "ggtext",
+#     "here",
+#     "janitor",
+#     "priceR",
+#     "readxl",
+#     "remotes",
+#     "renderthis",
+#     "rjson",
+#     "scales",
+#     "shiny",
+#     "shinythemes",
+#     "tidyverse"
 # ))
-# remotes::install_github("jhelvy/renderthis")
 
 # Load libraries
 library(tidyverse)
