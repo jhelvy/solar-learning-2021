@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-[![DOI](https://zenodo.org/badge/373634772.svg)](https://zenodo.org/badge/latestdoi/6989075)
+[![DOI](https://zenodo.org/badge/373634772.svg)](https://zenodo.org/badge/latestdoi/373634772)
 
 This repository contains the data and code to reproduce results from our
 study titled **“Quantifying the cost savings of global solar

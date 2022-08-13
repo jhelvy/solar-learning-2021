@@ -6,7 +6,7 @@ output:
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-[![DOI](https://zenodo.org/badge/373634772.svg)](https://zenodo.org/badge/latestdoi/6989075)
+[![DOI](https://zenodo.org/badge/373634772.svg)](https://zenodo.org/badge/latestdoi/373634772)
 
 ```{r setup, echo=FALSE}
 IS_README <- TRUE
