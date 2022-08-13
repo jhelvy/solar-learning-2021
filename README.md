@@ -1,6 +1,8 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+[![DOI](https://zenodo.org/badge/373634772.svg)](https://zenodo.org/badge/latestdoi/6989075)
+
 This repository contains the data and code to reproduce results from our
 study titled **“Quantifying the cost savings of global solar
 photovoltaic supply chains”**. All code is written using the [R
