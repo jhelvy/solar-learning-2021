@@ -19,7 +19,7 @@ proj <- readRDS(dir$scenarios_proj)
 # Global PV production ----
 
 # Read in and format data
-pvProduction <- data$pvProduction %>% 
+pv_production <- data$pvProduction %>% 
   mutate(
     country = str_to_title(country), 
     country = ifelse(country == "Row", "ROW", country), 
@@ -52,12 +52,12 @@ pvProduction <- data$pvProduction %>%
        fill  = 'Origin', 
        caption = "Data from Jäger-Waldau, A. (2022) https://doi.org/10.1051/epjpv/2022010")
 
-save_fig(pvProduction, "pvProduction", width = 8, height = 6)
+save_fig(pv_production, "fig1_pv_production", width = 8, height = 6)
 
 # Cost per kw for global vs. national learning ----
 
 # First, just plot the global markets scenario
-cost_historical_global_plot <- cost$cost %>%
+prices_historical_only <- cost$cost %>%
     mutate(
         learning = str_to_title(learning),
         learning = fct_relevel(learning, c("National", "Global")),
@@ -131,11 +131,11 @@ cost_historical_global_plot <- cost$cost %>%
     )
 
 save_fig(
-    cost_historical_global_plot, "cost_historical_global_plot",
+    prices_historical_only, "prices_historical_only",
     width = 11, height = 4.25
 )
 
-cost_historical_plot <- 
+prices_historical_national_global <- 
     make_historical_plot(cost$cost, size = 16) +
     scale_y_continuous(
         limits = c(0, 6000),
@@ -175,7 +175,7 @@ cost_historical_plot <-
     )
 
 save_fig(
-    cost_historical_plot, "cost_historical_plot",
+    prices_historical_national_global, "fig2_prices_historical_national_global",
     width = 11, height = 4.25
 )
 
@@ -183,10 +183,10 @@ save_fig(
 
 # Cumulative savings historical ----
 
-savings_cum_historical_plot <- make_cum_savings_plot(cost$savings)
+savings_historical_cumulative <- make_cum_savings_plot(cost$savings)
 
 save_fig(
-    savings_cum_historical_plot, "savings_cum_historical_plot",
+    savings_historical_cumulative, "savings_historical_cumulative",
     width = 6, height = 5
 )
 
@@ -208,7 +208,7 @@ cum_savings_labels <- cost$savings %>%
     )
 
 # Now make the plot
-savings_ann_historical_plot <- make_ann_savings_plot(cost$savings, size = 16) +
+savings_historical_annual <- make_ann_savings_plot(cost$savings, size = 16) +
     scale_y_continuous(
         labels = scales::dollar, 
         breaks = seq(0, 10, 2),
@@ -223,7 +223,7 @@ savings_ann_historical_plot <- make_ann_savings_plot(cost$savings, size = 16) +
     )
 
 save_fig(
-    savings_ann_historical_plot, "savings_ann_historical_plot",
+    savings_historical_annual, "fig3_savings_historical_annual",
     width = 11, height = 4.25
 )
 
@@ -232,9 +232,12 @@ save_fig(
 
 # 2030 Projections ----
 
-cost_proj <- make_projection_plot(proj$nat_trends, proj$sus_dev, size = 16)
+prices_projection_national_global <- make_projection_plot(proj$nat_trends, proj$sus_dev, size = 16)
 
-save_fig(cost_proj, "cost_proj", width = 11, height = 6.5)
+save_fig(
+    prices_projection_national_global, "fig4_prices_projection_national_global", 
+    width = 11, height = 6.5
+)
 
 
 
@@ -273,7 +276,7 @@ cum_savings_labels_proj <- rbind(
       "Sustainable Development" = "sus_dev"))
 
 # Now make the plot
-savings_ann_proj_plot <- make_ann_savings_proj_plot(
+ex_savings_projection_annual <- make_ann_savings_proj_plot(
   proj$savings_nat_trends, proj$savings_sus_dev, size = 16) +
     scale_y_continuous(
         labels = scales::dollar, 
@@ -289,7 +292,7 @@ savings_ann_proj_plot <- make_ann_savings_proj_plot(
     )
 
 save_fig(
-    savings_ann_proj_plot, "savings_ann_proj_plot",
+    ex_savings_projection_annual, "ex_fig1_savings_projection_annual",
     width = 11, height = 6.5
 )
 
@@ -327,7 +330,7 @@ ex_compare_capacity_type <- nrelSeia %>%
     title = "Comparison of installed capacity by type and data source")
 
 save_fig(
-    ex_compare_capacity_type, "ex_compare_capacity_type",
+    ex_compare_capacity_type, "ex_fig2_compare_capacity_type",
     width = 9, height = 3
 )
 
@@ -364,7 +367,7 @@ ex_compare_capacity_cumulative <- nrelSeia %>%
     title = "Comparison of cumulative installed data")
 
 save_fig(
-    ex_compare_capacity_cumulative, "ex_compare_capacity_cumulative",
+    ex_compare_capacity_cumulative, "ex_fig3_compare_capacity_cumulative",
     width = 5, height = 3
 )
 
@@ -403,7 +406,7 @@ ex_compare_cost <- cost_compare %>%
        color = "Data source",
        title = "Comparison of price per kW by data source")
 
-save_fig(ex_compare_cost, "ex_compare_cost", width = 5, height = 3)
+save_fig(ex_compare_cost, "ex_fig4_compare_cost", width = 5, height = 3)
 
 
 
@@ -457,7 +460,7 @@ lambda_compare <- ggplot(plotData) +
         y = "Cumulative installed capacity (GW)"
     )
 
-save_fig(lambda_compare, "lambda_compare", width = 11, height = 3.75)
+save_fig(lambda_compare, "ex_fig5_lambda_compare", width = 11, height = 3.75)
 
 
 
@@ -499,4 +502,4 @@ silicon_prices <- data$silicon %>%
     caption = "Data from Nemet, G. (2019) https://doi.org/10.4324/9780367136604"
   )
 
-save_fig(silicon_prices, "silicon_prices", width = 5, height = 3.75)
+save_fig(silicon_prices, "ex_fig6_silicon_prices", width = 5, height = 3.75)
