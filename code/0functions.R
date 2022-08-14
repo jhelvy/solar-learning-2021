@@ -702,6 +702,8 @@ combine_cost_diffs <- function(us, china, germany, year_min, year_max) {
 }
 
 # Exports figure to pdf, eps, and png in the "figs" folder
+# and then extracts the plot data and saves it in the "figs/data" folder
+# as a csv file
 save_fig <- function(fig, name, width, height) {
     
     # Create temp vars
@@ -711,6 +713,7 @@ save_fig <- function(fig, name, width, height) {
     path_pdf <- file.path(dir$figs, 'pdf', name_pdf)
     path_eps <- file.path(dir$figs, 'eps', name_eps)
     path_png <- file.path(dir$figs, 'png', name_png)
+    path_csv <- file.path(dir$figs, 'data', paste0(name, ".csv"))
     
     # PDF
     ggsave(path_pdf, fig, width = width, height = height, device = cairo_pdf)
@@ -720,4 +723,8 @@ save_fig <- function(fig, name, width, height) {
 
     # Convert PDF to PNG
     renderthis::to_png(path_pdf, path_png, density = 300)
+    
+    # Now extract the plot data and export to CSV
+    df <- ggplot_build(fig)$plot$data
+    write_csv(df, path_csv)
 }

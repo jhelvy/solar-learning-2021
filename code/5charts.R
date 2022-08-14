@@ -16,7 +16,7 @@ proj <- readRDS(dir$scenarios_proj)
 # Check any plot for color blindness
 # colorblindr::cvd_grid(plot)
 
-# Global PV production ----
+# FIG 1: Global PV production ----
 
 # Read in and format data
 pv_production <- data$pvProduction %>% 
@@ -54,7 +54,7 @@ pv_production <- data$pvProduction %>%
 
 save_fig(pv_production, "fig1_pv_production", width = 8, height = 6)
 
-# Cost per kw for global vs. national learning ----
+# FIG 2: Price per kw for global vs. national learning ----
 
 # First, just plot the global markets scenario
 prices_historical_only <- cost$cost %>%
@@ -181,7 +181,9 @@ save_fig(
 
 
 
-# Cumulative savings historical ----
+# FIG 3: Annual savings historical ----
+
+# Cumulative savings historical 
 
 savings_historical_cumulative <- make_cum_savings_plot(cost$savings)
 
@@ -190,9 +192,7 @@ save_fig(
     width = 6, height = 5
 )
 
-
-
-# Annual savings historical ----
+# Now annual savings figure 
 
 # First make label data
 cum_savings_labels <- cost$savings %>% 
@@ -230,7 +230,7 @@ save_fig(
 
 
 
-# 2030 Projections ----
+# FIG 4: 2030 Projections ----
 
 prices_projection_national_global <- make_projection_plot(proj$nat_trends, proj$sus_dev, size = 16)
 
@@ -242,7 +242,7 @@ save_fig(
 
 
 
-# Annual savings projection ----
+# EX FIG 1: Annual savings projection ----
 
 # First make label data
 cum_savings_labels_nat_trends <- proj$savings_nat_trends %>% 
@@ -298,7 +298,7 @@ save_fig(
 
 
 
-# Compare capacity data from NREL, SEIA, and IRENA ----
+# EX FIG 2: Compare capacity data from NREL, SEIA, and IRENA ----
 
 # Merge NREL and SEIA capacity data
 nrelSeia <- data$nrelCapacity %>%
@@ -336,7 +336,8 @@ save_fig(
 
 
 
-
+# EX FIG 3: Compare installed capacity data ----
+    
 # During the overlapping period, NREL and SEIA data match quite closely
 # Only deviation is that NREL Commercial installations are slightly lower
 # than those in SEIA
@@ -353,6 +354,7 @@ ex_compare_capacity_cumulative <- nrelSeia %>%
       select(year, source, cumCapacityGw)
   ) %>%
   filter(year <= plot_max_year) %>%
+  ungroup() %>% 
   ggplot(aes(x = year, y = cumCapacityGw, color = source)) +
   geom_line(alpha = 0.5) +
   geom_point(pch = 21, fill = "white") +
@@ -372,14 +374,13 @@ save_fig(
 )
 
 
-
+# EX FIG 4: Compare NREL, LBNL, and SPV Cost data ----
+    
 # IRENA data track differently from NREL and SEIA. 
 # They're slightly higher in the period before 2014 and lower afterwards
 
 # Based on these comparisons, we use SEIA data for installed capacity as
 # it tracks with NREL and covers a longer time period
-
-# Compare NREL, LBNL, and SPV Cost data ----
 
 cost_compare <- data$nrelCost %>%
   filter(installType == "Utility") %>% 
@@ -410,12 +411,12 @@ save_fig(ex_compare_cost, "ex_fig4_compare_cost", width = 5, height = 3)
 
 
 
+# EX FIG 5: Interpreting lambda ----
+    
 # NREL and LBNL cost data are relatively similar for modules, with 
 # the biggest disagreement in the earlier years. We decided to use LBNL cost
 # data for the earlier period (2000 - 2018) and NREL for 2019 & 2020 as 
 # the two appear to converge in the later years.
-
-# Interpreting lambda ----
 
 plotData <- rbind(
     prep_lambda_df(data$hist_us) %>% mutate(country = "U.S."),
@@ -465,7 +466,7 @@ save_fig(lambda_compare, "ex_fig5_lambda_compare", width = 11, height = 3.75)
 
 
 
-# Historical Silicon prices -----
+# EX FIG 6: Historical Silicon prices -----
 
 silicon_prices <- data$silicon %>%
   rbind(data.frame(
