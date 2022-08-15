@@ -75,12 +75,14 @@ Reproducing the analyses requires the follow setup steps:
 2.  Install
     [RStudio](https://www.rstudio.com/products/rstudio/download/)
     (optional, though recommended).
-3.  Download the files in this repository.
-4.  Open the `solar-learning-2021.Rproj` file, which sets the working
+3.  If on a Mac, install [XQuartz](https://www.xquartz.org/) to enable
+    Cairo graphics (for reproducing figures).
+4.  Download the files in this repository.
+5.  Open the `solar-learning-2021.Rproj` file, which sets the working
     directory to the root of the files in this repository. The
     repository root must be set as the working directory otherwise the
     code will error.
-5.  Install additional required R packages using this code:
+6.  Install additional required R packages using this code:
 
 ``` r
 install.packages(c(

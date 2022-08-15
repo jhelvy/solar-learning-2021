@@ -704,7 +704,7 @@ combine_cost_diffs <- function(us, china, germany, year_min, year_max) {
 # Exports figure to pdf, eps, and png in the "figs" folder
 # and then extracts the plot data and saves it in the "figs/data" folder
 # as a csv file
-save_fig <- function(fig, name, width, height) {
+save_fig <- function(fig, name, width, height, fig_grey = NULL) {
     
     # Create temp vars
     name_pdf <- paste0(name, ".pdf")
@@ -712,6 +712,7 @@ save_fig <- function(fig, name, width, height) {
     name_png <- paste0(name, ".png")
     path_pdf <- file.path(dir$figs, 'pdf', name_pdf)
     path_eps <- file.path(dir$figs, 'eps', name_eps)
+    path_grey <- file.path(dir$figs, 'greyscale', name_eps)
     path_png <- file.path(dir$figs, 'png', name_png)
     path_csv <- file.path(dir$figs, 'data', paste0(name, ".csv"))
     
@@ -727,4 +728,12 @@ save_fig <- function(fig, name, width, height) {
     # Now extract the plot data and export to CSV
     df <- ggplot_build(fig)$plot$data
     write_csv(df, path_csv)
+    
+    # If a greyscale plot is provided, save it to the "figs/greyscale" folder 
+    if (!is.null(fig_grey)) {
+        ggsave(
+            path_grey, fig_grey, 
+            width = width, height = height, device = cairo_ps
+        )
+    }
 }

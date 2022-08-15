@@ -13,9 +13,6 @@ cost <- readRDS(dir$scenarios_hist)
 # Load projections
 proj <- readRDS(dir$scenarios_proj)
 
-# Check any plot for color blindness
-# colorblindr::cvd_grid(plot)
-
 # FIG 1: Global PV production ----
 
 # Read in and format data
@@ -132,7 +129,8 @@ prices_historical_only <- cost$cost %>%
 
 save_fig(
     prices_historical_only, "prices_historical_only",
-    width = 11, height = 4.25
+    width = 11, height = 4.25, 
+    fig_grey = prices_historical_only
 )
 
 prices_historical_national_global <- 
@@ -189,7 +187,9 @@ savings_historical_cumulative <- make_cum_savings_plot(cost$savings)
 
 save_fig(
     savings_historical_cumulative, "savings_historical_cumulative",
-    width = 6, height = 5
+    width = 6, height = 5, 
+    fig_grey = savings_historical_cumulative + 
+        scale_fill_manual(values = colors_country_grey) 
 )
 
 # Now annual savings figure 
@@ -224,7 +224,9 @@ savings_historical_annual <- make_ann_savings_plot(cost$savings, size = 16) +
 
 save_fig(
     savings_historical_annual, "fig3_savings_historical_annual",
-    width = 11, height = 4.25
+    width = 11, height = 4.25, 
+    fig_grey = savings_historical_annual + 
+        scale_fill_manual(values = rep("grey70", 3))
 )
 
 
@@ -293,7 +295,9 @@ ex_savings_projection_annual <- make_ann_savings_proj_plot(
 
 save_fig(
     ex_savings_projection_annual, "ex_fig1_savings_projection_annual",
-    width = 11, height = 6.5
+    width = 11, height = 6.5, 
+    fig_grey = ex_savings_projection_annual + 
+        scale_fill_manual(values = rep("grey70", 3))
 )
 
 
@@ -331,7 +335,9 @@ ex_compare_capacity_type <- nrelSeia %>%
 
 save_fig(
     ex_compare_capacity_type, "ex_fig2_compare_capacity_type",
-    width = 9, height = 3
+    width = 9, height = 3, 
+    fig_grey = ex_compare_capacity_type + 
+        scale_color_manual(values = c("grey10", "grey60"))
 )
 
 
@@ -370,7 +376,9 @@ ex_compare_capacity_cumulative <- nrelSeia %>%
 
 save_fig(
     ex_compare_capacity_cumulative, "ex_fig3_compare_capacity_cumulative",
-    width = 5, height = 3
+    width = 5, height = 3, 
+    fig_grey = ex_compare_capacity_cumulative + 
+        scale_color_manual(values = colors_country_grey)
 )
 
 
@@ -407,7 +415,12 @@ ex_compare_cost <- cost_compare %>%
        color = "Data source",
        title = "Comparison of price per kW by data source")
 
-save_fig(ex_compare_cost, "ex_fig4_compare_cost", width = 5, height = 3)
+save_fig(
+    ex_compare_cost, "ex_fig4_compare_cost", 
+    width = 5, height = 3, 
+    fig_grey = ex_compare_cost +
+        scale_color_manual(values = c("grey10", "grey60"))
+)
 
 
 
@@ -461,7 +474,11 @@ lambda_compare <- ggplot(plotData) +
         y = "Cumulative installed capacity (GW)"
     )
 
-save_fig(lambda_compare, "ex_fig5_lambda_compare", width = 11, height = 3.75)
+save_fig(
+    lambda_compare, "ex_fig5_lambda_compare", 
+    width = 11, height = 3.75, 
+    fig_grey = lambda_compare
+)
 
 
 
@@ -503,4 +520,8 @@ silicon_prices <- data$silicon %>%
     caption = "Data from Nemet, G. (2019) https://doi.org/10.4324/9780367136604"
   )
 
-save_fig(silicon_prices, "ex_fig6_silicon_prices", width = 5, height = 3.75)
+save_fig(
+    silicon_prices, "ex_fig6_silicon_prices", 
+    width = 5, height = 3.75, 
+    fig_grey = silicon_prices
+)

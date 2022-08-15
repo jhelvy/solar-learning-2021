@@ -112,6 +112,7 @@ target_sus_dev_world      <- 3125*1e6
 # Chart settings
 colors_learning <- c("National" = "#E5601A", "Global" = "#1A9FE5")
 colors_country <- c("#E5C61A", "#1A9FE5", "#E5601A")
+colors_country_grey <- c("grey20", "grey50", "grey70")
 font_add_google("Fira Sans Condensed", "firasanscondensed")
 showtext_auto() # Automatically use showtext to render text
 font_main <- "firasanscondensed"
