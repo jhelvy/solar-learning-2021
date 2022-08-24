@@ -42,12 +42,15 @@ pv_production <- data$pvProduction %>%
     plot.caption = element_text(
       hjust = 0, size = 12, family = font_main, face = "italic"),
     plot.caption.position = "plot",
-    plot.title.position = "plot") +
+    plot.title.position = "plot"
+    # plot.title = element_markdown(face = "plain")
+  ) +
   labs(x = NULL,
        y = 'Annual Cell Production (GW)',
        title = 'Annual Solar Photovoltaic Cell Production (GW)',
        fill  = 'Origin', 
-       caption = "Data from Jäger-Waldau, A. (2022) https://doi.org/10.1051/epjpv/2022010")
+       caption = "Data from Jäger-Waldau, A. (2022) https://doi.org/10.1051/epjpv/2022010"
+  )
 
 save_fig(pv_production, "fig1_pv_production", width = 8, height = 6)
 
@@ -103,7 +106,7 @@ prices_historical_only <- cost$cost %>%
         axis.line.x = element_blank(),
         plot.caption.position = "plot",
         plot.caption = element_text(hjust = 1, size = 11, face = "italic"),
-        plot.title = element_markdown(),
+        plot.title = element_text(face = "bold"),
         legend.position = "none"
     ) +
     # Add "historical" labels

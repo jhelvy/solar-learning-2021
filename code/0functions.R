@@ -291,6 +291,7 @@ make_historical_plot <- function(cost, log_scale = FALSE, size = 12) {
             plot.caption.position = "plot",
             plot.caption = element_text(hjust = 1, size = 11, face = "italic"),
             plot.title = element_markdown(),
+            # plot.title = element_markdown(face = "plain"),
             legend.position = "none"
         ) 
     if (log_scale) {
@@ -708,19 +709,14 @@ save_fig <- function(fig, name, width, height, fig_grey = NULL) {
     
     # Create temp vars
     name_pdf <- paste0(name, ".pdf")
-    name_eps <- paste0(name, ".eps")
     name_png <- paste0(name, ".png")
     path_pdf <- file.path(dir$figs, 'pdf', name_pdf)
-    path_eps <- file.path(dir$figs, 'eps', name_eps)
-    path_grey <- file.path(dir$figs, 'greyscale', name_eps)
+    path_grey <- file.path(dir$figs, 'greyscale', name_pdf)
     path_png <- file.path(dir$figs, 'png', name_png)
     path_csv <- file.path(dir$figs, 'data', paste0(name, ".csv"))
     
     # PDF
     ggsave(path_pdf, fig, width = width, height = height, device = cairo_pdf)
-
-    # EPS
-    ggsave(path_eps, fig, width = width, height = height, device = cairo_ps)
 
     # Convert PDF to PNG
     renderthis::to_png(path_pdf, path_png, density = 300)
@@ -733,7 +729,7 @@ save_fig <- function(fig, name, width, height, fig_grey = NULL) {
     if (!is.null(fig_grey)) {
         ggsave(
             path_grey, fig_grey, 
-            width = width, height = height, device = cairo_ps
+            width = width, height = height, device = cairo_pdf
         )
     }
 }
