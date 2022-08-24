@@ -201,6 +201,7 @@ save_fig(
 cum_savings_labels <- cost$savings %>% 
     filter(year == max(year)) %>%
     mutate(
+        x_year = lubridate::ymd("08-01-01"),
         mean = round(cum_savings_bil), 
         lb = round(cum_savings_bil_lb),
         ub = round(cum_savings_bil_ub),
@@ -221,8 +222,8 @@ savings_historical_annual <- make_ann_savings_plot(cost$savings, size = 16) +
     # Add totals labels
     geom_text(
         data = cum_savings_labels,
-        aes(x = x, y = y, label = label),
-        size = 4.5, family = "Roboto Condensed", hjust = 0
+        aes(x = x_year, y = y, label = label),
+        size = 4.5, family = font_main, hjust = 0
     )
 
 save_fig(
@@ -276,6 +277,7 @@ cum_savings_labels_proj <- rbind(
   cum_savings_labels_nat_trends, 
   cum_savings_labels_sus_dev) %>% 
   mutate(
+    x_year = lubridate::ymd("20-01-01"),
     scenario = fct_recode(scenario, 
       "National Trends" = "nat_trends", 
       "Sustainable Development" = "sus_dev"))
@@ -292,8 +294,8 @@ ex_savings_projection_annual <- make_ann_savings_proj_plot(
     # Add totals labels
     geom_text(
         data = cum_savings_labels_proj,
-        aes(x = x, y = y, label = label),
-        size = 4.5, family = "Roboto Condensed", hjust = 0
+        aes(x = x_year, y = y, label = label),
+        size = 4.5, family = font_main, hjust = 0
     )
 
 save_fig(
@@ -331,7 +333,7 @@ ex_compare_capacity_type <- nrelSeia %>%
   facet_wrap(vars(installType)) +
   theme_bw(base_family = font_main) +
   labs(
-    x = NULL,
+    x = "Year",
     y = "Installed Capacity (GW)",
     color = "Data source",
     title = "Comparison of installed capacity by type and data source")
@@ -372,7 +374,7 @@ ex_compare_capacity_cumulative <- nrelSeia %>%
     breaks = c("NREL", "SEIA", "IRENA")) +
   theme_bw(base_family = font_main) +
   labs(
-    x = NULL,
+    x = "Year",
     y = "Installed Capacity (GW)",
     color = "Data source",
     title = "Comparison of cumulative installed data")
@@ -413,7 +415,7 @@ ex_compare_cost <- cost_compare %>%
     values = c("red", "dodgerblue", "black"),
     breaks = c("NREL", "LBNL", "SPV")) +
   theme_bw(base_family = font_main) +
-  labs(x = NULL,
+  labs(x = "Year",
        y = "Price per kW ($USD)",
        color = "Data source",
        title = "Comparison of price per kW by data source")

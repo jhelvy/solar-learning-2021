@@ -228,7 +228,7 @@ prep_lambda_df <- function(df) {
     result <- do.call(rbind, results)
     result$lambda <- rep(lambda, each = nrow(df))
     result <- result %>% 
-        mutate(label = paste0("λ = ", lambda, ", p = ", percent(median_p, accuracy = 1)))
+        mutate(label = paste0("λ = ", lambda, ", p = ", scales::percent(median_p, accuracy = 1)))
     return(result)
 }
 
@@ -264,7 +264,8 @@ make_historical_plot <- function(cost, log_scale = FALSE, size = 12) {
                 paste0(plot_max_year, "-07-01"))
             ),
             date_labels = "'%y",
-            date_breaks = "2 years") +
+            date_breaks = "2 years"
+        ) +
         scale_y_continuous(labels = scales::dollar) +
         scale_color_manual("Learning", values = colors_learning) +
         scale_fill_manual("Learning", values = colors_learning) +
@@ -320,7 +321,7 @@ make_cum_savings_plot <- function(savings, size = 12) {
     y_us <- (us / 2) + china
     y_germany <- sum(germany$cum_savings_bil)
     label_data <- data.frame(
-        x = c(2018, 2018, 2017), 
+        x = c(2018, 2018.2, 2017), 
         y = c(y_china, y_us, y_germany), 
         label = c("China", "U.S.", "Germany")
     )
@@ -335,7 +336,7 @@ make_cum_savings_plot <- function(savings, size = 12) {
           breaks = seq(year_savings_min, year_savings_max, 2),
           limits = c(year_savings_min, year_savings_max)) +
         scale_y_continuous(
-          labels = dollar,
+          labels = scales::dollar,
           breaks = seq(0, 80, 20),
           limits = c(0, 80),
           expand = expansion(mult = c(0, 0.05))) +
@@ -361,14 +362,22 @@ make_cum_savings_plot <- function(savings, size = 12) {
 }
 
 make_ann_savings_plot <- function(savings, size = 12) { 
-    plot <- savings %>% 
+    plot <- savings %>%
+        mutate(year = lubridate::ymd(paste0(year, "-01-01"))) %>% 
         ggplot() + 
         facet_wrap(vars(country), nrow = 1) +
         geom_col(aes(x = year, y = ann_savings_bil, fill = country)) + 
         geom_errorbar(
             aes(x = year, ymin = ann_savings_bil_lb, ymax = ann_savings_bil_ub), 
-            color = "grey42", width = 0.5) + 
-        scale_x_continuous(breaks = seq(year_savings_min, year_savings_max, 2)) +
+            color = "grey42", width = 200) + 
+        scale_x_date(
+            limits = lubridate::ymd(c(
+                paste0(year_savings_min - 1, "-07-01"),
+                paste0(year_savings_max, "-07-01"))
+            ),
+            date_labels = "'%y",
+            date_breaks = "2 years"
+        ) +
         scale_y_continuous(
             labels = scales::dollar, 
             expand = expansion(mult = c(0, 0.05))
@@ -380,15 +389,15 @@ make_ann_savings_plot <- function(savings, size = 12) {
         ) +
         theme_minimal_hgrid(
             font_size = size,
-            font_family = font_main) +
+            font_family = font_main
+        ) +
         panel_border() +
         theme(
             plot.title.position = "plot",
             legend.position = "none",
             axis.line.x = element_blank(),
             strip.background = element_rect(fill = "grey80"), 
-            panel.grid.major = element_line(
-                size = 0.5, colour = "grey90")
+            panel.grid.major = element_line(size = 0.5, colour = "grey90")
         ) +
          labs(
             title = "Annual Module Savings Under Global vs. National Market Scenarios (2008 - 2020)",
@@ -422,7 +431,6 @@ make_projection_plot <- function(
         date_labels = "'%y",
         date_breaks = "2 years") +
       scale_y_continuous(labels = scales::dollar) +
-      # expand_limits(y = 0) +
       scale_color_manual("Scenario", values = colors_learning) +
       scale_fill_manual("Scenario", values = colors_learning) +
       theme_minimal_grid(
@@ -459,6 +467,7 @@ make_ann_savings_proj_plot <- function(nat_trends, sus_dev, size = 12) {
   
     plot <- rbind(nat_trends, sus_dev) %>% 
         mutate(
+          year = lubridate::ymd(paste0(year, "-01-01")),
           scenario = fct_recode(scenario, 
             "National Trends" = "nat_trends", 
             "Sustainable Development" = "sus_dev")) %>% 
@@ -467,8 +476,15 @@ make_ann_savings_proj_plot <- function(nat_trends, sus_dev, size = 12) {
         geom_col(aes(x = year, y = ann_savings_bil, fill = country)) + 
         geom_errorbar(
             aes(x = year, ymin = ann_savings_bil_lb, ymax = ann_savings_bil_ub), 
-            color = "grey42", width = 0.5) + 
-        scale_x_continuous(breaks = seq(year_proj_min, year_proj_max, 2)) +
+            color = "grey42", width = 200) + 
+        scale_x_date(
+            limits = lubridate::ymd(c(
+                paste0(year_proj_min - 1, "-07-01"),
+                paste0(year_proj_max, "-07-01"))
+            ),
+            date_labels = "'%y",
+            date_breaks = "2 years"
+        ) +
         scale_y_continuous(
             labels = scales::dollar, 
             expand = expansion(mult = c(0, 0.05))
@@ -480,15 +496,16 @@ make_ann_savings_proj_plot <- function(nat_trends, sus_dev, size = 12) {
         ) +
         theme_minimal_hgrid(
             font_size = size,
-            font_family = font_main) +
+            font_family = font_main
+        ) +
         panel_border() +
         theme(
             plot.title.position = "plot",
             legend.position = "none",
             axis.line.x = element_blank(),
             strip.background = element_rect(fill = "grey80"), 
-            panel.grid.major = element_line(
-                size = 0.5, colour = "grey90")
+            plot.title = element_text(size = size),
+            panel.grid.major = element_line(size = 0.5, colour = "grey90")
         ) +
          labs(
             title = "Projected Annual Module Savings Under Global vs. National Market Scenarios (2020 - 2030)",

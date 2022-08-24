@@ -82,30 +82,9 @@ Reproducing the analyses requires the follow setup steps:
     directory to the root of the files in this repository. The
     repository root must be set as the working directory otherwise the
     code will error.
-6.  Install additional required R packages using this code:
-
-``` r
-install.packages(c(
-    "broom",
-    "Cairo",
-    "cowplot",
-    "flextable",
-    "ggrepel",
-    "gtsummary",
-    "ggtext",
-    "here",
-    "janitor",
-    "priceR",
-    "readxl",
-    "remotes",
-    "renderthis",
-    "rjson",
-    "scales",
-    "shiny",
-    "shinythemes",
-    "tidyverse"
-))
-```
+6.  Install additional required R packages by running the code in the
+    `/code/0install.R` file (you’ll only need to install these packages
+    once).
 
 ## Full reproduction
 
