@@ -1,14 +1,20 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+You can use this DOI to cite this repository:
+
 [![DOI](https://zenodo.org/badge/373634772.svg)](https://zenodo.org/badge/latestdoi/373634772)
 
 This repository contains the data and code to reproduce results from our
-study titled **“Quantifying the cost savings of global solar
-photovoltaic supply chains”**. All code is written using the [R
-programming language](https://www.r-project.org/).
+study titled [**“Quantifying the cost savings of global solar
+photovoltaic supply
+chains”**](https://doi.org/10.1038/s41586-022-05316-6). All code is
+written using the [R programming language](https://www.r-project.org/).
 
 **Authors**: John Paul Helveston, Gang He, & Michael R. Davidson.
+
+**DOI**:
+[10.1038/s41586-022-05316-6](https://doi.org/10.1038/s41586-022-05316-6)
 
 **Abstract**: Achieving carbon neutrality requires deploying renewable
 energy at unprecedented speed and scale, yet countries sometimes
@@ -19,9 +25,9 @@ cost savings from a globalized solar photovoltaic (PV) module supply
 chain. We develop a two-factor learning model using historical capacity,
 component, and input material price data of solar PV deployment in the
 U.S., Germany, and China. We estimate that the globalized PV module
-market has saved PV installers in the U.S. $24 ($19 - $31) billion,
-Germany $7 ($5 - $9) billion, and China $36 ($26 - $45) billion from
-2008 to 2020 compared to a counterfactual scenario where domestic
+market has saved PV installers in the U.S. \$24 (\$19 - \$31) billion,
+Germany \$7 (\$5 - \$9) billion, and China \$36 (\$26 - \$45) billion
+from 2008 to 2020 compared to a counterfactual scenario where domestic
 manufacturers supply an increasing proportion of installed capacities
 over a 10-year period. Projecting the same scenario forward from 2020
 results in estimated solar module prices that are approximately 20% -
