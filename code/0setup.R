@@ -1,3 +1,5 @@
+set.seed(8675)
+
 # Make sure you first install the packages by running the code in
 # "./code/0install.R". You only need to install them once.
 
@@ -84,7 +86,7 @@ target_nat_trends_us      <- 295*1e6
 target_nat_trends_china   <- 750*1e6
 target_nat_trends_germany <- 103*1e6
 target_nat_trends_world   <- 2115*1e6
-target_sus_dev_us         <- 628*1e6
+target_sus_dev_us         <- 411*1e6
 target_sus_dev_china      <- 1106*1e6
 target_sus_dev_germany    <- 147*1e6
 target_sus_dev_world      <- 3125*1e6
