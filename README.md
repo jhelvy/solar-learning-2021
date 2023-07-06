@@ -31,7 +31,7 @@ from 2008 to 2020 compared to a counterfactual scenario where domestic
 manufacturers supply an increasing proportion of installed capacities
 over a 10-year period. Projecting the same scenario forward from 2020
 results in estimated solar module prices that are approximately 20% -
-25% higher in 2030 compared to a future with globalized supply chains.
+30% higher in 2030 compared to a future with globalized supply chains.
 International climate policy benefits from a globalized low-carbon value
 chain, and these results point to the need for complementary policies to
 mitigate welfare distribution effects and potential impacts on
